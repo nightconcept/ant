@@ -81,13 +81,55 @@ Tests show TinyCC **rejects or mishandles** only: C++ (`numbers.cc`),
 (unresolved reference), and `_Thread_local` with a non-zero initializer (reads
 back 0).
 
-#### Item 0 — `../mc` compile harness (prerequisite)
+**Progress note (2026-07-25):** Items 0, 2, 3, 4, 5, and 6 are done — see below.
+Item 1 (`numbers.cc` -> `numbers.c`) is the only item left in Phase 2 and has not
+been started; it is the long pole (Ryu/Grisu3 port) and should be scoped/planned
+separately before starting.
+
+The full-tree triage (Item 6) surfaced TinyCC gaps beyond the ones found in the
+initial smoke test, all fixed:
+* `__has_include(x)` is recognized directly after `#if`/`#elif` but not when
+  reached through another macro's expansion — broke yyjson's
+  `yyjson_has_include(x)` wrapper on every TU that includes `yyjson.h`. Fixed by
+  passing `-Dyyjson_has_include(x)=0` in `scripts/mc-check.sh` (yyjson is
+  vendored/gitignored, so this is a compiler-invocation-level fix, not a vendor
+  patch).
+* TinyCC does not define `__GNUC__` (it self-identifies via `__TINYC__`).
+  Vendor code gated on `defined(__GNUC__)` — c-ares' `ares_build.h`,
+  wasm-micro-runtime's `ALIGNED_(x)` macro — fell through to `#error`/broken
+  branches. **Do not** globally `-D__GNUC__=N` to paper over this: it breaks
+  glibc's `features.h`, which gates its own compiler-support branches on the
+  real `__GNUC__` (confirmed by testing — regressed the pass count from 163 to
+  ~140). Fixed per-vendor instead, via tracked patches wired through each
+  wrap's `diff_files`: `vendor/packagefiles/patches/c-ares-tinycc.patch` and
+  `vendor/packagefiles/patches/wasm-micro-runtime-tinycc.patch`, both adding
+  `|| defined(__TINYC__)` next to the `__GNUC__` check.
+* TinyCC's bundled `<stddef.h>` predates C11 and has no `max_align_t`; its
+  `<stdatomic.h>` has no `ATOMIC_*_LOCK_FREE` macros. Both fixed with small
+  `#if defined(__TINYC__)` fallback shims local to `src/pool.c` and
+  `src/modules/atomics.c`.
+* `include/arena.h` and `include/types.h` used `bool` without including
+  `<stdbool.h>`, relying on gcc's C23 (`gnu2x`/`gnu23`) implicit `bool` keyword.
+  TinyCC doesn't implement that C23 keyword promotion, so this broke any TU
+  that hit these headers before something else pulled in `<stdbool.h>`
+  (`src/modules/v8.c`, `src/modules/sandbox.c`). Fixed by adding the explicit
+  `#include <stdbool.h>` — this is a real portability bug, not TinyCC-specific,
+  and is safe under the primary gcc/meson build too.
+
+#### Item 0 — `../mc` compile harness (prerequisite) — DONE
 * Script (`scripts/mc-check.sh`) runs `../mc/build/mc build -c` on each engine
-  translation unit with meson's include dirs (`-Iinclude -Ibuild -Ivendor/...`).
+  translation unit, deriving real per-TU include/define flags from Meson's
+  `compile_commands.json` (`meson setup build` first) rather than guessing
+  `-I` paths — this also covers vendored dependency headers.
 * Reuse the generated headers meson already emits into `build/`
-  (`messages.h`, `theme.h`, `builtin_bundle.h`, `snapshot.h`); do **not** wait on
-  the Phase 4 gen-driver.
-* Produces the per-file pass/fail matrix that drives Item 6.
+  (`messages.h`, `theme.h`, `meson/builtins/builtin_bundle_data.h`,
+  `meson/snapshot/snapshot_data.h` — note the actual custom_target output
+  names differ from the plan's original guess); do **not** wait on the Phase 4
+  gen-driver. Generate them directly with
+  `ninja -C build messages.h theme.h meson/builtins/builtin_bundle_data.h meson/snapshot/snapshot_data.h`.
+* Produces the per-file pass/fail matrix that drove Item 6: currently
+  **169/169 engine TUs pass** (excludes `src/main.c` and the still-C++
+  `src/numbers.cc`, per plan scope).
 
 #### Item 1 — `src/numbers.cc` -> `src/numbers.c` (long pole; start first, runs in parallel)
 * Only `.cc` in the tree; TinyCC has **no C++**. It wraps the C++
@@ -102,45 +144,56 @@ back 0).
 * **Guardrail:** `examples/spec/run.js --all` + `tools/wpt` number tests + number
   tests under `tests/`. This item lives or dies on conformance.
 
-#### Item 2 — Packed structs: `__attribute__((packed))` -> `#pragma pack`
+#### Item 2 — Packed structs: `__attribute__((packed))` -> `#pragma pack` — DONE
 * TinyCC **silently ignores** `__attribute__((packed))` (test: `sizeof` 8 not 5)
   but **honors** `#pragma pack(push,1)` / `#pragma pack(pop)` (test: 5).
 * 8 wire/ABI-critical structs: `src/sandbox/backends/linux/kvm_internal.h` (2),
   `src/sandbox/backends/shared/include/sandbox_backend/net_internal.h` (5),
   `src/sandbox/backends/shared/include/sandbox_backend/virtio_vsock.h` (1).
-* Wrap each in `#pragma pack` and add `_Static_assert(sizeof(T) == N, ...)` to
-  lock layout (TinyCC supports `_Static_assert`).
+* Wrapped each in `#pragma pack` and added `_Static_assert(sizeof(T) == N, ...)`
+  to lock layout (TinyCC supports `_Static_assert`). Verified with `../mc build -c`.
 
-#### Item 3 — `__builtin_ia32_pause()` -> inline asm
+#### Item 3 — `__builtin_ia32_pause()` -> inline asm — DONE
 * [`src/modules/atomics.c`](file:///Users/danny/git/ant/src/modules/atomics.c) line ~1039.
-  Replace with `__asm__ __volatile__("pause")` (verified OK), preserving the
+  Replaced with `__asm__ __volatile__("pause")` (verified OK), preserving the
   existing aarch64 `"yield"` guard nearby.
 
-#### Item 4 — `_Thread_local` audit (verification only)
+#### Item 4 — `_Thread_local` audit (verification only) — DONE
 * TinyCC mishandles **non-zero** TLS initializers. All current usages
   (`src/utils.c:24-25`, `src/utf8.c:28`) are zero/`{0}`-initialized and are safe.
-  Add a CI grep guard forbidding non-zero `_Thread_local` initializers; no code
-  change.
+  Added `.github/agents/check_thread_local.js` (wired into `check_all.js` /
+  `mise run preflight`) as the CI grep guard forbidding non-zero `_Thread_local`
+  initializers; no code change needed.
 
-#### Item 5 — `__attribute__` inventory (audit)
-* 18 files use `__attribute__`. After Item 2, cosmetic kinds (`noreturn`,
-  `format`, `unused`, `always_inline`) are ignored harmlessly by TinyCC. Verify
-  no load-bearing `aligned` / `cleanup` usages remain (none found so far). ARM
-  inline asm (`mrs`) in `kvm_aarch64.c` / `gic.c` is aarch64-only — out of scope
-  for the x86_64 `../mc` target; note and defer.
+#### Item 5 — `__attribute__` inventory (audit) — DONE
+* 18 files use `__attribute__`. After Item 2, remaining usages are all cosmetic
+  (`format`, `noinline`, `visibility`, `fallthrough`) and ignored/honored
+  harmlessly by TinyCC (spot-checked by direct `../mc build -c` compile). No
+  load-bearing `aligned` / `cleanup` usages remain. ARM inline asm (`mrs`) in
+  `kvm_aarch64.c` / `gic.c` is aarch64-only — out of scope for the x86_64
+  `../mc` target; deferred.
 
-#### Item 6 — Full-tree compile-and-triage under `../mc`
-* Run Item 0's harness across all engine TUs; fix remaining TinyCC gaps (libc
-  header differences, other unsupported `__builtin_*`, etc.), then link and run
-  the spec suite.
-* Add a parallel CI job compiling the tree with `mc -c` (keep the meson/gnu23
-  build primary through Phase 2). Full link + dogfood is Phase 4.
+#### Item 6 — Full-tree compile-and-triage under `../mc` — DONE
+* Ran Item 0's harness across all engine TUs and fixed the remaining TinyCC
+  gaps it surfaced (see progress note above): yyjson's `__has_include`
+  indirection, `__GNUC__`-gated vendor branches in c-ares and
+  wasm-micro-runtime, missing `max_align_t`/`ATOMIC_*_LOCK_FREE` in TinyCC's
+  bundled libc headers, and two of our own headers relying on C23's implicit
+  `bool` keyword instead of including `<stdbool.h>`. **169/169 engine TUs now
+  compile cleanly under `../mc -c`**; confirmed the primary gcc/meson build
+  (`ninja -C build libant.a`) still links cleanly with the same changes.
+* Added `.github/workflows/mc-check.yml` as a parallel CI job compiling the
+  tree with `mc -c` (keep the meson/gnu23 build primary through Phase 2). This
+  workflow is untested against real GitHub Actions runners in this session —
+  verify the `mc` build step (`python3 scripts/build.py` via `mise`/zig) on
+  first CI run. Full link + dogfood is Phase 4.
 
 **Definition of done:** no C++ in the tree (`project()` languages = `['c']`,
 double-conversion wrap gone); all packed structs use `#pragma pack` with
 `_Static_assert` size locks; rejected builtins replaced; whole engine compiles
 cleanly under `../mc -c` (enforced by CI); spec suite (`--all`) + number/WPT
-tests pass.
+tests pass. **Everything above is done except the C++ removal itself (Item 1)**,
+which blocks marking Phase 2 fully complete.
 
 **Explicitly not doing** (vs. the original C99-strip plan): rewriting VM dispatch
 to `switch`, refactoring `({ ... })` macros, naming anonymous unions, or

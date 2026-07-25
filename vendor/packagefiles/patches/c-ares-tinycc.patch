@@ -1,0 +1,11 @@
+--- a/include/ares_build.h
++++ b/include/ares_build.h
+@@ -177,7 +177,7 @@
+ #    define CARES_HAVE_WINSOCK2_H       1
+ #  endif
+ 
+-#elif defined(__GNUC__)
++#elif defined(__GNUC__) || defined(__TINYC__)
+ #  define CARES_TYPEOF_ARES_SOCKLEN_T socklen_t
+ #  define CARES_HAVE_SYS_TYPES_H      1
+ #  define CARES_HAVE_SYS_SOCKET_H     1

@@ -56,6 +56,16 @@ echo "using build dir: $build_dir"
 echo "using mc: $mc_bin"
 echo
 
+# yyjson's yyjson_has_include(x) wraps __has_include(x); tcc recognizes
+# __has_include directly after #if/#elif but mishandles it once expanded
+# through another macro, so pre-define it to bypass that path. (Defining
+# __GNUC__ globally is NOT safe here: glibc's features.h gates its own
+# compiler-support branches on the real __GNUC__ and breaks under a faked
+# value, so __GNUC__-gated vendor code like c-ares needs a per-file fix.)
+mc_extra_defines=(
+  '-Dyyjson_has_include(x)=0'
+)
+
 results_file="$(mktemp)"
 trap 'rm -f "$results_file"' EXIT
 
@@ -120,7 +130,7 @@ while IFS= read -r line; do
   directory=$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['directory'])" "$line")
   mapfile -t flags < <(python3 -c "import json,sys; [print(x) for x in json.loads(sys.argv[1])['flags']]" "$line")
 
-  if (cd "$directory" && "$mc_bin" build "${flags[@]}" -o /dev/null "$repo_root/$file" >/tmp/mc-check-out.$$ 2>&1); then
+  if (cd "$directory" && "$mc_bin" build "${mc_extra_defines[@]}" "${flags[@]}" -o /dev/null "$repo_root/$file" >/tmp/mc-check-out.$$ 2>&1); then
     echo "PASS  $file"
     pass_count=$((pass_count + 1))
   else

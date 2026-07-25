@@ -1,0 +1,55 @@
+name: mc Compile Check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mc-check:
+    name: Compile engine TUs with ../mc (TinyCC)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ant
+        uses: actions/checkout@v4
+        with:
+          path: ant
+
+      - name: Checkout mc
+        uses: actions/checkout@v4
+        with:
+          repository: nightconcept/mc
+          path: mc
+
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y meson ninja-build
+
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: "0.16.0"
+
+      - name: Build mc
+        working-directory: mc
+        run: python3 scripts/build.py
+
+      - name: Setup ant build (Meson configure only)
+        working-directory: ant
+        run: |
+          meson setup build -Dc_std=gnu2x -Dcpp_std=gnu++23
+
+      - name: Generate headers needed by mc-check
+        working-directory: ant
+        run: |
+          ninja -C build messages.h theme.h \
+            meson/builtins/builtin_bundle_data.h meson/snapshot/snapshot_data.h
+
+      - name: Run mc-check
+        working-directory: ant
+        run: ./scripts/mc-check.sh build

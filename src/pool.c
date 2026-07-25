@@ -5,6 +5,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(__TINYC__) && !defined(__max_align_t_defined) && !defined(_GCC_MAX_ALIGN_T)
+/* tcc's bundled <stddef.h> predates C11 and omits max_align_t. */
+typedef union {
+  long long ll;
+  long double ld;
+  void *p;
+} max_align_t;
+#endif
+
 static const size_t g_size_classes[ANT_POOL_SIZE_CLASS_COUNT] = {
   16u,   24u,   32u,   40u,   48u,   56u,   64u,   80u,
   96u,   112u,  128u,  160u,  192u,  224u,  256u,  320u,

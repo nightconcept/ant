@@ -2,6 +2,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdatomic.h>
+
+#if defined(__TINYC__) && !defined(ATOMIC_CHAR_LOCK_FREE)
+/* tcc's <stdatomic.h> omits the LOCK_FREE feature macros; all of the sizes
+ * used below are always-lock-free on the x86_64/aarch64 targets we support. */
+#  define ATOMIC_CHAR_LOCK_FREE 2
+#  define ATOMIC_SHORT_LOCK_FREE 2
+#  define ATOMIC_INT_LOCK_FREE 2
+#  define ATOMIC_LLONG_LOCK_FREE 2
+#endif
+
 #include <pthread.h>
 #include <time.h>
 #include <errno.h>
