@@ -1,0 +1,101 @@
+[tools]
+node = "22"
+python = "3.12"
+zig = "0.16.0"
+meson = "latest"
+ninja = "latest"
+cmake = "latest"
+just = "latest"
+
+
+[env]
+CC = "clang"
+CXX = "clang++"
+CCACHE_COMPRESS = "1"
+CCACHE_MAXSIZE = "2G"
+SDKROOT = "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+
+
+
+[tasks.setup]
+description = "Download subprojects and configure build directory"
+run = [
+  "meson subprojects download",
+  "meson setup build --wipe"
+]
+
+[tasks.build]
+description = "Compile the project with Meson"
+run = "meson compile -C build"
+
+[tasks.reconfigure]
+description = "Reconfigure Meson build"
+run = "meson setup --reconfigure build"
+
+[tasks.strip]
+description = "Strip debug symbols from the binary"
+run = "strip build/ant"
+
+[tasks.run]
+description = "Build and run a JS file"
+run = [
+  "mise run build -q",
+  "./build/ant {{arg(0)}}"
+]
+
+[tasks.preflight]
+description = "Run preflight checks"
+run = "./build/ant .github/agents/check_all.js"
+
+[tasks.knowledge]
+description = "Check repo knowledge docs"
+run = "./build/ant .github/agents/check_repo_knowledge.js"
+
+[tasks.structure]
+description = "Check repo structure"
+run = "./build/ant .github/agents/check_repo_structure.js"
+
+[tasks.validate_changes]
+description = "Route validation"
+run = "./build/ant .github/agents/route_validation.js"
+
+[tasks.no_jit]
+description = "Setup build without JIT"
+run = [
+  "meson subprojects download",
+  "meson setup build --wipe -Djit=false"
+]
+
+[tasks.asan]
+description = "Setup build with AddressSanitizer"
+run = [
+  "meson subprojects download",
+  "meson setup build --wipe -Db_sanitize=address -Doptimization=0 -Db_lto=false -Dstrip=false -Db_lundef=false"
+]
+
+[tasks.debug]
+description = "Setup debug build"
+run = [
+  "meson subprojects download",
+  "meson setup build --wipe --buildtype=debug -Doptimization=0 -Db_lto=false -Dstrip=false -Db_lundef=false -Dunity=off"
+]
+
+[tasks.shell]
+description = "Open developer shell"
+run = "zsh"
+
+[tasks.install]
+description = "Install binary locally"
+run = '''
+#!/usr/bin/env bash
+mise run build -q
+if which ant >/dev/null 2>&1; then
+  dir=$(dirname "$(which ant)")
+  cp ./build/ant "$dir/ant"
+  ln -sf "$dir/ant" "$dir/antx"
+else
+  mkdir -p ~/.ant/bin
+  cp ./build/ant ~/.ant/bin/
+  ln -sf ~/.ant/bin/ant ~/.ant/bin/antx
+fi
+'''

@@ -31,7 +31,14 @@ if host_machine.system() == 'darwin'
   deployment_flag = '-mmacosx-version-min=15.0'
   add_project_arguments(deployment_flag, language: ['c', 'cpp'])
   add_project_link_arguments(deployment_flag, language: ['c', 'cpp'])
+  sysroot_dir = run_command(python, '-c', 'import subprocess; print(subprocess.check_output(["xcrun", "--show-sdk-path"]).decode().strip())', check: false).stdout().strip()
+  if sysroot_dir != ''
+    sysroot_flag = '-isysroot' + sysroot_dir
+    add_project_arguments(sysroot_flag, language: ['c', 'cpp'])
+    add_project_link_arguments(sysroot_flag, language: ['c', 'cpp'])
+  endif
 endif
+
 
 if host_machine.system() == 'linux'
   add_project_arguments('-fno-pie', language: ['c', 'cpp'])

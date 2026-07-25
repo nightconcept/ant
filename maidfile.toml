@@ -49,7 +49,7 @@ script = [
 
 [tasks.shell]
 exec = true
-script = "nix develop --command zsh"
+script = "mise run shell"
 
 [tasks.install]
 script = ["maid build -q", '''
