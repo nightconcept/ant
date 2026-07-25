@@ -4,7 +4,7 @@ Status: active
 Last reviewed: 2026-07-25
 Owner: User & Antigravity
 
-This execution plan outlines the step-by-step roadmap to fork and simplify **Ant**, transition the developer toolchain from Nix to **Mise**, lower the compilation standard from **GNU23 / C++ down to pure C99** for dogfooding with `../mc`, align the custom `../mir` engine, and streamline the build system.
+This execution plan outlines the step-by-step roadmap to fork and simplify **Ant**, transition the developer toolchain from Nix to **Mise**, make the engine compile under the custom `../mc` compiler (TinyCC) for dogfooding — removing the C++ dependency and fixing constructs TinyCC rejects, while keeping the GNU/C11 extensions it accepts — align the custom `../mir` engine, and streamline the build system.
 
 ---
 
@@ -25,7 +25,7 @@ Keeping `src/pkg/` significantly simplifies the initial fork transition:
 └──────────────────────────┬─────────────────────────────┘
                            │
 ┌──────────────────────────▼─────────────────────────────┐
-│ Phase 2: C Standard & Language Pruning (GNU23/C++ -> C99)│
+│ Phase 2: Compile Engine Under ../mc (Empirical TinyCC)  │
 └──────────────────────────┬─────────────────────────────┘
                            │
 ┌──────────────────────────▼─────────────────────────────┐
@@ -59,20 +59,94 @@ Keeping `src/pkg/` significantly simplifies the initial fork transition:
 
 ---
 
-### Phase 2: C Standard & Language Simplification (GNU23 / C++ -> C99)
+### Phase 2: Compile the Engine Under `../mc` (Empirical TinyCC Targeting)
 
-1. **Convert C++ Files to C99**:
-   * Refactor [`src/numbers.cc`](file:///Users/danny/git/ant/src/numbers.cc) into pure C99 (`src/numbers.c`) using standard C number formatting utilities (`snprintf`, `strtod`), eliminating the C++ compiler requirement for `../mc`.
-2. **Resolve C11 Blockers**:
-   * **Anonymous Unions/Structs**: Name inner anonymous structs/unions in [`include/silver/engine.h`](file:///Users/danny/git/ant/include/silver/engine.h) and update all member access sites across `src/silver/`.
-   * **`_Static_assert`**: Replace `_Static_assert` in [`src/ant.c`](file:///Users/danny/git/ant/src/ant.c) and `engine.h` with a C99-compliant array macro:
-     ```c
-     #define STATIC_ASSERT(cond) typedef char static_assertion_##__LINE__[(cond) ? 1 : -1]
-     ```
-3. **Clean Up GNU Extensions**:
-   * **Statement Expressions**: Refactor `({ ... })` macros in [`src/main.c`](file:///Users/danny/git/ant/src/main.c), [`src/silver/ast.c`](file:///Users/danny/git/ant/src/silver/ast.c), and [`src/silver/engine.c`](file:///Users/danny/git/ant/src/silver/engine.c) (`VM_CHECK`, `NEXT`) into standard `do { ... } while(0)` blocks or static inline functions.
-   * **Attributes**: Guard `__attribute__((...))` usages behind `#ifdef __GNUC__`. Use `#pragma pack(1)` for packed structs in sandbox backends.
-   * **Flexible Array Members**: Convert zero-length arrays `[0]` in [`src/ant.c`](file:///Users/danny/git/ant/src/ant.c) to standard C99 `[]`.
+**Goal:** The Ant engine compiles under `../mc` (TinyCC 0.9.28rc) and passes the
+spec suite. Keep every extension TinyCC accepts; fix **only** the constructs it
+actually rejects or mishandles.
+
+**Framing note (2026-07-25):** The dogfooding target `../mc` is TinyCC, not a
+strict ISO C99 compiler. Empirical smoke tests against `../mc/build/mc` show it
+**accepts** the constructs the original plan wanted to strip — computed goto
+(`goto *`), statement expressions `({ ... })`, `typeof`, anonymous
+unions/structs, `_Static_assert`, `_Alignof`, C11 `_Atomic`/`<stdatomic.h>`,
+`__builtin_expect`, `__builtin_clz`. Removing these would be pointless make-work
+and would regress interpreter performance (the bytecode VM dispatch in
+[`src/silver/engine.c`](file:///Users/danny/git/ant/src/silver/engine.c) relies
+on computed goto). We therefore target TinyCC empirically instead of stripping to
+pure C99.
+
+Tests show TinyCC **rejects or mishandles** only: C++ (`numbers.cc`),
+`__attribute__((packed))` (silently ignored — layout wrong), `__builtin_ia32_pause`
+(unresolved reference), and `_Thread_local` with a non-zero initializer (reads
+back 0).
+
+#### Item 0 — `../mc` compile harness (prerequisite)
+* Script (`scripts/mc-check.sh`) runs `../mc/build/mc build -c` on each engine
+  translation unit with meson's include dirs (`-Iinclude -Ibuild -Ivendor/...`).
+* Reuse the generated headers meson already emits into `build/`
+  (`messages.h`, `theme.h`, `builtin_bundle.h`, `snapshot.h`); do **not** wait on
+  the Phase 4 gen-driver.
+* Produces the per-file pass/fail matrix that drives Item 6.
+
+#### Item 1 — `src/numbers.cc` -> `src/numbers.c` (long pole; start first, runs in parallel)
+* Only `.cc` in the tree; TinyCC has **no C++**. It wraps the C++
+  **double-conversion** library for ECMAScript-correct number formatting/parsing.
+* `snprintf`/`strtod` alone will **not** reproduce shortest-round-trip
+  `Number.prototype.toString`. Port a C implementation of **Ryu** (or Grisu3) for
+  shortest double->string, plus hand-rolled `toFixed`/`toPrecision`/`toExponential`
+  and a JS-rules parser (hex / `Infinity` / `NaN`).
+* Then: remove [`vendor/double-conversion.wrap`](file:///Users/danny/git/ant/vendor/double-conversion.wrap);
+  change `project('ant', ['c', 'cpp'], ...)` -> `['c']` and drop `cpp_std` in
+  [`meson.build`](file:///Users/danny/git/ant/meson.build).
+* **Guardrail:** `examples/spec/run.js --all` + `tools/wpt` number tests + number
+  tests under `tests/`. This item lives or dies on conformance.
+
+#### Item 2 — Packed structs: `__attribute__((packed))` -> `#pragma pack`
+* TinyCC **silently ignores** `__attribute__((packed))` (test: `sizeof` 8 not 5)
+  but **honors** `#pragma pack(push,1)` / `#pragma pack(pop)` (test: 5).
+* 8 wire/ABI-critical structs: `src/sandbox/backends/linux/kvm_internal.h` (2),
+  `src/sandbox/backends/shared/include/sandbox_backend/net_internal.h` (5),
+  `src/sandbox/backends/shared/include/sandbox_backend/virtio_vsock.h` (1).
+* Wrap each in `#pragma pack` and add `_Static_assert(sizeof(T) == N, ...)` to
+  lock layout (TinyCC supports `_Static_assert`).
+
+#### Item 3 — `__builtin_ia32_pause()` -> inline asm
+* [`src/modules/atomics.c`](file:///Users/danny/git/ant/src/modules/atomics.c) line ~1039.
+  Replace with `__asm__ __volatile__("pause")` (verified OK), preserving the
+  existing aarch64 `"yield"` guard nearby.
+
+#### Item 4 — `_Thread_local` audit (verification only)
+* TinyCC mishandles **non-zero** TLS initializers. All current usages
+  (`src/utils.c:24-25`, `src/utf8.c:28`) are zero/`{0}`-initialized and are safe.
+  Add a CI grep guard forbidding non-zero `_Thread_local` initializers; no code
+  change.
+
+#### Item 5 — `__attribute__` inventory (audit)
+* 18 files use `__attribute__`. After Item 2, cosmetic kinds (`noreturn`,
+  `format`, `unused`, `always_inline`) are ignored harmlessly by TinyCC. Verify
+  no load-bearing `aligned` / `cleanup` usages remain (none found so far). ARM
+  inline asm (`mrs`) in `kvm_aarch64.c` / `gic.c` is aarch64-only — out of scope
+  for the x86_64 `../mc` target; note and defer.
+
+#### Item 6 — Full-tree compile-and-triage under `../mc`
+* Run Item 0's harness across all engine TUs; fix remaining TinyCC gaps (libc
+  header differences, other unsupported `__builtin_*`, etc.), then link and run
+  the spec suite.
+* Add a parallel CI job compiling the tree with `mc -c` (keep the meson/gnu23
+  build primary through Phase 2). Full link + dogfood is Phase 4.
+
+**Definition of done:** no C++ in the tree (`project()` languages = `['c']`,
+double-conversion wrap gone); all packed structs use `#pragma pack` with
+`_Static_assert` size locks; rejected builtins replaced; whole engine compiles
+cleanly under `../mc -c` (enforced by CI); spec suite (`--all`) + number/WPT
+tests pass.
+
+**Explicitly not doing** (vs. the original C99-strip plan): rewriting VM dispatch
+to `switch`, refactoring `({ ... })` macros, naming anonymous unions, or
+macro-replacing `_Static_assert` / `_Alignof` — all accepted by TinyCC, so
+touching them is pure risk with no benefit. `meson.build` `c_std=gnu23` may stay
+(no C23-specific syntax exists in the tree; lowering it is optional churn).
 
 ---
 

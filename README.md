@@ -103,8 +103,3 @@ For information on reporting security vulnerabilities in Ant, see [SECURITY.md](
 - [Discord](http://discord.gg/CH7YSjWGzY)
 - [Blog: Working was the beginning](https://themackabu.dev/blog/ant-part-two)
 - [DeepWiki: Ant internals](https://deepwiki.com/theMackabu/ant)
-
-## Contributing to Ant
-
-We welcome contributions through pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for more details. <br>
-For information about the governance of Ant, see [GOVERNANCE.md](GOVERNANCE.md).

@@ -5,6 +5,21 @@ setup:
     meson subprojects download
     meson setup build --wipe
 
+# Configure build directory without JIT
+no_jit:
+    meson subprojects download
+    meson setup build --wipe -Djit=false
+
+# Configure build directory with AddressSanitizer
+asan:
+    meson subprojects download
+    meson setup build --wipe -Db_sanitize=address -Doptimization=0 -Db_lto=false -Dstrip=false -Db_lundef=false
+
+# Configure build directory for debug
+debug:
+    meson subprojects download
+    meson setup build --wipe --buildtype=debug -Doptimization=0 -Db_lto=false -Dstrip=false -Db_lundef=false -Dunity=off
+
 # Compile Ant executable
 build:
     meson compile -C build
@@ -18,10 +33,35 @@ strip:
     meson compile -C build
     strip build/ant
 
-# Build and run a JS file
-run file:
+# Download GitHub artifacts
+download:
+    .github/download.sh
+    open .github/artifacts
+
+# Build and run a JS file or binary with arguments
+run +args="":
     meson compile -C build
-    ./build/ant {{file}}
+    ./build/ant {{args}}
+
+# Run full preflight agent checks
+preflight:
+    ant .github/agents/check_all.js
+
+# Check repository knowledge docs
+knowledge:
+    ant .github/agents/check_repo_knowledge.js
+
+# Check repository structure invariants
+structure:
+    ant .github/agents/check_repo_structure.js
+
+# Route and report recommended validation for git changes
+validate_changes:
+    ant .github/agents/route_validation.js
+
+# Run shell environment
+shell:
+    mise run shell
 
 # Run spec tests
 test:

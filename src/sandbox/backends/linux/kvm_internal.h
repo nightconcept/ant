@@ -15,6 +15,7 @@ enum {
   ANT_KVM_PIO_OUT = 1,
 };
 
+#pragma pack(push, 1)
 typedef struct {
   uint32_t magic;
   uint32_t version;
@@ -26,14 +27,18 @@ typedef struct {
   uint64_t memmap_paddr;
   uint32_t memmap_entries;
   uint32_t reserved;
-} __attribute__((packed)) ant_kvm_hvm_start_info_t;
+} ant_kvm_hvm_start_info_t;
 
 typedef struct {
   uint64_t addr;
   uint64_t size;
   uint32_t type;
   uint32_t reserved;
-} __attribute__((packed)) ant_kvm_hvm_memmap_entry_t;
+} ant_kvm_hvm_memmap_entry_t;
+#pragma pack(pop)
+
+_Static_assert(sizeof(ant_kvm_hvm_start_info_t) == 56, "ant_kvm_hvm_start_info_t layout mismatch");
+_Static_assert(sizeof(ant_kvm_hvm_memmap_entry_t) == 24, "ant_kvm_hvm_memmap_entry_t layout mismatch");
 
 typedef struct {
   ant_hvf_vm_t vm;

@@ -1036,7 +1036,7 @@ static ant_value_t js_atomics_waitAsync(ant_t *js, ant_value_t *args, int nargs)
 // Atomics.pause()
 static ant_value_t js_atomics_pause(ant_t *js, ant_value_t *args, int nargs) {
 #if defined(__x86_64__) || defined(__i386__)
-  __builtin_ia32_pause();
+  __asm__ __volatile__("pause");
 #elif defined(__aarch64__) || defined(__arm__)
   __asm__ __volatile__("yield");
 #endif

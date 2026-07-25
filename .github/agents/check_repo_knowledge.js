@@ -21,7 +21,7 @@ const docs = new Map([
   [
     'docs/repo/index.md',
     {
-      requiredLinks: new Set(['AGENTS.md', 'ARCHITECTURE.md', 'BUILDING.md', 'CONTRIBUTING.md', 'docs/repo/testing.md', 'docs/exec-plans/index.md'])
+      requiredLinks: new Set(['AGENTS.md', 'ARCHITECTURE.md', 'BUILDING.md', 'docs/repo/testing.md', 'docs/exec-plans/index.md'])
     }
   ],
   [

@@ -28,6 +28,7 @@
 #define ANT_HVF_VSOCK_BUF_ALLOC 65536u
 #define ANT_HVF_VSOCK_MAX_PAYLOAD 2048u
 
+#pragma pack(push, 1)
 typedef struct {
   uint64_t src_cid;
   uint64_t dst_cid;
@@ -39,7 +40,10 @@ typedef struct {
   uint32_t flags;
   uint32_t buf_alloc;
   uint32_t fwd_cnt;
-} __attribute__((packed)) ant_virtio_vsock_hdr_t;
+} ant_virtio_vsock_hdr_t;
+#pragma pack(pop)
+
+_Static_assert(sizeof(ant_virtio_vsock_hdr_t) == 44, "ant_virtio_vsock_hdr_t layout mismatch");
 
 typedef struct ant_vsock_outgoing_frame {
   unsigned char *data;

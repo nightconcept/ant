@@ -97,17 +97,17 @@ function main() {
     console.log('No changed files detected.');
     console.log('');
     console.log('Recommended validation:');
-    console.log('- maid knowledge');
+    console.log('- just knowledge');
     return;
   }
 
   if (isDocsOnly(changedFiles)) {
-    addRecommendation(recommendations, 'maid knowledge', 'docs-only change set');
+    addRecommendation(recommendations, 'just knowledge', 'docs-only change set');
   }
 
   for (const filePath of changedFiles) {
     if (filePath === 'AGENTS.md' || filePath === 'ARCHITECTURE.md' || filePath.startsWith('docs/repo/') || filePath.startsWith('docs/exec-plans/')) {
-      addRecommendation(recommendations, 'maid knowledge', 'repo knowledge docs changed');
+      addRecommendation(recommendations, 'just knowledge', 'repo knowledge docs changed');
     }
 
     if (
@@ -148,7 +148,7 @@ function main() {
     if (
       filePath === 'meson.build' ||
       filePath.startsWith('meson/') ||
-      filePath === 'maidfile.toml' ||
+      filePath === 'justfile' ||
       filePath.startsWith('.github/workflows/') ||
       filePath.startsWith('.github/actions/') ||
       filePath.startsWith('packages/libant/')
@@ -158,7 +158,7 @@ function main() {
     }
 
     if (filePath.startsWith('.github/agents/')) {
-      addRecommendation(recommendations, 'maid knowledge', 'tooling change touched the repo harness');
+      addRecommendation(recommendations, 'just knowledge', 'tooling change touched the repo harness');
     }
 
     if (filePath.startsWith('tests/')) {

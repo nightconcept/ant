@@ -40,13 +40,14 @@
 #define ANT_NAT_WAKE_DRAIN_BYTES 64u
 #define ANT_NAT_WAKE_PIPE_FDS 2u
 
-typedef struct __attribute__((packed)) {
+#pragma pack(push, 1)
+typedef struct {
   uint8_t dst[ANT_NET_MAC_BYTES];
   uint8_t src[ANT_NET_MAC_BYTES];
   uint16_t ethertype;
 } ant_eth_t;
 
-typedef struct __attribute__((packed)) {
+typedef struct {
   uint16_t htype;
   uint16_t ptype;
   uint8_t hlen;
@@ -58,7 +59,7 @@ typedef struct __attribute__((packed)) {
   uint32_t tpa;
 } ant_arp_t;
 
-typedef struct __attribute__((packed)) {
+typedef struct {
   uint8_t vhl;
   uint8_t tos;
   uint16_t len;
@@ -71,14 +72,14 @@ typedef struct __attribute__((packed)) {
   uint32_t dst;
 } ant_ipv4_t;
 
-typedef struct __attribute__((packed)) {
+typedef struct {
   uint16_t src;
   uint16_t dst;
   uint16_t len;
   uint16_t sum;
 } ant_udp_t;
 
-typedef struct __attribute__((packed)) {
+typedef struct {
   uint16_t src;
   uint16_t dst;
   uint32_t seq;
@@ -89,6 +90,13 @@ typedef struct __attribute__((packed)) {
   uint16_t sum;
   uint16_t urg;
 } ant_tcp_t;
+#pragma pack(pop)
+
+_Static_assert(sizeof(ant_eth_t) == 14, "ant_eth_t layout mismatch");
+_Static_assert(sizeof(ant_arp_t) == 28, "ant_arp_t layout mismatch");
+_Static_assert(sizeof(ant_ipv4_t) == 20, "ant_ipv4_t layout mismatch");
+_Static_assert(sizeof(ant_udp_t) == 8, "ant_udp_t layout mismatch");
+_Static_assert(sizeof(ant_tcp_t) == 20, "ant_tcp_t layout mismatch");
 
 typedef struct ant_hvf_nat ant_hvf_nat_t;
 typedef struct ant_hvf_nat_tcp ant_hvf_nat_tcp_t;
