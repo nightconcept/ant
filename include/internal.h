@@ -593,6 +593,7 @@ ant_value_t js_delete_sym_prop(ant_t *js, ant_value_t obj, ant_value_t sym);
 
 ant_value_t js_cfunc_promote(ant_t *js, ant_value_t cfunc);
 ant_value_t js_cfunc_expose_named(ant_t *js, ant_value_t cfunc, const char *name, size_t name_len);
+ant_value_t js_cfunc_expose_anonymous_for_key(ant_t *js, ant_value_t value, const char *key, size_t key_len);
 ant_value_t js_set_function_name(ant_t *js, ant_value_t fn, const char *name, size_t name_len);
 
 ant_value_t js_set_function_name_prefixed(
