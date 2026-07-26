@@ -113,9 +113,17 @@ Note: `mc`'s default/primary branch is `dev` (it has no `main` branch — only
   metadata and zip is smaller over the wire. `ant`'s download step was
   updated to match (downloads the `.zip`, `unzip`s it, `chmod +x`s the
   result).
+- Follow-up: the binary inside each zip is renamed to a plain `mc` (`mc.exe`
+  on Windows, zipped as `mc` before compressing) so consumers don't need to
+  rename after unzipping — the per-platform name lives only on the zip
+  filename (`mc-linux-x64.zip`, etc.), which is what distinguishes assets.
+- Follow-up: renamed the tag/release from `latest` to `edge` — `latest`
+  reads as "latest stable," which this isn't (it's an unreviewed build off
+  `dev` on every push). The old `latest` pre-release was deleted from
+  `nightconcept/mc`.
 - Validation still pending: needs the next push to `dev` to confirm the
-  `release` job actually creates/updates the `latest` pre-release with all
-  three zipped platform assets.
+  `release` job actually creates/updates the `edge` pre-release with all
+  three zipped platform assets (each containing a plain `mc`/`mc.exe`).
 
 ### Task 2 — `ant`: consume the `latest` mc release in `mc-check.yml` — DONE
 - Replaced the unconditional "Checkout mc" + "Build mc" steps with a

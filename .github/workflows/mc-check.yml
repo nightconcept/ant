@@ -33,9 +33,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p mc/build
-          gh release download latest -R nightconcept/mc -p 'mc-linux-x64.zip' -O mc-linux-x64.zip
+          gh release download edge -R nightconcept/mc -p 'mc-linux-x64.zip' -O mc-linux-x64.zip
           unzip -o mc-linux-x64.zip -d mc/build
-          mv mc/build/mc-linux-x64 mc/build/mc
           chmod +x mc/build/mc
           test -s mc/build/mc
 
