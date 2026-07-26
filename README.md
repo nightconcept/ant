@@ -26,13 +26,13 @@ $ ls -lh ant
 
 ## Why Ant?
 
-|                     | Ant        | Node    | Bun    | Deno   |
-| ------------------- | ---------- | ------- | ------ | ------ |
-| Binary size         | **~9 MB**  | ~120 MB | ~60 MB | ~90 MB |
-| Cold start          | **~5 ms**  | ~31 ms  | ~13 ms | ~25 ms |
-| Engine              | Ant Silver | V8      | JSC    | V8     |
-| JIT                 | ✓          | ✓       | ✓      | ✓      |
-| WinterTC conformant | ✓          | partial | ✓      | ✓      |
+|                     | Ant (Fork) | Ant (Upstream) | Node    | Bun    | Deno   |
+| ------------------- | ---------- | -------------- | ------- | ------ | ------ |
+| Binary size         | **~12 MB** | ~11 MB         | ~115 MB | ~94 MB | ~122 MB |
+| Cold start          | **~8.7 ms**| **~8.6 ms**    | ~38 ms  | ~20 ms | ~30 ms |
+| Engine              | Ant Silver | Ant Silver     | V8      | JSC    | V8     |
+| JIT                 | ✓          | ✓              | ✓       | ✓      | ✓      |
+| WinterTC conformant | ✓          | ✓              | partial | ✓      | ✓      |
 
 Ant is designed for environments where size and startup time matter: serverless functions, edge computing, embedded systems, CLI tools, and anywhere you'd want JavaScript but can't afford a 50MB+ runtime.
 
@@ -59,34 +59,32 @@ Ant targets the [WinterTC Minimum Common API](https://min-common-api.proposal.wi
 
 Measures the time to import [Hono](https://hono.dev), register routes, and exit. Each runtime loads the same `bench-coldstart.js` script from `examples/npm/hono/` that creates a Hono app with two routes, prints "ready", and calls `process.exit(0)`. No HTTP server is actually started, this isolates module resolution and initialization overhead.
 
-Measured with hyperfine (10 warmup runs, 100 timed runs):
+Measured with `just bench` (hyperfine 10 warmup runs, 100 timed runs):
 
 ```bash
-hyperfine --warmup 10 --runs 100 \
-  'ant  examples/npm/hono/bench-coldstart.js' \
-  'node examples/npm/hono/bench-coldstart.js' \
-  'bun  examples/npm/hono/bench-coldstart.js' \
-  'deno run --allow-read --allow-env examples/npm/hono/bench-coldstart.js'
+just bench
 ```
 
-| Runtime | Mean       | Min     | Max     | Relative     |
-| ------- | ---------- | ------- | ------- | ------------ |
-| **Ant** | **5.5 ms** | 4.9 ms  | 6.1 ms  | **1.00**     |
-| Bun     | 10.6 ms    | 9.5 ms  | 13.8 ms | 1.93× slower |
-| Deno    | 24.8 ms    | 22.2 ms | 29.4 ms | 4.51× slower |
-| Node    | 28.7 ms    | 27.1 ms | 31.2 ms | 5.22× slower |
+| Runtime | Mean | Min | Max | Relative |
+| ------- | ---- | --- | --- | -------- |
+| **Ant (Upstream)** | **8.6 ms** | 6.5 ms | 11.4 ms | **1.00** |
+| **Ant (Fork)** | **8.7 ms** | 6.2 ms | 11.2 ms | 1.01× slower |
+| Bun | 20.1 ms | 15.6 ms | 27.2 ms | 2.33× slower |
+| Deno | 29.7 ms | 25.0 ms | 36.6 ms | 3.44× slower |
+| Node | 37.7 ms | 31.8 ms | 43.1 ms | 4.36× slower |
 
 <details>
 <summary>Environment</summary>
 
-| Detail   | Value                             |
-| -------- | --------------------------------- |
-| Hardware | Apple M5 Pro, 64 GB RAM, 18 cores |
-| OS       | macOS 26.5.1 (arm64)              |
-| Ant      | 12.1.15dd25d.1                    |
-| Node     | 26.2.0                            |
-| Bun      | 1.3.14                            |
-| Deno     | 2.8.3                             |
+| Detail | Value |
+| ------ | ----- |
+| Hardware | AMD Ryzen 9 5900X, 64 GB RAM, 12 cores / 24 threads |
+| OS | Ubuntu 24.04.4 LTS (x86_64, Linux 7.0.3) |
+| Ant (Fork) | 12.2.1d8040ee (Local build) |
+| Ant (Upstream) | 12.2.1d8040ee.1 |
+| Node | 22.14.0 |
+| Bun | 1.2.2 |
+| Deno | 2.2.3 |
 
 </details>
 

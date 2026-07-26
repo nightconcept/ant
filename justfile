@@ -68,6 +68,11 @@ test:
     meson compile -C build
     ./build/ant examples/spec/run.js
 
+# Run benchmark suite
+bench +args="":
+    meson compile -C build
+    python3 bench/bench.py {{args}}
+
 # Clean build directory
 clean:
     rm -rf build

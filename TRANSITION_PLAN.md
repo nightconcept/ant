@@ -29,7 +29,7 @@ Keeping `src/pkg/` significantly simplifies the initial fork transition:
 └──────────────────────────┬─────────────────────────────┘
                            │
 ┌──────────────────────────▼─────────────────────────────┐
-│ Phase 3: MIR Engine Alignment (themackabu/mir -> ../mir)│
+│ Phase 3: MIR Engine Alignment (nightconcept/mir)       │
 └──────────────────────────┬─────────────────────────────┘
                            │
 ┌──────────────────────────▼─────────────────────────────┐
@@ -234,14 +234,17 @@ touching them is pure risk with no benefit. `meson.build` `c_std=gnu23` may stay
 
 ---
 
-### Phase 3: MIR Engine Alignment (`../mir`)
+### Phase 3: MIR Engine Alignment (`nightconcept/mir`)
 
-1. **Audit Fork API Diffs**:
-   * Compare `themackabu/mir` headers with `../mir` API definitions.
-   * Pull any custom MIR instruction variants, optimization flags, or helper functions into `../mir`.
-2. **Update Swarm JIT Includes**:
-   * Direct [`src/silver/swarm.c`](file:///Users/danny/git/ant/src/silver/swarm.c) to include headers from `../mir`.
-   * Link the final executable directly against `../mir` build outputs.
+**Goal:** Swap out `themackabu/mir` for the updated [`nightconcept/mir`](https://github.com/nightconcept/mir) repository, updating build definitions for its restructured `src/` directory layout and ensuring required runtime APIs (`MIR_remove_module`) are exported.
+
+1. **Repository Swap & Meson Overlay**:
+   * Update [`vendor/mir.wrap`](file:///home/danny/git/ant/vendor/mir.wrap) to point to `https://github.com/nightconcept/mir.git` with `patch_directory = mir`.
+   * Create [`vendor/packagefiles/mir/meson.build`](file:///home/danny/git/ant/vendor/packagefiles/mir/meson.build) mapping sources to `src/mir.c` / `src/mir-gen.c` and include directory to `src/`.
+2. **API Parity in `nightconcept/mir`**:
+   * Export `MIR_remove_module` in `src/mir.h` and `src/mir.c` of `nightconcept/mir` so [`src/silver/swarm.c`](file:///home/danny/git/ant/src/silver/swarm.c) can release compiled modules.
+3. **Verification**:
+   * Reconfigure Meson (`meson setup build --reconfigure` or `ninja -C build`), compile `ant`, run engine tests and spec suite.
 
 ---
 

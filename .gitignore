@@ -12,6 +12,8 @@
 *.dll
 
 /build
+/bench/bin
+/bench/results.json
 /traces
 /result
 /result-*
