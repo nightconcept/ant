@@ -2,7 +2,11 @@
 .nova
 .maid
 .cache
+.deps
 .superset
+__pycache__/
+*.pyc
+
 
 .claude
 .github/artifacts

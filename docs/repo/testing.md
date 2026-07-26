@@ -8,13 +8,15 @@ This guide keeps validation proportional to the change while still protecting ru
 
 ## Common Commands
 
-- Build the configured tree: `maid build`
-- Fresh setup and build: `maid setup && maid build`
+- Build the configured tree: `just build`
+- Fresh setup and build: `just setup && just build`
 - Run one runtime test: `./build/ant tests/test_<name>.cjs`
 - Run the spec suite: `./build/ant examples/spec/run.js --all`
-- Validate repo knowledge docs: `maid knowledge`
-- Validate changed-file boundaries: `maid structure`
-- Ask the harness what to run for the current diff: `maid validate_changes`
+- Run compliance test suite: `just compliance --tier all --smoke`
+- Validate repo knowledge docs: `just knowledge`
+- Validate changed-file boundaries: `just structure`
+- Ask the harness what to run for the current diff: `just validate_changes`
+
 
 ## Validation By Change Type
 

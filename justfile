@@ -73,6 +73,12 @@ bench +args="":
     meson compile -C build
     python3 bench/bench.py {{args}}
 
+# Run compliance test suite
+compliance +args="":
+    meson compile -C build
+    python3 scripts/run_compliance.py {{args}}
+
+
 # Clean build directory
 clean:
     rm -rf build
