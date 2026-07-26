@@ -138,7 +138,6 @@ minicoro_dep = subproject('minicoro').get_variable('minicoro_dep')
 crprintf_dep = subproject('crprintf').get_variable('crprintf_dep')
 ada_dep = subproject('ada').get_variable('ada_dep')
 wamr_dep = subproject('wasm-micro-runtime').get_variable('wamr_dep')
-double_conversion_dep = subproject('double-conversion').get_variable('double_conversion_dep')
 
 wirecall = dependency('wirecall', default_options: [
   'b_lto=' + get_option('b_lto').to_string(),
@@ -270,7 +269,7 @@ ant_format_deps = [
 
 ant_runtime_deps = [
   ssl_dep, crypto_dep, uthash_dep, lmdb_dep, wamr_dep,
-  double_conversion_dep, wirecall, skim_dep,
+  wirecall, skim_dep,
 ]
 
 ant_deps = allocator_deps + ant_core_deps + ant_format_deps + ant_runtime_deps + win_deps

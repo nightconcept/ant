@@ -1,8 +1,7 @@
-project('ant', ['c', 'cpp'], default_options: [
+project('ant', ['c'], default_options: [
   'buildtype=release',
   'optimization=3',
   'c_std=gnu23',
-  'cpp_std=gnu++23',
   'default_library=static',
   'b_lto=true',
   'b_lto_threads=8',

@@ -81,10 +81,28 @@ Tests show TinyCC **rejects or mishandles** only: C++ (`numbers.cc`),
 (unresolved reference), and `_Thread_local` with a non-zero initializer (reads
 back 0).
 
-**Progress note (2026-07-25):** Items 0, 2, 3, 4, 5, and 6 are done — see below.
-Item 1 (`numbers.cc` -> `numbers.c`) is the only item left in Phase 2 and has not
-been started; it is the long pole (Ryu/Grisu3 port) and should be scoped/planned
-separately before starting.
+**Progress note (2026-07-25):** Items 0–6 are all done — Phase 2 complete. Item 1
+(`numbers.cc` -> `numbers.c`) was finished by transliterating the double-only
+subset of the vendored C++ **double-conversion** library into a single pure-C
+`src/numbers.c` (~3060 lines) rather than porting Ryu/Grisu3 fresh — the
+transliteration preserves double-conversion's exact ECMAScript tie-breaking by
+construction. Conformance was proven by a byte-for-byte differential against Node
+(the same double-conversion algorithm V8 uses): a fixed tricky-value grid, a
+20,000 random-double grid (240k output lines), and a parse grid all match
+identically; the spec suite stays 98/0 and `scripts/mc-check.sh` now reports
+**170/170** engine TUs compiling under `../mc` (numbers.c included).
+
+One transliteration bug was found and fixed during integration: the four stack
+`Bignum`s in `bignum_dtoa` were uninitialized (C has no default ctor like C++), so
+the FIXED/PRECISION paths read garbage `delta_plus`/`delta_minus` and tripped the
+`is_clamped` assertion — fixed by zeroing them (`src/numbers.c`, `bignum_dtoa`).
+
+**Discovered during Item 1:** `numbers.cc` was *not* the only C++ in the aggregate
+build — the vendored `ada` (URL parser) and `wasm-micro-runtime` subprojects are
+also C++ and remain linked into `ant`. The top-level `project()` was still flipped
+to `['c']` (and `cpp_std` dropped): Meson auto-detects C++ for those subprojects
+and links libstdc++ for the final binary regardless, so the ant-owned engine is now
+C-only while ada/wamr stay C++ (removing/porting those is out of Item 1 scope).
 
 The full-tree triage (Item 6) surfaced TinyCC gaps beyond the ones found in the
 initial smoke test, all fixed:
@@ -131,18 +149,28 @@ initial smoke test, all fixed:
   **169/169 engine TUs pass** (excludes `src/main.c` and the still-C++
   `src/numbers.cc`, per plan scope).
 
-#### Item 1 — `src/numbers.cc` -> `src/numbers.c` (long pole; start first, runs in parallel)
-* Only `.cc` in the tree; TinyCC has **no C++**. It wraps the C++
+#### Item 1 — `src/numbers.cc` -> `src/numbers.c` — DONE
+* Was the only `.cc` in the tree; TinyCC has **no C++**. It wrapped the C++
   **double-conversion** library for ECMAScript-correct number formatting/parsing.
-* `snprintf`/`strtod` alone will **not** reproduce shortest-round-trip
-  `Number.prototype.toString`. Port a C implementation of **Ryu** (or Grisu3) for
-  shortest double->string, plus hand-rolled `toFixed`/`toPrecision`/`toExponential`
-  and a JS-rules parser (hex / `Infinity` / `NaN`).
-* Then: remove [`vendor/double-conversion.wrap`](file:///Users/danny/git/ant/vendor/double-conversion.wrap);
-  change `project('ant', ['c', 'cpp'], ...)` -> `['c']` and drop `cpp_std` in
-  [`meson.build`](file:///Users/danny/git/ant/meson.build).
-* **Guardrail:** `examples/spec/run.js --all` + `tools/wpt` number tests + number
-  tests under `tests/`. This item lives or dies on conformance.
+* Chose a **mechanical transliteration** of double-conversion's double-only paths
+  (ieee/diy-fp/cached-powers/fast-dtoa/fixed-dtoa/bignum/bignum-dtoa/
+  double-to-string/strtod/string-to-double) into one self-contained
+  [`src/numbers.c`](file:///Users/danny/git/ant/src/numbers.c) over a fresh
+  Ryu/Grisu3 port — this preserves the exact ECMAScript tie-breaking (round-half-
+  up-to-larger) that `snprintf`/Ryu do **not** reproduce, by keeping the reference
+  algorithm the tests were validated against. Single-precision `float` paths and
+  the EcmaScriptConverter's configurability were dropped (config hardcoded:
+  `UNIQUE_ZERO|EMIT_POSITIVE_EXPONENT_SIGN`, low=-6/high=21, prec padding 6/0). The
+  JS-wrapper layer (whitespace-trim table, hex/bin/oct prefix parsers, the three
+  StringToDouble flag configs) carried over verbatim.
+* Done: removed `vendor/double-conversion.wrap` +
+  `vendor/packagefiles/double-conversion/`; dropped `double_conversion_dep` from
+  `meson/deps/meson.build`; flipped `project()` -> `['c']` and removed `cpp_std`
+  in `meson.build`; removed the now-dead `src/*.cc` globs from `sources.json`;
+  deleted `src/numbers.cc`.
+* **Guardrail (all green):** spec suite `--all` stays 98/0; the five `tests/`
+  number files pass; Node differential (fixed grid + 20k random doubles + parse
+  grid) is byte-for-byte identical; `scripts/mc-check.sh` = 170/170 under `../mc`.
 
 #### Item 2 — Packed structs: `__attribute__((packed))` -> `#pragma pack` — DONE
 * TinyCC **silently ignores** `__attribute__((packed))` (test: `sizeof` 8 not 5)
@@ -188,12 +216,15 @@ initial smoke test, all fixed:
   verify the `mc` build step (`python3 scripts/build.py` via `mise`/zig) on
   first CI run. Full link + dogfood is Phase 4.
 
-**Definition of done:** no C++ in the tree (`project()` languages = `['c']`,
-double-conversion wrap gone); all packed structs use `#pragma pack` with
-`_Static_assert` size locks; rejected builtins replaced; whole engine compiles
-cleanly under `../mc -c` (enforced by CI); spec suite (`--all`) + number/WPT
-tests pass. **Everything above is done except the C++ removal itself (Item 1)**,
-which blocks marking Phase 2 fully complete.
+**Definition of done — MET:** ant-owned engine is C-only (`project()` languages =
+`['c']`, `cpp_std` dropped, double-conversion wrap + dep + `src/numbers.cc` gone);
+all packed structs use `#pragma pack` with `_Static_assert` size locks; rejected
+builtins replaced; whole engine (incl. `numbers.c`) compiles cleanly under
+`../mc -c` — **170/170** (enforced by CI); spec suite (`--all`) = 98/0 + number
+tests pass + Node conformance differential identical. **Phase 2 complete.** Caveat:
+vendored `ada` and `wasm-micro-runtime` remain C++ subprojects linked into `ant`
+(Meson links libstdc++ for them automatically); removing/porting those is a
+separate future item, not part of Phase 2's engine-dogfooding goal.
 
 **Explicitly not doing** (vs. the original C99-strip plan): rewriting VM dispatch
 to `switch`, refactoring `({ ... })` macros, naming anonymous unions, or

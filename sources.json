@@ -2,7 +2,6 @@
   "engine": {
     "patterns": [
       "src/*.c",
-      "src/*.cc",
       "src/gc/*.c",
       "src/repl/*.c",
       "src/readline/*.c",
@@ -23,7 +22,6 @@
     "files": ["src/cli/version.c"],
     "patterns": [
       "src/*.c",
-      "src/*.cc",
       "src/gc/*.c",
       "src/repl/*.c",
       "src/readline/*.c",
