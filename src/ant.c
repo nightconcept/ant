@@ -8480,12 +8480,20 @@ static ant_value_t builtin_object_defineProperty(ant_t *js, ant_value_t *args, i
     return js_mkerr(js, "Object.defineProperty called on non-object");
   }
   
-  bool sym_key = (vtype(prop) == T_SYMBOL);
-  if (!sym_key && vtype(prop) != T_STR) {
-    char buf[64];
-    size_t len = tostr(js, prop, buf, sizeof(buf));
-    prop = js_mkstr(js, buf, len);
+  // ToPropertyKey: ToPrimitive with a string hint, then ToString unless the
+  // result is a symbol. `tostr` would format the key for display instead, and
+  // truncate it to its buffer.
+  if (vtype(prop) != T_STR && vtype(prop) != T_SYMBOL) {
+    prop = js_to_primitive(js, prop, 1);
+    if (is_err(prop)) return prop;
+    if (vtype(prop) != T_SYMBOL) {
+      prop = js_tostring_val(js, prop);
+      if (is_err(prop)) return prop;
+    }
   }
+
+  bool sym_key = (vtype(prop) == T_SYMBOL);
+  args[1] = prop;
 
   // ToPropertyDescriptor accepts any Object, not just a plain one: functions,
   // arrays, and boxed primitives all carry descriptor fields on themselves or

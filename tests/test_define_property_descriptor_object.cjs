@@ -105,4 +105,38 @@ try {
 }
 assert(mixedThrew, 'inherited value plus own get is an invalid descriptor');
 
+// The property key goes through ToPropertyKey — ToPrimitive with a string hint,
+// then ToString — rather than being formatted for display or truncated.
+const keyed = {};
+Object.defineProperty(keyed, { valueOf: () => 'abc', toString: undefined }, { value: 1 });
+assert(Object.prototype.hasOwnProperty.call(keyed, 'abc'), `valueOf key: got ${Object.getOwnPropertyNames(keyed)}`);
+
+const longKey = 'k'.repeat(100);
+const longKeyed = {};
+Object.defineProperty(longKeyed, { toString: () => longKey }, { value: 2 });
+assert(longKeyed[longKey] === 2, 'a key longer than the old buffer is not truncated');
+
+const primitiveKeys = {};
+for (const key of [false, 1.5, null, undefined, ['a', 'b']]) {
+  Object.defineProperty(primitiveKeys, key, { value: String(key) });
+  assert(primitiveKeys[String(key)] === String(key), `key ${String(key)} coerces with String()`);
+}
+
+const symKey = Symbol('sym');
+const symKeyed = {};
+Object.defineProperty(symKeyed, symKey, { value: 'symbol-keyed' });
+assert(symKeyed[symKey] === 'symbol-keyed', 'symbol keys stay symbols');
+
+const toPrimitiveKeyed = {};
+Object.defineProperty(toPrimitiveKeyed, { [Symbol.toPrimitive]: (hint) => hint }, { value: 3 });
+assert(toPrimitiveKeyed.string === 3, 'ToPropertyKey uses the string hint');
+
+let keyThrew = false;
+try {
+  Object.defineProperty({}, { toString() { throw new RangeError('key'); }, valueOf: undefined }, { value: 1 });
+} catch (e) {
+  keyThrew = e instanceof RangeError;
+}
+assert(keyThrew, 'a throwing key coercion propagates');
+
 console.log('PASS');
