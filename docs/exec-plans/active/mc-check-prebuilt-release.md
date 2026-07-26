@@ -107,9 +107,15 @@ Note: `mc`'s default/primary branch is `dev` (it has no `main` branch — only
 - Committed directly to `mc`'s `dev` branch (commit `d193456`) per explicit
   instruction — no PR was opened (one was opened and then closed at the
   user's request; the change instead landed as a direct push).
+- Follow-up: release assets are now zipped (`Zip release assets` step —
+  `mc-linux-x64.zip`, `mc-macos-arm64.zip`, `mc-windows-x64.zip`) instead of
+  uploading raw binaries, since `gh release` assets carry no unix permission
+  metadata and zip is smaller over the wire. `ant`'s download step was
+  updated to match (downloads the `.zip`, `unzip`s it, `chmod +x`s the
+  result).
 - Validation still pending: needs the next push to `dev` to confirm the
   `release` job actually creates/updates the `latest` pre-release with all
-  three platform assets.
+  three zipped platform assets.
 
 ### Task 2 — `ant`: consume the `latest` mc release in `mc-check.yml` — DONE
 - Replaced the unconditional "Checkout mc" + "Build mc" steps with a
