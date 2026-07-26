@@ -1,0 +1,144 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.timestamp.outputs.value }}
+    steps:
+      - id: timestamp
+        run: echo "value=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+  build-and-test:
+    name: Build and Test (${{ matrix.platform }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux-glibc-x64
+          - linux-glibc-aarch64
+          - linux-musl-x64
+          - linux-musl-aarch64
+          - macos-aarch64
+          - windows-x64
+    uses: ./.github/workflows/build-platform.yml
+    with:
+      platform: ${{ matrix.platform }}
+      build_timestamp: ${{ needs.prepare.outputs.timestamp }}
+
+  compliance-benchmarking:
+    name: Compliance Benchmarking (Tiers 2 & 3, Gate)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang ccache
+          pip install --break-system-packages -U meson
+
+      - name: Setup Zig
+        uses: ./.github/actions/setup-zig
+        with:
+          version: "0.16.0"
+
+      - name: Setup build caches
+        uses: ./.github/actions/setup-build-caches
+        with:
+          platform: compliance-linux-x64
+          compiler_version: system-clang
+          zig_version: "0.16.0"
+
+      - name: Configure build
+        env:
+          CC: ccache clang
+          CXX: ccache clang++
+        run: meson setup build -Dbuildtype=release
+
+      - name: Compile Ant
+        env:
+          CC: ccache clang
+          CXX: ccache clang++
+        run: meson compile -C build
+
+      - name: Report compiler cache statistics
+        if: always()
+        run: ccache --show-stats
+
+      - name: Run Tier 2 Compliance Tracking
+        run: python3 scripts/run_compliance.py --tier 2 --all --allow-failures --log
+
+      - name: Run Tier 3 Compliance Tracking
+        run: python3 scripts/run_compliance.py --tier 3 --all --allow-failures --log
+
+      - name: Check tier 2/3 pass counts against baseline
+        run: |
+          python3 - <<'PYEOF'
+          import json, sys, pathlib
+
+          baseline = json.loads(pathlib.Path("docs/repo/compliance-baseline.json").read_text())["tiers"]
+          logs = sorted(pathlib.Path(".deps/compliance/logs").glob("*.json"))
+
+          failed = False
+          for tier in ("2", "3"):
+              if tier not in baseline:
+                  print(f"Tier {tier}: no baseline seeded yet, skipping regression check")
+                  continue
+              manifest_path = next((p for p in logs if f"tier{tier}_" in p.name), None)
+              if manifest_path is None:
+                  print(f"::error::Tier {tier}: no manifest produced by this run")
+                  failed = True
+                  continue
+              manifest = json.loads(manifest_path.read_text())
+              base_passed = baseline[tier]["totals"]["passed"]
+              cur_passed = manifest["totals"]["passed"]
+              print(f"Tier {tier}: baseline passed={base_passed}, current passed={cur_passed}")
+              if cur_passed < base_passed:
+                  print(f"::error::Tier {tier} regressed: {cur_passed} passed vs baseline {base_passed}")
+                  failed = True
+
+          sys.exit(1 if failed else 0)
+          PYEOF
+
+      - name: Run Cold-Start Benchmarks & Upstream Threshold Assertions
+        run: |
+          strip build/ant || true
+          python3 bench/bench.py --check-thresholds --max-speed-lag 10.0 --max-size-growth 25.0
+
+  repo-knowledge:
+    name: Repo Knowledge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          fetch-depth: 0
+      - name: Validate repo knowledge docs
+        run: node .github/agents/check_repo_knowledge.js
+      - name: Collect changed files
+        run: |
+          if [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" > .changed-files
+          else
+            git ls-files > .changed-files
+          fi
+      - name: Validate changed-file structure
+        run: node .github/agents/check_repo_structure.js --files-from .changed-files
+      - name: Suggest validation commands
+        run: node .github/agents/route_validation.js --files-from .changed-files

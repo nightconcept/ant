@@ -13,10 +13,11 @@ on:
     outputs:
       version:
         description: Build version
-        value: ${{ jobs.build.outputs.version }}
+        value: ${{ jobs.build-and-test.outputs.version }}
 
 jobs:
-  build:
+  build-and-test:
+    name: Build and Test
     outputs:
       version: ${{ steps.build.outputs.version }}
     # runs-on/container/shell must be hardcoded
@@ -70,7 +71,7 @@ jobs:
           fi
           apt-get update
           apt-get install -y git ca-certificates gnupg wget software-properties-common curl \
-            python3-pip ninja-build cmake pkg-config jq xz-utils
+            python3-pip ninja-build cmake pkg-config jq xz-utils ccache
           curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
           apt-get install -y nodejs
           pip3 install meson tomli
@@ -83,14 +84,14 @@ jobs:
           apk add --no-cache git clang lld llvm meson ninja cmake pkgconf curl npm nodejs \
             musl-dev \
             util-linux-dev util-linux-static linux-headers libunwind-dev libunwind-static \
-            py3-tomli tar xz zstd jq bash
+            py3-tomli tar xz zstd jq bash ccache
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       # === MACOS SETUP ===
       - name: Setup macOS environment
         if: startsWith(inputs.platform, 'macos')
         run: |
-          for pkg in meson ninja llvm jq; do
+          for pkg in meson ninja llvm jq ccache; do
             brew list "$pkg" &>/dev/null || brew install "$pkg"
           done
 
@@ -109,7 +110,8 @@ jobs:
           install: >-
             mingw-w64-clang-x86_64-toolchain mingw-w64-clang-x86_64-meson mingw-w64-clang-x86_64-ninja
             mingw-w64-clang-x86_64-cmake
-            mingw-w64-clang-x86_64-lld mingw-w64-clang-x86_64-nodejs git jq
+            mingw-w64-clang-x86_64-lld mingw-w64-clang-x86_64-nodejs
+            mingw-w64-clang-x86_64-ccache git jq
 
       - name: Configure git line endings
         if: inputs.platform == 'windows-x64'
@@ -167,6 +169,13 @@ jobs:
           version: ${{ steps.config.outputs.llvm_version }}
           os_type: ${{ steps.config.outputs.os_type }}
 
+      - name: Setup build caches
+        uses: ./.github/actions/setup-build-caches
+        with:
+          platform: ${{ inputs.platform }}
+          compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
+          zig_version: ${{ steps.config.outputs.zig_version }}
+
       # === BUILD NATIVE DEPS ===
       - name: Build native dependencies
         uses: ./.github/actions/build-native-deps
@@ -196,6 +205,10 @@ jobs:
           static_link: ${{ steps.config.outputs.static_link }}
           extra_meson_args: ${{ steps.config.outputs.extra_meson_args }}
           binary_name: ${{ steps.config.outputs.binary_name }}
+
+      - name: WinterTC tests
+        if: inputs.platform == 'linux-glibc-x64'
+        run: python3 scripts/run_compliance.py --tier 1 --all
 
       # === UPLOAD ARTIFACTS ===
       - name: Upload binary

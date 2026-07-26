@@ -40,14 +40,15 @@ runs:
 
     - name: Cache native deps
       id: cache
+      if: inputs.deps != ''
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
       with:
         path: ${{ inputs.prefix }}
-        key: deps-${{ runner.os }}-${{ runner.arch }}-${{ steps.deps-hash.outputs.hash }}-${{ hashFiles('.github/versions.json') }}-v1
+        key: deps-${{ runner.os }}-${{ runner.arch }}-${{ steps.deps-hash.outputs.hash }}-zlib-${{ inputs.zlib_version }}-${{ hashFiles('.github/actions/build-native-deps/action.yml') }}-v2
 
     - name: Prepare build environment
       id: prep
-      if: steps.cache.outputs.cache-hit != 'true'
+      if: inputs.deps != '' && steps.cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         if [[ "$RUNNER_OS" == "Windows" ]]; then

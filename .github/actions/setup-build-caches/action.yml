@@ -1,0 +1,64 @@
+name: Setup Build Caches
+description: Configure bounded compiler, Zig, and npm caches
+
+inputs:
+  platform:
+    description: Stable platform key used to isolate incompatible cache entries
+    required: true
+  compiler_version:
+    description: Compiler/toolchain version used by this build
+    required: true
+  zig_version:
+    description: Zig version used by this build
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Configure build cache paths
+      shell: bash
+      run: |
+        echo "CCACHE_DIR=$GITHUB_WORKSPACE/.cache/ccache" >> "$GITHUB_ENV"
+        echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+        echo "CCACHE_COMPILERCHECK=content" >> "$GITHUB_ENV"
+        echo "ZIG_GLOBAL_CACHE_DIR=$GITHUB_WORKSPACE/.cache/zig" >> "$GITHUB_ENV"
+        echo "npm_config_cache=$GITHUB_WORKSPACE/.cache/npm" >> "$GITHUB_ENV"
+        mkdir -p \
+          "$GITHUB_WORKSPACE/.cache/ccache" \
+          "$GITHUB_WORKSPACE/.cache/zig" \
+          "$GITHUB_WORKSPACE/.cache/npm"
+
+    - name: Resolve weekly cache epoch
+      id: epoch
+      shell: bash
+      run: echo "value=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache compiler outputs
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+      with:
+        path: .cache/ccache
+        key: ccache-${{ inputs.platform }}-${{ inputs.compiler_version }}-${{ steps.epoch.outputs.value }}-v1
+        restore-keys: |
+          ccache-${{ inputs.platform }}-${{ inputs.compiler_version }}-
+
+    - name: Configure compiler cache
+      shell: bash
+      run: |
+        ccache --set-config=max_size=200M
+        ccache --set-config=compression=true
+        ccache --zero-stats
+        ccache --show-config
+
+    - name: Cache Zig build outputs
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+      with:
+        path: .cache/zig
+        key: zig-build-${{ inputs.platform }}-${{ inputs.zig_version }}-${{ steps.epoch.outputs.value }}-v1
+        restore-keys: |
+          zig-build-${{ inputs.platform }}-${{ inputs.zig_version }}-
+
+    - name: Cache npm downloads
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+      with:
+        path: .cache/npm
+        key: npm-${{ inputs.platform }}-${{ hashFiles('src/tools/npm-shrinkwrap.json') }}-v1
