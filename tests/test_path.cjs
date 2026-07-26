@@ -1,4 +1,4 @@
-import * as path from 'ant:path';
+const path = require('ant:path');
 
 console.log('Testing ant:path module...\n');
 
