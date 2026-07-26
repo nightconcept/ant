@@ -112,6 +112,32 @@ PULLED_SMOKE_TESTS = {
     ]
 }
 
+# Test262 host-provided `$262` object. Test262 assumes the host injects this
+# global (see test262/INTERPRETING.md); ant, as a runtime, does not ship it, so
+# hundreds of tests fail with `ReferenceError: '$262' is not defined`. We provide
+# a best-effort shim built from primitives ant actually exposes:
+#   - global            -> globalThis
+#   - evalScript(src)   -> indirect eval (runs as global-scope Script)
+#   - detachArrayBuffer -> ArrayBuffer.prototype.transfer() (detaches the buffer)
+#   - gc()              -> globalThis.gc() if present, else a safe no-op
+# Capabilities ant lacks (agent/createRealm/IsHTMLDDA/AbstractModuleSource) are
+# intentionally omitted: those tests still fail, but with an accurate error about
+# the missing feature rather than a spurious `$262` ReferenceError.
+T262_HOST_262_SHIM = (
+    "if (typeof $262 === 'undefined') {"
+    " Object.defineProperty(globalThis, '$262', {"
+    " writable: true, enumerable: false, configurable: true, value: {"
+    " global: globalThis,"
+    " evalScript: function(src) { return (0, eval)(src); },"
+    " gc: function() { if (typeof globalThis.gc === 'function') return globalThis.gc(); },"
+    " detachArrayBuffer: function(buffer) {"
+    " if (buffer && typeof buffer.transfer === 'function') { buffer.transfer(); }"
+    " return null; }"
+    " } });"
+    " }"
+)
+
+
 def find_ant_binary() -> Path:
     local_ant = REPO_ROOT / "build" / "ant"
     if local_ant.exists() and os.access(local_ant, os.X_OK):
@@ -199,20 +225,23 @@ def prepare_test262_code(test_file: Path, test262_dir: Path) -> tuple[str, dict]
     content = test_file.read_text(encoding="utf-8", errors="replace")
     fm = parse_test262_frontmatter(content)
     
-    parts = []
+    # Host-provided globals must exist before any harness code runs: some includes
+    # (e.g. atomicsHelper.js) touch `$262` at load time, so the shims go first.
+    parts = [
+        "if (typeof $DONE === 'undefined') { globalThis.$DONE = function(err) { if (err) throw err; }; }",
+        T262_HOST_262_SHIM,
+    ]
     assert_js = harness_dir / "assert.js"
     sta_js = harness_dir / "sta.js"
     if assert_js.exists():
         parts.append(assert_js.read_text(encoding="utf-8", errors="replace"))
     if sta_js.exists():
         parts.append(sta_js.read_text(encoding="utf-8", errors="replace"))
-        
+
     for inc in fm.get("includes", []):
         inc_path = harness_dir / inc
         if inc_path.exists():
             parts.append(inc_path.read_text(encoding="utf-8", errors="replace"))
-            
-    parts.append("if (typeof $DONE === 'undefined') { globalThis.$DONE = function(err) { if (err) throw err; }; }")
     
     flags = fm.get("flags", [])
     if "onlyStrict" in flags:
