@@ -61,6 +61,10 @@ guidance.
   explicit user approval before proceeding when sandbox escalation is required.
 - Check [docs/repo/testing.md](docs/repo/testing.md) before choosing validation
   scope or retrying a failing broad test command.
+- For conformance work read [docs/repo/compliance.md](docs/repo/compliance.md)
+  first. Done means: tier 1 at 100%, no tier 2/3 percentage regression, and
+  small upstreamable changes. Logs are stamped with the commit they ran at —
+  check it before treating a logged failure as live.
 - Before finalizing most code changes, run `just preflight` and then execute any
   additional build or spec commands it recommends, or explain why they were not
   run.
@@ -73,6 +77,8 @@ guidance.
   [ARCHITECTURE.md](ARCHITECTURE.md)
 - Test selection or validation scope:
   [docs/repo/testing.md](docs/repo/testing.md)
+- Test262 / WPT / Node compat conformance work:
+  [docs/repo/compliance.md](docs/repo/compliance.md)
 - Long-running or multi-step task:
   [docs/exec-plans/index.md](docs/exec-plans/index.md)
 

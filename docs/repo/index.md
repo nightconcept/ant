@@ -13,6 +13,7 @@ workflow. Start with the smallest document that answers the task at hand.
 - Architecture map: [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Build instructions: [../../BUILDING.md](../../BUILDING.md)
 - Test selection guide: [testing.md](testing.md)
+- Conformance work guide: [compliance.md](compliance.md)
 - Execution plans and tech debt: [../exec-plans/index.md](../exec-plans/index.md)
 
 ## How To Use This Knowledge Base
