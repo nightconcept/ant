@@ -9,6 +9,11 @@ project('ant', ['c'], default_options: [
   'warning_level=2'
 ], subproject_dir: 'vendor')
 
+# The engine itself is pure C, but CMake subprojects (BoringSSL, WAMR) build C++
+# translation units and the final link is driven by the C++ compiler, so the C++
+# toolchain must be registered for -no-pie and friends to reach that link.
+add_languages('cpp', native: false)
+
 python = find_program('python3')
 fs = import('fs')
 is_static = get_option('static_link')
