@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os
+import re
 import time
 import urllib.request
 import subprocess
@@ -8,6 +9,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEPS_DIR = REPO_ROOT / ".deps" / "compliance"
+LOGS_DIR = DEPS_DIR / "logs"
 
 # ANSI Colors
 GREEN = "\033[32m"
@@ -16,6 +18,11 @@ YELLOW = "\033[33m"
 CYAN = "\033[36m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
+
+_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
+
+def strip_ansi(text: str) -> str:
+    return _ANSI_RE.sub("", text)
 
 # Official Upstream Online Smoke Test Manifests
 PULLED_SMOKE_TESTS = {
@@ -142,6 +149,78 @@ def ensure_test262_harness() -> tuple[Path, Path]:
             
     return assert_js, sta_js
 
+def ensure_test262_repo() -> Path:
+    """Ensure Test262 suite repository is checked out locally."""
+    root_t262 = REPO_ROOT / "test262"
+    if (root_t262 / "test").exists():
+        return root_t262
+    
+    deps_t262 = DEPS_DIR / "test262"
+    if (deps_t262 / "test").exists():
+        return deps_t262
+
+    print(f"{CYAN}Cloning tc39/test262 repository into {deps_t262}...{RESET}")
+    deps_t262.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["git", "clone", "--depth", "1", "https://github.com/tc39/test262.git", str(deps_t262)],
+        check=True
+    )
+    return deps_t262
+
+def parse_test262_frontmatter(content: str) -> dict:
+    frontmatter = {"includes": [], "flags": [], "negative": None}
+    match = re.search(r"/\*---(.*?)---\*/", content, re.DOTALL)
+    if match:
+        block = match.group(1)
+        
+        inc_match = re.search(r"includes:\s*\[(.*?)\]", block)
+        if inc_match:
+            frontmatter["includes"] = [x.strip() for x in inc_match.group(1).split(",") if x.strip()]
+        else:
+            inc_list = re.findall(r"includes:.*?\n((?:\s*-\s*.*?\n)+)", block)
+            if inc_list:
+                frontmatter["includes"] = [x.strip().lstrip("- ").strip() for x in inc_list[0].splitlines()]
+
+        flags_match = re.search(r"flags:\s*\[(.*?)\]", block)
+        if flags_match:
+            frontmatter["flags"] = [x.strip() for x in flags_match.group(1).split(",") if x.strip()]
+
+        if "negative:" in block:
+            neg_type_match = re.search(r"type:\s*(\w+)", block)
+            neg_phase_match = re.search(r"phase:\s*(\w+)", block)
+            frontmatter["negative"] = {
+                "type": neg_type_match.group(1) if neg_type_match else None,
+                "phase": neg_phase_match.group(1) if neg_phase_match else None
+            }
+    return frontmatter
+
+def prepare_test262_code(test_file: Path, test262_dir: Path) -> tuple[str, dict]:
+    harness_dir = test262_dir / "harness"
+    content = test_file.read_text(encoding="utf-8", errors="replace")
+    fm = parse_test262_frontmatter(content)
+    
+    parts = []
+    assert_js = harness_dir / "assert.js"
+    sta_js = harness_dir / "sta.js"
+    if assert_js.exists():
+        parts.append(assert_js.read_text(encoding="utf-8", errors="replace"))
+    if sta_js.exists():
+        parts.append(sta_js.read_text(encoding="utf-8", errors="replace"))
+        
+    for inc in fm.get("includes", []):
+        inc_path = harness_dir / inc
+        if inc_path.exists():
+            parts.append(inc_path.read_text(encoding="utf-8", errors="replace"))
+            
+    parts.append("if (typeof $DONE === 'undefined') { globalThis.$DONE = function(err) { if (err) throw err; }; }")
+    
+    flags = fm.get("flags", [])
+    if "onlyStrict" in flags:
+        parts.append('"use strict";')
+        
+    parts.append(content)
+    return "\n".join(parts), fm
+
 def fetch_pulled_test(spec: dict) -> Path:
     pulled_dir = DEPS_DIR / "pulled"
     pulled_dir.mkdir(parents=True, exist_ok=True)
@@ -190,10 +269,31 @@ def run_js_test(ant_bin: Path, test_path: Path, timeout_sec: float = 15.0) -> tu
         duration_ms = (time.perf_counter() - start) * 1000.0
         return False, duration_ms, str(e)
 
+def make_log_path(label: str) -> Path:
+    """Return a timestamped log path under .deps/compliance/logs/."""
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    safe = label.lower().replace(" ", "_").replace("/", "_")
+    return LOGS_DIR / f"{safe}_{ts}.log"
+
 class SummaryTracker:
-    def __init__(self, suite_name: str):
+    def __init__(self, suite_name: str, log_path: Path | None = None, log_fail_only: bool = False):
         self.suite_name = suite_name
         self.results = []
+        self.log_path = log_path
+        self.log_fail_only = log_fail_only
+        self._log_file = None
+
+        if self.log_path:
+            self.log_path.parent.mkdir(parents=True, exist_ok=True)
+            self._log_file = open(self.log_path, "w", encoding="utf-8")
+            self._log_file.write(f"=== {suite_name} ===\n")
+            self._log_file.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+    def _write_log(self, text: str):
+        if self._log_file:
+            self._log_file.write(strip_ansi(text) + "\n")
+            self._log_file.flush()
 
     def add(self, name: str, passed: bool, duration_ms: float, category: str = "General", details: str = ""):
         self.results.append({
@@ -204,20 +304,56 @@ class SummaryTracker:
             "details": details
         })
         status_str = f"{GREEN}PASS{RESET}" if passed else f"{RED}FAIL{RESET}"
+        status_plain = "PASS" if passed else "FAIL"
         print(f"  [{status_str}] {name} ({duration_ms:.1f}ms)")
         if not passed and details:
             for line in details.strip().split("\n")[:5]:
                 print(f"        {YELLOW}| {line}{RESET}")
 
-    def print_summary(self):
+        # Write to log
+        if self._log_file:
+            should_log = (not self.log_fail_only) or (not passed)
+            if should_log:
+                self._write_log(f"[{status_plain}] {name} ({duration_ms:.1f}ms)")
+                if details:
+                    self._write_log("--- output ---")
+                    self._write_log(details.rstrip())
+                    self._write_log("-" * 14)
+                self._write_log("")
+
+    def add_raw_log(self, header: str, content: str):
+        """Write a block of raw output to the log (used for full-suite subprocess output)."""
+        if self._log_file:
+            self._write_log(f"--- {header} ---")
+            self._write_log(strip_ansi(content).rstrip())
+            self._write_log("-" * (len(header) + 8))
+            self._write_log("")
+
+    def print_summary(self) -> int:
         total = len(self.results)
         if total == 0:
             print(f"\n{BOLD}No tests executed for {self.suite_name}{RESET}")
+            if self._log_file:
+                self._write_log("No tests executed.")
+                self._close_log(0)
             return 0
 
         passed_cnt = sum(1 for r in self.results if r["passed"])
         failed_cnt = total - passed_cnt
         pass_pct = (passed_cnt / total) * 100.0
+
+        summary_lines = [
+            "",
+            "=" * 60,
+            f"Summary: {self.suite_name}",
+            "=" * 60,
+            f"Total Tests : {total}",
+            f"Passed      : {passed_cnt}",
+            f"Failed      : {failed_cnt}",
+            f"Pass Rate   : {pass_pct:.1f}%",
+            "=" * 60,
+            "",
+        ]
 
         print("\n" + "=" * 60)
         print(f"{BOLD}Summary: {self.suite_name}{RESET}")
@@ -227,4 +363,19 @@ class SummaryTracker:
         print(f"Failed      : {RED}{failed_cnt}{RESET}")
         print(f"Pass Rate   : {BOLD}{pass_pct:.1f}%{RESET}")
         print("=" * 60 + "\n")
+
+        if self._log_file:
+            for line in summary_lines:
+                self._write_log(line)
+            exit_code = 0 if failed_cnt == 0 else 1
+            self._close_log(exit_code)
+
         return 0 if failed_cnt == 0 else 1
+
+    def _close_log(self, exit_code: int):
+        if self._log_file:
+            self._write_log(f"Finished: {time.strftime('%Y-%m-%d %H:%M:%S')} (exit {exit_code})")
+            self._log_file.close()
+            self._log_file = None
+            mode = "fail-only" if self.log_fail_only else "full"
+            print(f"  {CYAN}Log ({mode}): {self.log_path}{RESET}")

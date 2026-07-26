@@ -8,23 +8,35 @@ from compliance_common import (
     SummaryTracker,
     fetch_pulled_test,
     PULLED_SMOKE_TESTS,
+    make_log_path,
     REPO_ROOT
 )
 
 def main():
     parser = argparse.ArgumentParser(description="Run Tier 2 Compliance Tests (Node.js Compatibility Suite)")
-    parser.add_argument("--smoke", action="store_true", help="Run pulled official Node.js online smoke test subset")
-    parser.add_argument("--all", action="store_true", help="Run all local Node module tests in tests/")
+    parser.add_argument("--smoke", action="store_true", help="Run pulled official Node.js online smoke test subset only")
+    parser.add_argument("--all", action="store_true", help="Run all local Node module tests in tests/ (default behavior)")
     parser.add_argument("-m", "--module", type=str, help="Filter tests by module name (e.g. events, buffer, fs)")
     parser.add_argument("-f", "--filter", type=str, help="Filter tests by substring")
+    parser.add_argument("--log", action="store_true", help="Write all test output to a timestamped log file")
+    parser.add_argument("--log-fail", action="store_true", help="Write only failing test output to a timestamped log file")
     args = parser.parse_args()
 
     ant_bin = find_ant_binary()
-    tracker = SummaryTracker("Tier 2 - Node.js Compatibility Suite")
+
+    log_path = None
+    if args.log or args.log_fail:
+        log_path = make_log_path("tier2")
+
+    tracker = SummaryTracker(
+        "Tier 2 - Node.js Compatibility Suite",
+        log_path=log_path,
+        log_fail_only=args.log_fail and not args.log,
+    )
 
     filter_term = args.module or args.filter
 
-    if args.smoke or not args.all:
+    if args.smoke:
         print("Fetching and running Tier 2 pulled official Node.js tests (nodejs/node)...")
         specs = PULLED_SMOKE_TESTS["tier2"]
         if filter_term:
