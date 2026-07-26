@@ -336,7 +336,7 @@ static uint16_t ant_nat_alloc_inbound_port(ant_hvf_nat_t *nat) {
 }
 
 static ant_hvf_nat_tcp_t *ant_nat_alloc_tcp(ant_hvf_nat_t *nat) {
-  for (size_t i = 0; i < nat->tcp_count; i++) if (!ant_nat_tcp_active(nat->tcp[i])) {
+  for (size_t i = 0; i < nat->tcp_count; i++) if (nat->tcp[i] && !ant_nat_tcp_active(nat->tcp[i])) {
     ant_hvf_nat_tcp_t *c = nat->tcp[i];
     memset(c, 0, sizeof(*c));
     c->state = ANT_NAT_TCP_ESTABLISHED;
