@@ -94,4 +94,99 @@ assertThrows(() => Array.prototype.forEach.call(null, () => {}), "forEach on nul
 assertThrows(() => Array.prototype.map.call(undefined, () => {}), "map on undefined throws");
 assertThrows(() => Array.prototype.indexOf.call(null, 1), "indexOf on null throws");
 
+// The copying methods build a fresh array and never write to the receiver, so
+// they accept any array-like, including one whose elements are not own
+// properties of a real array.
+const unsorted = { 0: "b", 1: "a", length: 2 };
+assert(
+  JSON.stringify(Array.prototype.toSorted.call(unsorted)) === '["a","b"]',
+  "toSorted over an array-like"
+);
+assert(
+  JSON.stringify(Array.prototype.toReversed.call(unsorted)) === '["a","b"]',
+  "toReversed over an array-like"
+);
+assert(
+  JSON.stringify(Array.prototype.toSpliced.call(unsorted, 0, 1)) === '["a"]',
+  "toSpliced over an array-like"
+);
+assert(
+  JSON.stringify(Array.prototype.toSorted.call("cab")) === '["a","b","c"]',
+  "toSorted over a primitive string"
+);
+assert(
+  JSON.stringify(Array.prototype.toReversed.call("abc")) === '["c","b","a"]',
+  "toReversed over a primitive string"
+);
+assert(
+  JSON.stringify(Array.prototype.with.call("abc", 0, "z")) === '["z","b","c"]',
+  "with over a primitive string"
+);
+assert(
+  JSON.stringify([...Array.prototype.values.call("abc")]) === '["a","b","c"]',
+  "values over a primitive string"
+);
+assert(
+  JSON.stringify([...Array.prototype.keys.call("abc")]) === "[0,1,2]",
+  "keys over a primitive string"
+);
+
+// A String exotic object's indices and length are non-writable, and the
+// mutating methods write with Set(..., throw = true), so a rejected write is a
+// TypeError rather than being silently ignored.
+assertThrows(() => Array.prototype.push.call("abc", "x"), "push on a string throws");
+assertThrows(() => Array.prototype.pop.call("abc"), "pop on a string throws");
+assertThrows(() => Array.prototype.shift.call("abc"), "shift on a string throws");
+assertThrows(() => Array.prototype.unshift.call("abc", "x"), "unshift on a string throws");
+assertThrows(() => Array.prototype.splice.call("abc", 0, 1), "splice on a string throws");
+assertThrows(() => Array.prototype.reverse.call("abc"), "reverse on a string throws");
+assertThrows(() => Array.prototype.sort.call("ba"), "sort on a string throws");
+assertThrows(() => Array.prototype.fill.call("abc", "x"), "fill on a string throws");
+assertThrows(() => Array.prototype.copyWithin.call("abc", 0, 1), "copyWithin on a string throws");
+
+// Setting `length` always fails on a String exotic, so these throw even when
+// there is no element to move.
+assertThrows(() => Array.prototype.push.call(Object(""), "x"), "push on an empty string throws");
+assertThrows(() => Array.prototype.push.call(Object("abc")), "push with no args still throws");
+assertThrows(() => Array.prototype.pop.call(Object("")), "pop on an empty string throws");
+assertThrows(() => Array.prototype.splice.call(Object(""), 0, 0), "splice on empty string throws");
+
+// ...but a method that ends up writing nothing does not throw.
+assert(
+  Array.prototype.reverse.call(Object("")) instanceof String,
+  "reverse on an empty string is a no-op"
+);
+assert(
+  Array.prototype.reverse.call(Object("a")) instanceof String,
+  "reverse on a one-character string is a no-op"
+);
+assert(
+  Array.prototype.sort.call(Object("a")) instanceof String,
+  "sort on a one-character string is a no-op"
+);
+assert(
+  Array.prototype.fill.call(Object(""), "x") instanceof String,
+  "fill on an empty string is a no-op"
+);
+assert(
+  Array.prototype.fill.call(Object("abc"), "x", 1, 1) instanceof String,
+  "fill over an empty range is a no-op"
+);
+assert(
+  Array.prototype.copyWithin.call(Object(""), 0, 1) instanceof String,
+  "copyWithin with nothing to copy is a no-op"
+);
+
+// A Number or Boolean wrapper has no exotic own properties, so the mutating
+// methods operate on the throwaway wrapper without throwing.
+assert(Array.prototype.push.call(5, "x") === 1, "push on a number returns the new length");
+assert(Array.prototype.pop.call(5) === undefined, "pop on a number yields undefined");
+assert(Array.prototype.reverse.call(5) instanceof Number, "reverse on a number is a no-op");
+assert(Array.prototype.sort.call(5) instanceof Number, "sort on a number is a no-op");
+assert(Array.prototype.fill.call(5, "x") instanceof Number, "fill on a number is a no-op");
+
+// The mutating methods still reject null and undefined.
+assertThrows(() => Array.prototype.push.call(null, "x"), "push on null throws");
+assertThrows(() => Array.prototype.sort.call(undefined), "sort on undefined throws");
+
 console.log("PASS");
