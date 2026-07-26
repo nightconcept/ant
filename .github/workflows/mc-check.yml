@@ -1,6 +1,7 @@
 name: mc Compile Check
 
 on:
+  push:
   pull_request:
   workflow_dispatch:
 
@@ -22,20 +23,34 @@ jobs:
         with:
           path: ant
 
-      - name: Checkout mc
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y meson ninja-build
+
+      - name: Download latest mc pre-release
+        id: mc-download
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p mc/build
+          gh release download latest -R nightconcept/mc -p 'mc-linux-x64' -O mc/build/mc
+          chmod +x mc/build/mc
+          test -s mc/build/mc
+
+      - name: Checkout mc source
+        if: steps.mc-download.outcome != 'success'
         uses: actions/checkout@v4
         with:
           repository: nightconcept/mc
           path: mc
 
-      - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y meson ninja-build
-
       - uses: mlugg/setup-zig@v1
+        if: steps.mc-download.outcome != 'success'
         with:
           version: "0.16.0"
 
-      - name: Build mc
+      - name: Build mc from source
+        if: steps.mc-download.outcome != 'success'
         working-directory: mc
         run: python3 scripts/build.py
 

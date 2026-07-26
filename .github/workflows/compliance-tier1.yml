@@ -24,7 +24,8 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build clang
+          sudo apt-get install -y ninja-build clang
+          pip install --break-system-packages -U meson
 
       - name: Configure build
         run: meson setup build -Dbuildtype=release
