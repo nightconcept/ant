@@ -1,0 +1,2749 @@
+{
+  "schema_version": 1,
+  "tiers": {
+    "1": {
+      "categories": {
+        "examples/spec (full suite)": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "filter": null,
+      "finished": "2026-07-26T09:24:27",
+      "revision": {
+        "branch": "compliance/t3-harness-and-builtin-names",
+        "commit": "b8f6ef47c43ccd725307f1f2c9f6ddd59daa30f5",
+        "dirty": false,
+        "short": "b8f6ef47",
+        "subject": "compliance: emit a per-run JSON manifest and add baseline diffing"
+      },
+      "schema_version": 1,
+      "started": "2026-07-26T09:24:26",
+      "suite": "Tier 1 - WinterTC / Edge Baseline & Core JS",
+      "tier": 1,
+      "totals": {
+        "failed": 0,
+        "pass_rate": 100.0,
+        "passed": 1,
+        "total": 1
+      }
+    },
+    "2": {
+      "categories": {
+        "test_all_modules.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_all_modules.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_all_new.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_ant_serve.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_apply_argument_length_limit.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_arguments_async.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_callback_thisarg.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_comprehensive.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_flat_prototype_indices.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_from.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_includes_regression_big.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_is_template_object.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_join_number_stringification.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_proto_subclassing.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_sort_gc_roots.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_array_sparse_descending_length.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_arraybuffer_isview.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_arrow_closure.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_arrow_this.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_asi.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_asi_all.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_await_integration.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_await_microtask.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_class_methods.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_coroutines.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_dead_await_fastpath.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_gc.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_generator_gc_liveness.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_iterable_stream_cleanup.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_loops.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_materialized_stack_slice.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_promise_job_resume.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_reentrant_resume.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_regular_function.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_this.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_this_binding.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_this_context.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_atomics.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_atomics_wait_async.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_atomics_with_literals.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_await.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_await_return.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_await_thenables.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_base64.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_base64.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_bigint.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_binding_loop_closures.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_block_closure.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_block_function_hoisting.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_bracket_getter.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_bracket_setter.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_buffer.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_buffer_indexof.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_buffer_species_arraybuffer.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_builtin_function_name.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_builtin_missing_named_export.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_captured.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_child_process_exec_promisify.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_child_process_execfile_git_options.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_child_process_execfile_promisify.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_child_process_spawn_options_overload.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_child_process_spawnsync_env.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_child_process_spawnsync_inherit.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_child_process_stream_setencoding.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_circular.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_cjs_accessor_exports.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_cjs_esbuild_named_exports.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_cjs_esm_circular.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_cjs_exports_prototype.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_class_closure.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_class_function_hoisting.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_cli_eval_type_module.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_cli_file_arg_precedes_package_script.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_cli_file_arg_precedes_package_script.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_closure.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_closure2.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_closure_forwarder_reentrant_callbacks.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_closure_spec.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_collection_foreach_thisarg.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_collection_method_lengths.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_collections_constructor_iterables.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_commonjs_circular_module_exports.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_commonjs_module_not_found.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_computed_assignment_order.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_concurrent_scope.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_concurrent_timing.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_console_inspect_string_internals.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_console_methods.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_contextual_keyword.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_coro_resume_safety.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_coro_this.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_cpu_usage.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_crypto_extended.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_crypto_get_ciphers.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_crypto_get_curves.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_crypto_get_hashes.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_crypto_subtle_digest.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_crypto_timing_safe_equal.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_ctor_prop_feedback.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_date.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_date_parse_string.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_debug_await.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_debug_error_trace.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_debug_error_trace.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_deep_this.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_default_params.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_define_property.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_define_property_edge_cases.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_define_property_shape_slot.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_define_property_simple.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_define_property_strict.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_direct_eval_environment.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_direct_eval_jit.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_direct_eval_lexical.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_direct_eval_strict.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_disposable_stack.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_dot.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_dot_property_syntax.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_double_resolve.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_double_underscore_enumeration.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_dynamic_func.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_dynamic_import_tla_module_context.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_entry_tla_for_await_async_only.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_error_catch.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_es2016_includes_and_strict.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_esm_import_vs_create_require_conditions.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_eval.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_eval.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_event_loop_timers.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_eventemitter_function_call.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_eventemitter_max_listeners.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_events.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_events_listeners_api.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_events_prototype_chain.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_exp_associativity.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_exponentiation.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_extensionless_hidden_entrypoint.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fetch_cookie_header.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fetch_redirect.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_ffi_wrappers.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_ffi_wrappers.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_for_in_closure.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_for_in_dense_array_fast.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_for_of_dense_array_fast.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_async.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_chmod_sync.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_cpsync_symlinks.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_error_messages.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_fsync.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_promises_filehandle.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_readfile_url.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_stats_node_fields.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_streams.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_symlink_sync.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_sync.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_truncate_sync.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_fs_writefile_buffer.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_function_call_apply_bind.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_function_constructor.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_function_constructor_strictness.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_function_constructor_tostring.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_function_scope.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_async.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_comprehensive.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_coro.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_cycles.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_debug.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_in_coro.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_large.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_minimal8.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_simple.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_stress10.js": {
+          "failed": 1,
+          "failing": [
+            "test_gc_stress10.js"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_gc_stress7.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_tco.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_template_const_cache.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_gc_timer.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_getters_setters.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_global_accessor_read.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_global_write_fast_path.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_highlight.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_highlight_comments.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_highlight_keyword_using.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_http_request_host_port_fetch_shim.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_https_get_fetch_shim.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_if_else_var.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_immediate_concurrent.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_import_meta.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_import_meta_full.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_in_operator.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_inherited_class_constructor.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_inline_await.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_inspect_custom.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_inspect_custom.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_instanceof_ic_prototype_guard.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_intl.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_iterator_result_fast_path.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_add_local_numeric_feedback.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_arguments_object.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_bigint_ops.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_cfunc_call_fast.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_delete_numeric_key.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_derived_ctor.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_destructure_arg_resume.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_for_of.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_get_elem_opt.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_get_field_opt.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_global_read_ic.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_handlekey.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_inc_dec.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_inline_call_errors.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_inline_special_obj.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_inline_special_obj_dep.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_inline_special_obj_import.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_is_undef_or_null.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_jmp_not_nullish.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_map_string_concat.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_missing_arg_normalization.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_nip.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_num_add_ok.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_osr_existing_open_upvalue.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_osr_existing_param_upvalue.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_osr_param_write.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_post_inc_upval.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_private.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_put_elem_fast.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_put_field_ic.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_regexp_literal_intrinsics.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_sparse_captured_param_bailout.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_string_add_bailout.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_string_builder_snapshot.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_string_concat_gc_roots.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_typed_array_elem_fast.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_jit_typed_array_elem_fast.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_jit_typeof_bailout_arg_resume.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_upvalue_self_reference.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_jit_void.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_js_entry_module_syntax_server.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_js_entry_tla_resume.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_json.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_json_stringify_global_this.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_label_of.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_labeled_loops.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_legacy_accessors.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_literal_primordials.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_loops.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_map.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_map_gc.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_map_upsert.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_math.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_math_ops.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_microtask_order.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_mini_amp_tui_exit_restores_tty.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_minicoro_concurrent.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_minimal.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_missing_named_export.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_module_destructured_export_clause.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_module_eval_reentrancy.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_module_static_dependency_order.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_nan_infinity.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_native_bind.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_native_bind_debug.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_native_cfunc_object_semantics_repro.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_native_method_descriptors.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_net_create_connection.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_new_arr.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_events_cjs_static_helpers.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_events_get_event_listeners.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_events_once_eventtarget_abort.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_events_once_prototype_spoof.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_http_host_header_ipv6.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_http_incoming_message_readable.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_http_max_header_size.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_http_upgrade_head.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_http_upgrade_max_header_size.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_http_upgrade_non101_body.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_url_parse_named_export.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_node_util_textcodec_exports.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_not_operator.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_number_literals.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_number_radix.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_number_simple_decimal_fast.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_numeric_separators.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_obj_closure.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_object_define_property_generic_descriptor.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_object_fromentries_iterables.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_optional_chain.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_parser_unterminated_template.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_path.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_performance.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_pkg_exec_user_agent.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_pkg_lifecycle_install_postinstall_order.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_practical_async.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_primitive_wrappers.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_private_brands.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_binding_constants.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_emit_warning.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_process_emit_warning.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_process_env.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_env_double_underscore.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_event_api.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_nexttick_bound_receiver.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_nexttick_order.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_stdin_setencoding_tty.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_stdout_resize_signal.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_process_stdout_setencoding.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise_all_array_iterator.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise_chained_catch_unhandled.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise_display.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise_inspect_long.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise_only.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise_resolve.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise_thenables.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_property_cache_deletion.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_property_error_messages.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_property_ic_proto_guard.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_property_lookup_cache.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_prototype_chain_class_mutation.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_prototype_chain_obj_mutation.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_prototypes.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_proxy_array_flat_urlsearchparams.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_proxy_get_topropertykey.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_proxy_object_entries.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_proxy_toprimitive_get_trap.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_proxy_typeof_callable.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_readable_stream_tee_object_chunk.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_readline_history_bounds.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_readline_keypress.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_readline_keypress_arrow.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_readline_keypress_sequential.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_readline_promises_piped.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_readline_question_prompt.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_readline_stdin_pause.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_reflect_construct_newtarget_wrappers.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_reflect_get_own_property_descriptor.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_reflect_proxy_get_toprimitive.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_regex_equals_literal.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_regexp_basic.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_regexp_edge_cases.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_regexp_exec_fast_paths.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_regexp_patterns.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_regexp_replace_large_template.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_registry_multipart_publish.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_repl_static_import.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_repl_static_import.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_require_exports_conditions.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_response_constructor_fast_path.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_rest_params.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_return.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_rope_large_property_concat.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_rpc.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_rpc.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_sandbox_cpu_limits.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_sandbox_messages.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_server_invalid_request_target.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_set.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_setter_direct.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_shadowing.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_shell.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_silver_eval.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_spread.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_spread_accessor.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_spread_symbols.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stack_depth.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_static.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stream_is_disturbed_end.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stream_is_errored.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stream_read0_refills_below_hwm.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stream_readable_data_listener_order.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stream_readable_resume_end_async.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stream_readable_to_web.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stream_static_state_predicates.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_stream_transform_async_callback.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_strict_function.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_strict_mode.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_concat_perf.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_exports.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_fromcharcode_unicode.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_large_space_stats.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_length_accumulation.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_number_methods.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_pad_unicode.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_replace_regex.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_small_append_loop.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_string_template_modern.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_super_getter_receiver.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_suppressed_error_symbols.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_sv_async.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_switch.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tco.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tco_asi.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tco_curried.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tco_curried_debug.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tco_monad.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tco_zeroarg.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_template_regex_brace.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_template_self_append.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_ternary_and_operators.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_this.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_three_params.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_throw_expressions.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_throw_stack.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_throw_stack.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_timer_chain_iter.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_timer_fired_timeout_gc.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_timer_mutation.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_timer_refresh.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_timer_unref_exit.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_timers.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tla_dead_await_fastpath.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tls_secure_connect_event.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_toString.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_toprimitive_null.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_try_catch.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_ts_js_extension_resolution.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tty_readstream_da_timeout.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tty_readstream_dev_tty.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tty_readstream_dev_tty_on_data_flowing.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_tty_readstream_setencoding.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_two_awaits.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_typedarray_apply.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_typescript_entry_tla.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_typescript_type_only_import_elision.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_ub_class.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_uint8array_base64_hex.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_upvalue_gc.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_uri.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_url_bracket_query.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_util_is_deep_strict_equal.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_util_parse_args.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_var.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_var_hoisting.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_void_operator.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_wasm_imported_global_mutability.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_wasm_imported_memory_shared.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_wasm_imported_table_funcref.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_wasm_memory_constructor.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_wasm_simd.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_wasm_table_constructor.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_wasm_webassembly_api.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_watch_supervisor.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_weakmap.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_weakset.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_websocket_client_buffered_frames.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_websocket_server_options.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_window_identifier_shadowing.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_windows_file_url_paths.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_windows_float64array_tco_gc.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_with_package_compat.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_with_proxy_write_delete.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_with_strict.cjs": {
+          "failed": 1,
+          "failing": [
+            "test_with_strict.cjs"
+          ],
+          "passed": 0,
+          "total": 1
+        },
+        "test_without_strict.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_wrapped_this.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_ws_echo.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        }
+      },
+      "filter": null,
+      "finished": "2026-07-26T09:26:03",
+      "revision": {
+        "branch": "compliance/t3-harness-and-builtin-names",
+        "commit": "b8f6ef47c43ccd725307f1f2c9f6ddd59daa30f5",
+        "dirty": false,
+        "short": "b8f6ef47",
+        "subject": "compliance: emit a per-run JSON manifest and add baseline diffing"
+      },
+      "schema_version": 1,
+      "started": "2026-07-26T09:24:27",
+      "suite": "Tier 2 - Node.js Compatibility Suite",
+      "tier": 2,
+      "totals": {
+        "failed": 14,
+        "pass_rate": 96.8,
+        "passed": 430,
+        "total": 444
+      }
+    }
+  }
+}
