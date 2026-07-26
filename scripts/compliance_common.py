@@ -138,6 +138,44 @@ T262_HOST_262_SHIM = (
 )
 
 
+def git_revision() -> dict:
+    """Describe the tree the suite is being run against.
+
+    Compliance percentages are only comparable between runs at the same
+    revision, and a log that does not say which commit produced it will be
+    misread later (a fix landed after the run looks like a live failure). So
+    every log records the commit, whether the tree was dirty, and the branch.
+    """
+    def _git(*args: str) -> str:
+        try:
+            out = subprocess.run(
+                ["git", *args],
+                cwd=REPO_ROOT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                timeout=10,
+            )
+            return out.stdout.strip() if out.returncode == 0 else ""
+        except Exception:
+            return ""
+
+    commit = _git("rev-parse", "HEAD")
+    if not commit:
+        return {"commit": "unknown", "short": "unknown", "dirty": False, "branch": "unknown", "subject": ""}
+
+    return {
+        "commit": commit,
+        "short": commit[:8],
+        "dirty": bool(_git("status", "--porcelain")),
+        "branch": _git("rev-parse", "--abbrev-ref", "HEAD") or "unknown",
+        "subject": _git("log", "-1", "--format=%s"),
+    }
+
+def revision_tag(rev: dict) -> str:
+    """Short `<short-sha>` / `<short-sha>-dirty` tag used in log filenames."""
+    return f"{rev['short']}-dirty" if rev["dirty"] else rev["short"]
+
 def find_ant_binary() -> Path:
     local_ant = REPO_ROOT / "build" / "ant"
     if local_ant.exists() and os.access(local_ant, os.X_OK):
@@ -176,11 +214,18 @@ def ensure_test262_harness() -> tuple[Path, Path]:
     return assert_js, sta_js
 
 def ensure_test262_repo() -> Path:
-    """Ensure Test262 suite repository is checked out locally."""
+    """Ensure Test262 suite repository is checked out locally.
+
+    Note: the checkout ships a `package.json`, which makes ant run the tests
+    (which are executed in place, see run_compliance_tier3) in CommonJS scope
+    rather than as Scripts. Removing it fixes a handful of `noStrict` tests that
+    assert `this === global`, but costs ~60 dynamic-import tests, so it is left
+    alone. Fixing both needs an engine-side way to force Script semantics.
+    """
     root_t262 = REPO_ROOT / "test262"
     if (root_t262 / "test").exists():
         return root_t262
-    
+
     deps_t262 = DEPS_DIR / "test262"
     if (deps_t262 / "test").exists():
         return deps_t262
@@ -299,11 +344,15 @@ def run_js_test(ant_bin: Path, test_path: Path, timeout_sec: float = 15.0) -> tu
         return False, duration_ms, str(e)
 
 def make_log_path(label: str) -> Path:
-    """Return a timestamped log path under .deps/compliance/logs/."""
+    """Return a revision-tagged, timestamped log path under .deps/compliance/logs/.
+
+    The commit is in the filename as well as the header so that agents can pick
+    the right log (and spot a stale one) without opening a 20MB file.
+    """
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     ts = time.strftime("%Y%m%d_%H%M%S")
     safe = label.lower().replace(" ", "_").replace("/", "_")
-    return LOGS_DIR / f"{safe}_{ts}.log"
+    return LOGS_DIR / f"{safe}_{ts}_{revision_tag(git_revision())}.log"
 
 class SummaryTracker:
     def __init__(self, suite_name: str, log_path: Path | None = None, log_fail_only: bool = False):
@@ -312,12 +361,25 @@ class SummaryTracker:
         self.log_path = log_path
         self.log_fail_only = log_fail_only
         self._log_file = None
+        self.revision = git_revision()
 
         if self.log_path:
             self.log_path.parent.mkdir(parents=True, exist_ok=True)
             self._log_file = open(self.log_path, "w", encoding="utf-8")
             self._log_file.write(f"=== {suite_name} ===\n")
-            self._log_file.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            self._log_file.write(f"Started  : {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            self._log_file.write(f"Commit   : {self.revision['commit']}\n")
+            self._log_file.write(f"Branch   : {self.revision['branch']}\n")
+            self._log_file.write(f"Tree     : {'dirty' if self.revision['dirty'] else 'clean'}\n")
+            if self.revision["subject"]:
+                self._log_file.write(f"Subject  : {self.revision['subject']}\n")
+            self._log_file.write("\n")
+
+        if self.revision["dirty"]:
+            print(
+                f"  {YELLOW}Warning: working tree is dirty; results are not reproducible "
+                f"from commit {self.revision['short']} alone.{RESET}"
+            )
 
     def _write_log(self, text: str):
         if self._log_file:
@@ -371,11 +433,16 @@ class SummaryTracker:
         failed_cnt = total - passed_cnt
         pass_pct = (passed_cnt / total) * 100.0
 
+        rev_label = revision_tag(self.revision)
+
         summary_lines = [
             "",
             "=" * 60,
             f"Summary: {self.suite_name}",
             "=" * 60,
+            f"Commit      : {self.revision['commit']}"
+            + (" (dirty)" if self.revision["dirty"] else ""),
+            f"Branch      : {self.revision['branch']}",
             f"Total Tests : {total}",
             f"Passed      : {passed_cnt}",
             f"Failed      : {failed_cnt}",
@@ -387,6 +454,7 @@ class SummaryTracker:
         print("\n" + "=" * 60)
         print(f"{BOLD}Summary: {self.suite_name}{RESET}")
         print("=" * 60)
+        print(f"Commit      : {CYAN}{rev_label}{RESET} ({self.revision['branch']})")
         print(f"Total Tests : {total}")
         print(f"Passed      : {GREEN}{passed_cnt}{RESET}")
         print(f"Failed      : {RED}{failed_cnt}{RESET}")
@@ -398,6 +466,18 @@ class SummaryTracker:
                 self._write_log(line)
             exit_code = 0 if failed_cnt == 0 else 1
             self._close_log(exit_code)
+
+        gh_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+        if gh_summary:
+            try:
+                with open(gh_summary, "a", encoding="utf-8") as f:
+                    f.write(f"### Compliance Summary: {self.suite_name}\n\n")
+                    f.write(f"Commit `{rev_label}` on `{self.revision['branch']}`\n\n")
+                    f.write(f"| Total Tests | Passed | Failed | Pass Rate |\n")
+                    f.write(f"| ----------- | ------ | ------ | --------- |\n")
+                    f.write(f"| {total} | {passed_cnt} | {failed_cnt} | **{pass_pct:.1f}%** |\n\n")
+            except Exception:
+                pass
 
         return 0 if failed_cnt == 0 else 1
 

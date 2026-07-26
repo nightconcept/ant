@@ -13,7 +13,6 @@ from compliance_common import (
     make_log_path,
     ensure_test262_repo,
     prepare_test262_code,
-    DEPS_DIR,
     REPO_ROOT
 )
 
@@ -23,22 +22,49 @@ TIER3_SPEC_FILES = [
     "explicit_resource_management.js",
 ]
 
-def run_single_t262(ant_bin: Path, test262_dir: Path, test_file: Path, worker_id: int):
-    tmp_file = DEPS_DIR / f"tmp_t262_w{worker_id}.js"
+# Prefix for the harness-prepended scratch copy of each test. It is written next
+# to the original (see run_single_t262) so it must be recognisable for cleanup.
+TMP_PREFIX = "ant_t262_tmp_"
+
+def sweep_stale_tmp(test262_dir: Path) -> int:
+    """Delete scratch copies left behind by an interrupted run."""
+    removed = 0
+    for stale in (test262_dir / "test").glob(f"**/{TMP_PREFIX}*"):
+        try:
+            stale.unlink()
+            removed += 1
+        except OSError:
+            pass
+    return removed
+
+def run_single_t262(ant_bin: Path, test262_dir: Path, test_file: Path, seq: int):
+    # The scratch copy must live in the test's own directory: Test262 tests
+    # reach sibling files through relative specifiers (`./x_FIXTURE.js`,
+    # `import('./y.js')`), which cannot resolve from a shared scratch dir.
+    # The name is unique per test rather than per worker — a `idx % workers`
+    # name is not safe under a thread pool, where two tasks sharing a slot can
+    # overlap and clobber each other's source.
+    tmp_file = test_file.parent / f"{TMP_PREFIX}{seq}_{test_file.name}"
     code, fm = prepare_test262_code(test_file, test262_dir)
-    tmp_file.write_text(code, encoding="utf-8")
-    
-    passed, duration_ms, output = run_js_test(ant_bin, tmp_file, timeout_sec=5.0)
-    
+
+    try:
+        tmp_file.write_text(code, encoding="utf-8")
+        passed, duration_ms, output = run_js_test(ant_bin, tmp_file, timeout_sec=5.0)
+    finally:
+        try:
+            tmp_file.unlink()
+        except OSError:
+            pass
+
     neg = fm.get("negative")
     rel_path = test_file.relative_to(test262_dir / "test")
     test_name = f"Test262: {rel_path}"
-    
+
     if neg is not None:
         actual_passed = not passed
     else:
         actual_passed = passed
-        
+
     return test_name, actual_passed, duration_ms, output
 
 def main():
@@ -93,9 +119,15 @@ def main():
 
         if t262_test_root.exists():
             print(f"Discovering Test262 tests in {t262_test_root}...")
+            stale = sweep_stale_tmp(test262_dir)
+            if stale:
+                print(f"Removed {stale} stale scratch file(s) from a previous run.")
+
             all_t262 = sorted([
                 f for f in t262_test_root.glob("**/*.js")
-                if not f.name.endswith("_FIXTURE.js") and "FIXTURE" not in f.name
+                if not f.name.endswith("_FIXTURE.js")
+                and "FIXTURE" not in f.name
+                and not f.name.startswith(TMP_PREFIX)
             ])
 
             if args.filter:
@@ -111,12 +143,13 @@ def main():
             with ThreadPoolExecutor(max_workers=workers) as executor:
                 futures = []
                 for idx, t_file in enumerate(all_t262):
-                    worker_id = idx % workers
-                    futures.append(executor.submit(run_single_t262, ant_bin, test262_dir, t_file, worker_id))
+                    futures.append(executor.submit(run_single_t262, ant_bin, test262_dir, t_file, idx))
 
                 for future in as_completed(futures):
                     name, passed, duration_ms, output = future.result()
                     tracker.add(name, passed, duration_ms, details=output if not passed else "")
+
+            sweep_stale_tmp(test262_dir)
 
     return tracker.print_summary()
 
