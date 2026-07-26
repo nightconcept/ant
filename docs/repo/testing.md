@@ -41,9 +41,10 @@ This guide keeps validation proportional to the change while still protecting ru
 
 ## CI Workflows By Branch
 
-This fork runs three branch-scoped top-level workflows instead of one
-workflow per concern. Each only triggers on `push`/`pull_request` targeting
-its own branch, so a single commit fires exactly one of them.
+This fork does not use pull requests — all work lands via direct pushes to
+`dev`, `main`, or `upstream`. Each branch has its own top-level workflow that
+triggers only on `push` to that branch (plus `workflow_dispatch` for manual
+runs), so a single push fires exactly one of them.
 
 - **`.github/workflows/dev-ci.yml`** (branch `dev`): `build` (all 7 platform
   binaries), `tier1` (Tier 1 compliance gate — fails if any Tier 1 test

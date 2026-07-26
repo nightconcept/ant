@@ -3,8 +3,6 @@ name: Dev CI
 on:
   push:
     branches: [dev]
-  pull_request:
-    branches: [dev]
   workflow_dispatch:
 
 permissions:
@@ -136,10 +134,7 @@ jobs:
         run: node .github/agents/check_repo_knowledge.js
       - name: Collect changed files
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin "${{ github.base_ref }}" --depth=1
-            git diff --name-only "origin/${{ github.base_ref }}...HEAD" > .changed-files
-          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+          if [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
             git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" > .changed-files
           else
             git ls-files > .changed-files
