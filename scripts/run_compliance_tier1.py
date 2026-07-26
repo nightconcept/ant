@@ -33,6 +33,7 @@ def main():
         "Tier 1 - WinterTC / Edge Baseline & Core JS",
         log_path=log_path,
         log_fail_only=args.log_fail and not args.log,
+        filter=args.filter,
     )
 
     if args.smoke:

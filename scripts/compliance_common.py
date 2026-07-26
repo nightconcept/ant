@@ -2,6 +2,7 @@
 import sys
 import os
 import re
+import json
 import time
 import urllib.request
 import subprocess
@@ -175,6 +176,26 @@ def git_revision() -> dict:
 def revision_tag(rev: dict) -> str:
     """Short `<short-sha>` / `<short-sha>-dirty` tag used in log filenames."""
     return f"{rev['short']}-dirty" if rev["dirty"] else rev["short"]
+
+# Mirrors `category_of()` in `.claude/skills/compliance-failures/parse_failures.py`.
+# Kept as a separate copy on purpose: that script parses historical log text and
+# must keep working standalone against old logs, while this one buckets live
+# results as they are recorded. If the naming convention for test names changes,
+# update both.
+def category_of(name: str) -> str:
+    """Coarse bucket for grouping, e.g. Test262: built-ins/Temporal."""
+    m = re.match(r"Test262:\s*([^/]+/[^/]+)", name)
+    if m:
+        return f"Test262: {m.group(1)}"
+    m = re.match(r"(Test262):\s*([^/]+)", name)
+    if m:
+        return f"Test262: {m.group(2)}"
+    return name
+
+def suite_tier(suite_name: str) -> int | None:
+    """Extract the numeric tier from a suite name like 'Tier 3 - Full ...'."""
+    m = re.match(r"\s*Tier\s+(\d+)", suite_name)
+    return int(m.group(1)) if m else None
 
 def find_ant_binary() -> Path:
     local_ant = REPO_ROOT / "build" / "ant"
@@ -355,13 +376,15 @@ def make_log_path(label: str) -> Path:
     return LOGS_DIR / f"{safe}_{ts}_{revision_tag(git_revision())}.log"
 
 class SummaryTracker:
-    def __init__(self, suite_name: str, log_path: Path | None = None, log_fail_only: bool = False):
+    def __init__(self, suite_name: str, log_path: Path | None = None, log_fail_only: bool = False, filter: str | None = None):
         self.suite_name = suite_name
         self.results = []
         self.log_path = log_path
         self.log_fail_only = log_fail_only
+        self.filter = filter
         self._log_file = None
         self.revision = git_revision()
+        self.started = time.strftime("%Y-%m-%dT%H:%M:%S")
 
         if self.log_path:
             self.log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -386,7 +409,9 @@ class SummaryTracker:
             self._log_file.write(strip_ansi(text) + "\n")
             self._log_file.flush()
 
-    def add(self, name: str, passed: bool, duration_ms: float, category: str = "General", details: str = ""):
+    def add(self, name: str, passed: bool, duration_ms: float, category: str | None = None, details: str = ""):
+        if category is None:
+            category = category_of(name)
         self.results.append({
             "name": name,
             "passed": passed,
@@ -420,6 +445,62 @@ class SummaryTracker:
             self._write_log("-" * (len(header) + 8))
             self._write_log("")
 
+    def _build_manifest(self) -> dict:
+        """Build the machine-readable per-run manifest (see docs/repo/compliance.md).
+
+        This is the cheap, structured counterpart to the multi-MB `.log` file:
+        agents should read this first and only drill into the log for the
+        specific failing test output they need.
+        """
+        total = len(self.results)
+        passed_cnt = sum(1 for r in self.results if r["passed"])
+        failed_cnt = total - passed_cnt
+        pass_rate = round((passed_cnt / total) * 100.0, 1) if total else 0.0
+
+        categories: dict[str, dict] = {}
+        for r in self.results:
+            cat = categories.setdefault(r["category"], {
+                "total": 0, "passed": 0, "failed": 0, "failing": [],
+            })
+            cat["total"] += 1
+            if r["passed"]:
+                cat["passed"] += 1
+            else:
+                cat["failed"] += 1
+                cat["failing"].append(r["name"])
+        for cat in categories.values():
+            cat["failing"].sort()
+
+        return {
+            "schema_version": 1,
+            "suite": self.suite_name,
+            "tier": suite_tier(self.suite_name),
+            "started": self.started,
+            "finished": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "revision": self.revision,
+            "filter": self.filter,
+            "totals": {
+                "total": total,
+                "passed": passed_cnt,
+                "failed": failed_cnt,
+                "pass_rate": pass_rate,
+            },
+            "categories": categories,
+        }
+
+    def _write_manifest(self):
+        """Write the JSON manifest next to the log file (same stem, .json suffix)."""
+        if not self.log_path:
+            return
+        manifest_path = self.log_path.with_suffix(".json")
+        try:
+            with open(manifest_path, "w", encoding="utf-8") as f:
+                json.dump(self._build_manifest(), f, indent=2)
+                f.write("\n")
+            print(f"  {CYAN}Manifest: {manifest_path}{RESET}")
+        except Exception as e:
+            print(f"  {YELLOW}Warning: failed to write manifest {manifest_path}: {e}{RESET}")
+
     def print_summary(self) -> int:
         total = len(self.results)
         if total == 0:
@@ -427,6 +508,7 @@ class SummaryTracker:
             if self._log_file:
                 self._write_log("No tests executed.")
                 self._close_log(0)
+                self._write_manifest()
             return 0
 
         passed_cnt = sum(1 for r in self.results if r["passed"])
@@ -466,6 +548,7 @@ class SummaryTracker:
                 self._write_log(line)
             exit_code = 0 if failed_cnt == 0 else 1
             self._close_log(exit_code)
+            self._write_manifest()
 
         gh_summary = os.environ.get("GITHUB_STEP_SUMMARY")
         if gh_summary:

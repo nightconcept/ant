@@ -87,6 +87,7 @@ def main():
         "Tier 3 - Full Conformance (Test262 / WPT / Frameworks)",
         log_path=log_path,
         log_fail_only=args.log_fail and not args.log,
+        filter=args.filter,
     )
 
     if args.smoke:

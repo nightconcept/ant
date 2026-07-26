@@ -24,6 +24,8 @@ def main():
 
     ant_bin = find_ant_binary()
 
+    filter_term = args.module or args.filter
+
     log_path = None
     if args.log or args.log_fail:
         log_path = make_log_path("tier2")
@@ -32,9 +34,8 @@ def main():
         "Tier 2 - Node.js Compatibility Suite",
         log_path=log_path,
         log_fail_only=args.log_fail and not args.log,
+        filter=filter_term,
     )
-
-    filter_term = args.module or args.filter
 
     if args.smoke:
         print("Fetching and running Tier 2 pulled official Node.js tests (nodejs/node)...")

@@ -63,19 +63,76 @@ binary before acting on them.
 Tier 3 logs are 20+ MB. Never read one directly; use the
 `compliance-failures` skill, which ranks and groups the failures.
 
+## The Per-Run Manifest
+
+Every run that writes a log (`--log` or `--log-fail`) also writes a sibling
+JSON manifest at the same path with `.json` instead of `.log` — a few KB
+versus the log's tens of MB, so it is what agents should read first. It is
+built in `SummaryTracker` (`scripts/compliance_common.py`) and has this shape:
+
+```json
+{
+  "schema_version": 1,
+  "suite": "Tier 3 - Full Conformance (Test262 / WPT / Frameworks)",
+  "tier": 3,
+  "started": "2026-07-26T08:53:35",
+  "finished": "2026-07-26T09:14:02",
+  "revision": { "commit": "...", "short": "...", "dirty": false, "branch": "dev", "subject": "..." },
+  "filter": "language/module-code",
+  "totals": { "total": 599, "passed": 474, "failed": 125, "pass_rate": 79.1 },
+  "categories": {
+    "Test262: language/module-code": {
+      "total": 599, "passed": 474, "failed": 125,
+      "failing": ["Test262: language/module-code/foo.js", "..."]
+    }
+  }
+}
+```
+
+`filter` is the `--filter` value used for the run, or `null` for a full run.
+`failing` lists only failing test *names*, sorted — no output — which is what
+makes per-category diffing across runs cheap and precise.
+
+## The Checked-In Baseline
+
+`docs/repo/compliance-baseline.json` holds the most recent full-run manifest
+per tier, keyed by tier number: `{"schema_version": 1, "tiers": {"1": {...},
+"2": {...}}}`. **The tier 3 entry is not seeded** — a full tier 3 run is too
+expensive to run casually, so `diff` (below) treats a missing tier baseline as
+"nothing to compare", prints that, and exits 0. Seed it by running a full tier
+3 pass and then `compliance_baseline.py update` on the resulting manifest once
+one has been run and reviewed.
+
+`scripts/compliance_baseline.py` has two subcommands:
+
+- `update <manifest.json>` — store that manifest as the new baseline for its
+  tier. Refuses (non-zero exit) a manifest with a non-null `filter` or a dirty
+  revision — a baseline must describe one specific, reproducible, full run.
+- `diff <manifest.json>` — compare a manifest (full run or a filtered slice)
+  against the stored baseline for its tier, per category. Only categories the
+  run actually covered are compared, so a `--filter` slice cannot look like a
+  suite-wide regression. It lists newly-failing and newly-passing test names
+  (capped, with exact counts) and exits non-zero if any covered category
+  regressed. Pass `--allow-regressions` to report without failing the exit
+  code.
+
 ## Measuring A Change Without A Full Run
 
 A full tier 3 run is expensive. To attribute a delta:
 
-- Run the affected slice only: `python3 scripts/run_compliance_tier3.py --filter
-  <path-substring> --log-fail`.
-- Diff the failing-test *names* between the old and new logs. Comparing totals
-  against a whole-suite log's category counts is unreliable — the categories do
-  not line up with `--filter` substrings, and a stale baseline will invent both
-  regressions and wins that are not there.
-- Treat single-test movements with suspicion until reproduced. Runs before the
-  per-test scratch-file fix could clobber each other's sources and record false
-  passes.
+```
+python3 scripts/run_compliance_tier3.py --filter <path-substring> --log-fail
+python3 scripts/compliance_baseline.py diff .deps/compliance/logs/tier3_<new-run>.json
+```
+
+`diff` does the failing-test-name comparison for you, scoped to the categories
+the slice actually touched. Once a change is verified clean (or an improvement
+is confirmed) on a full run, promote it with `compliance_baseline.py update` so
+later slices compare against it.
+
+Treat single-test movements with suspicion until reproduced. Runs before the
+per-test scratch-file fix could clobber each other's sources and record false
+passes.
 
 ## Harness Invariants
 
