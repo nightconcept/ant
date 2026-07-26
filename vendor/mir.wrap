@@ -1,6 +1,6 @@
 [wrap-git]
 url = https://github.com/nightconcept/mir.git
-revision = b10a29833f77d428b405e95c0eb6216256459fed
+revision = c932c4784e2aed0d1fa7eab3c2d4fb21a6869766
 depth = 1
 patch_directory = mir
 
