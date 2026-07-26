@@ -1,7 +1,8 @@
 [wrap-git]
-url = https://github.com/themackabu/mir.git
-revision = cb71e1eefde4b8f01c05c94961c52c45dccbfc7e
+url = https://github.com/nightconcept/mir.git
+revision = c932c478136948f9e5f5e8a23fa1f9609fad6a54
 depth = 1
+patch_directory = mir
 
 [provide]
 mir = mir_dep

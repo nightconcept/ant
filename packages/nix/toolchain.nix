@@ -1,5 +1,8 @@
 { pkgs }: {
-  clang = pkgs.llvmPackages_21.clang-unwrapped.out;
+  clang =
+    if pkgs.stdenv.hostPlatform.isDarwin
+    then pkgs.llvmPackages_21.clang-unwrapped.out
+    else pkgs.llvmPackages_21.clang;
   compilerRt = pkgs.llvmPackages_21.compiler-rt;
   bintools =
     if pkgs.stdenv.hostPlatform.isDarwin

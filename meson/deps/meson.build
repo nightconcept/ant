@@ -15,7 +15,13 @@ if host_machine.system() == 'darwin'
     'CMAKE_SHARED_LINKER_FLAGS': deployment_flag,
     'CMAKE_MODULE_LINKER_FLAGS': deployment_flag,
   })
+  if host_machine.cpu_family() == 'aarch64'
+    boringssl_opts.append_compile_args('c', '-march=armv8-a+crypto')
+    boringssl_opts.append_compile_args('cpp', '-march=armv8-a+crypto')
+  endif
 endif
+
+
 
 boringssl_warning_flag = cc.get_argument_syntax() == 'msvc' ? '/W0' : '-w'
 boringssl_opts.append_compile_args('c', boringssl_warning_flag)

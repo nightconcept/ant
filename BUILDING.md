@@ -37,15 +37,15 @@ If you can reproduce a test failure, search for it in the <br>
 Ant builds and runs on the following platforms. Official CI builds are
 produced for each platform listed below.
 
-| Operating System | Architectures | Variant    | Static | Notes                        |
-| ---------------- | ------------- | ---------- | ------ | ---------------------------- |
-| GNU/Linux        | x64           | glibc      | No     | Ubuntu 22.04 (CI)            |
-| GNU/Linux        | aarch64       | glibc      | No     | Ubuntu 22.04 (CI)            |
-| GNU/Linux        | x64           | musl       | Yes    | Alpine Edge (CI)             |
-| GNU/Linux        | aarch64       | musl       | Yes    | Alpine Edge (CI)             |
-| macOS            | x64           | darwin     | No     | macOS 15 (CI)                |
-| macOS            | aarch64       | darwin     | No     | macOS 15 (CI)                |
-| Windows          | x64           | mingw/msys | No     | MSYS2 MINGW64 toolchain (CI) |
+| Operating System | Architectures | Variant      | Static | Notes                        |
+| ---------------- | ------------- | ------------ | ------ | ---------------------------- |
+| GNU/Linux        | x64           | glibc        | No     | Ubuntu 22.04 (CI)            |
+| GNU/Linux        | aarch64       | glibc        | No     | Ubuntu 22.04 (CI)            |
+| GNU/Linux        | x64           | musl         | Yes    | Alpine Edge (CI)             |
+| GNU/Linux        | aarch64       | musl         | Yes    | Alpine Edge (CI)             |
+| macOS            | x64           | darwin       | No     | macOS 15 (CI)                |
+| macOS            | aarch64       | darwin       | No     | macOS 15 (CI)                |
+| Windows          | x64           | clang64/msys | No     | MSYS2 CLANG64 toolchain (CI) |
 
 ### Supported toolchains
 
@@ -56,7 +56,7 @@ C23 support is required.
 | ---------------- | ------------------------------------- |
 | Linux            | GCC >= 14 or Clang >= 18              |
 | macOS            | Xcode CLT (Apple Clang) or LLVM >= 18 |
-| Windows          | MinGW-w64 GCC via MSYS2 (MINGW64)     |
+| Windows          | LLVM/Clang via MSYS2 (CLANG64)        |
 
 ### Official binary platforms and toolchains
 
@@ -70,7 +70,7 @@ CI binaries are produced using:
 | ant-linux-aarch64-musl | Alpine Edge (musl), statically linked, Clang |
 | ant-darwin-x64         | macOS 15 Intel, LLVM/Clang                   |
 | ant-darwin-aarch64     | macOS 15 ARM, LLVM/Clang                     |
-| ant-windows-x64        | MSYS2 MINGW64 toolchain                      |
+| ant-windows-x64        | MSYS2 CLANG64 toolchain                      |
 
 ## Building Ant on supported platforms
 
@@ -84,7 +84,7 @@ The following tools are required to build Ant regardless of platform:
 - **pkg-config**
 - **Node.js** >= 22 and **npm** (used to generate bundled JavaScript sources at
   build time)
-- **[Zig](https://ziglang.org/)** >= 0.16 (builds the package manager component)
+- **[Zig](https://ziglang.org/)** 0.16.x (builds the package manager component)
 - **Git**
 
 Dependencies are vendored as Meson subprojects under `vendor/`
@@ -94,22 +94,27 @@ and are fetched automatically:
 - Ada URL 3.4.4
 - argtable3 3.3.1
 - BoringSSL `297b11798a0ed6bc7736aa57328909a4afbbf67a`
+- c-ares
 - crprintf `HEAD`
+- double-conversion
 - google-brotli 1.1.0
 - libffi 3.5.2
 - libuv 1.52.0
 - llhttp 9.3.1
 - LMDB (OpenLDAP LMDB 0.9.33)
-- mimalloc 3.3.2 (default runtime allocator)
+- mimalloc 3.3.2 (optional runtime allocator)
 - minicoro `HEAD`
 - MIR `HEAD`
 - nghttp2 1.68.0
 - PCRE2 10.47
+- Simde
+- Skim
 - tlsuv 0.40.13
 - utf8proc 2.10.0
 - uthash 2.3.0
 - uuidv7-h `HEAD`
 - wasm-micro-runtime `92f40918bbfad35546a1512b10bd25eaa31add4d`
+- wirecall
 - yyjson 0.12.0
 - zlib-ng 2.3.3
 
@@ -117,7 +122,37 @@ and are fetched automatically:
 
 #### Unix prerequisites
 
-Installation via package manager:
+The supported development environment on Linux and macOS is the checked-in
+Nix flake. Install [Nix](https://nixos.org/download/) with flakes enabled,
+then enter the shell from the repository root:
+
+```bash
+nix develop --accept-flake-config
+```
+
+The shell provides LLVM/Clang 21, Meson, Ninja, CMake, pkg-config, Node.js 22,
+Python, Git, curl, Zig 0.16, and Just. `--accept-flake-config` accepts the
+Cachix substituter and public key declared in `flake.nix`.
+
+For automatic shell activation, install
+[direnv](https://direnv.net/) and
+[nix-direnv](https://github.com/nix-community/nix-direnv), then run once:
+
+```bash
+direnv allow
+```
+
+The checked-in `.envrc` loads the same flake. It is intended for Linux and
+macOS; Windows development uses mise as described below.
+
+To build the reproducible Nix package rather than enter the development shell:
+
+```bash
+nix build .#ant --accept-flake-config
+./result/bin/ant --version
+```
+
+If you cannot use Nix, install the prerequisites manually:
 
 - Ubuntu/Debian:
 
@@ -142,7 +177,7 @@ Installation via package manager:
     util-linux-dev util-linux-static linux-headers libunwind-dev libunwind-static
   ```
 
-You will also need Zig installed. The recommended approach:
+You will also need Zig 0.16.x installed:
 
 ```bash
 # Zig (download from https://ziglang.org/download/)
@@ -150,6 +185,10 @@ You will also need Zig installed. The recommended approach:
 ```
 
 #### macOS prerequisites
+
+The Nix flake described above is the supported macOS development environment.
+It discovers the active Xcode SDK while supplying the remaining toolchain.
+For a manual setup instead:
 
 - Xcode Command Line Tools (provides Apple Clang):
 
@@ -184,21 +223,20 @@ meson setup build
 meson compile -C build
 ```
 
+Run these commands inside `nix develop`, or let direnv load the flake first.
 Meson runs `npm ci` in `src/tools` automatically before generating the bundled
 JavaScript headers; no separate npm install step is needed.
 
-Alternatively, if you have [maid](https://github.com/exact-labs/maid) installed, <br>
-you can use the task runner:
+Alternatively, use the checked-in `justfile`:
 
 ```bash
-maid setup       # downloads subprojects + configures with ccache and lld
-maid build       # compiles
-maid run <file>  # builds and runs a JS file
+just setup       # downloads subprojects and configures build/
+just build       # compiles
+just run <file>  # builds and runs a JS file
 ```
 
 > [!TIP]
-> `maid setup` automatically configures ccache and lld for faster builds.
-> Use `maid run <file>` during development to build and execute in one step.
+> Use `just run <file>` during development to build and execute in one step.
 
 To verify the build:
 
@@ -226,7 +264,7 @@ part of the version string.
 You can install the built binary using:
 
 ```bash
-maid install
+just install
 ```
 
 This copies the binary to the directory of an existing `ant` installation, or
@@ -253,7 +291,7 @@ To run the spec suite:
 ```
 
 > [!NOTE]
-> Remember to recompile with `meson compile -C build` (or `maid build`)
+> Remember to recompile with `meson compile -C build` (or `just build`)
 > between test runs if you change code in the `src/` directory.
 
 #### Building a debug build
@@ -268,11 +306,11 @@ CC="ccache $(which clang)" \
 meson compile -C build
 ```
 
-Or with maid:
+Or with Just:
 
 ```bash
-maid debug
-maid build
+just debug
+just build
 ```
 
 When using the debug build, core dumps will be generated in case of crashes.
@@ -300,11 +338,11 @@ CC="ccache $(which clang)" \
 meson compile -C build
 ```
 
-Or with maid:
+Or with Just:
 
 ```bash
-maid asan
-maid build
+just asan
+just build
 ```
 
 Then run tests against the ASan build:
@@ -316,7 +354,7 @@ Then run tests against the ASan build:
 #### Speeding up frequent rebuilds when developing
 
 If you plan to frequently rebuild Ant, installing `ccache` can greatly
-reduce build times. The `maid setup` task configures ccache automatically.
+reduce build times.
 
 > [!TIP]
 > Using both `ccache` and `lld` together provides the best rebuild
@@ -363,20 +401,8 @@ To regenerate the profile and produce a final PGO build:
 ./meson/pgo/build.sh
 ```
 
-The script enters the project Nix devShell by default so profile generation and
-the final optimized build use the same pinned toolchain. To deliberately use
-the current shell toolchain instead:
-
-```bash
-./meson/pgo/build.sh --force-no-nix
-```
-
-On macOS, the devShell intentionally uses unwrapped Clang with the selected
-Apple SDK and supplies Nix's full `compiler-rt` only through linker flags. Do
-not replace it with wrapped Clang: that injects Nix libc++ headers and can mix
-SDK versions when `SDKROOT` points at Xcode Command Line Tools.
-
-Use the same toolchain to consume any profile generated this way.
+The script uses the current shell toolchain. Generate and consume a profile
+with the same Clang/LLVM version so the profile data remains compatible.
 
 PGO can also be controlled explicitly with Meson:
 
@@ -412,31 +438,58 @@ meson compile -C build -j2
 
 #### Windows prerequisites
 
-Ant on Windows is built using the MSYS2 MINGW64 toolchain.
+Ant on Windows is built using the MSYS2 CLANG64 toolchain. This matches the
+Windows CI build.
 
 > [!IMPORTANT]
-> Native MSVC builds are not currently supported. You must use the MSYS2
-> MINGW64 environment.
+> Native MSVC builds are not currently supported.
 
-1. Install [MSYS2](https://www.msys2.org/)
-2. Open the **MINGW64** shell and install dependencies:
-   ```bash
-   pacman -S mingw-w64-x86_64-toolchain mingw-w64-x86_64-meson \
-     mingw-w64-x86_64-ninja mingw-w64-x86_64-cmake \
-     mingw-w64-x86_64-lld mingw-w64-x86_64-nodejs git
+1. Install [mise](https://mise.jdx.dev/installing-mise.html) for Windows, for
+   example with `winget install jdx.mise` or `scoop install mise`.
+2. From PowerShell in the repository root, install Just and Zig as pinned by
+   `mise.toml`:
+   ```powershell
+   mise trust
+   mise install
    ```
-3. Install [Zig](https://ziglang.org/download/)
+3. Bootstrap and build:
+   ```powershell
+   just setup
+   just build
+   ```
+
+`just setup` is idempotent on Windows. It installs MSYS2 with winget when
+`C:\msys64` (or `MSYS2_ROOT`) is absent, ensures the complete CLANG64 build
+toolchain is installed with pacman, performs a full MSYS2 system upgrade, and
+configures the Meson build directory. Rerunning it repairs missing or stale
+packages without reinstalling packages that are already current. The bootstrap
+also checks minimum versions of the MSYS2 tools known to match the Windows CI
+build.
+
+mise supplies only Just and Zig on Windows. MSYS2 supplies Clang, binutils,
+pkg-config, Node.js, Python, Meson, Ninja, CMake, NASM, ccache, and the CLANG64
+runtime. The Justfile puts the CLANG64 directories first on `PATH`, matching
+Windows CI tool resolution. The mise configuration is OS-restricted and is
+inert on Linux and macOS.
+
+To provision MSYS2 manually instead, install
+[MSYS2](https://www.msys2.org/) and these packages:
+
+```bash
+pacman -S mingw-w64-clang-x86_64-toolchain \
+  mingw-w64-clang-x86_64-meson mingw-w64-clang-x86_64-ninja \
+  mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-lld \
+  mingw-w64-clang-x86_64-nodejs mingw-w64-clang-x86_64-pkgconf \
+  mingw-w64-clang-x86_64-nasm mingw-w64-clang-x86_64-ccache
+```
 
 #### Building Ant
 
-From the MSYS2 MINGW64 shell:
+From PowerShell in the repository root:
 
-```bash
-git clone https://github.com/theMackabu/ant.git
-cd ant
-meson subprojects download
-meson setup build -Dc_std=gnu2x
-meson compile -C build
+```powershell
+just setup
+just build
 ```
 
 > [!NOTE]
@@ -455,10 +508,17 @@ Configure options are set via `meson setup` or `meson configure`:
 
 | Option              | Type    | Default    | Description                                           |
 | ------------------- | ------- | ---------- | ----------------------------------------------------- |
-| `allocator`         | combo   | `mimalloc` | Runtime malloc implementation (`mimalloc`, `system`)  |
+| `jit`               | boolean | `true`     | Enable the JIT compiler                               |
+| `allocator`         | combo   | `system`   | Runtime malloc implementation (`mimalloc`, `system`)  |
 | `static_link`       | boolean | `false`    | Statically link the final binary                      |
+| `linker_map`        | boolean | `false`    | Emit a linker map for the Ant binary                  |
+| `codesign`          | boolean | `true`     | Codesign the Ant binary on Darwin                     |
+| `embed_example`     | feature | `auto`     | Build the libant embed example                        |
+| `native_tuning`     | feature | `disabled` | Optimize for the current build host CPU               |
 | `pgo`               | feature | `auto`     | Use matching `meson/pgo/profiles/*.profdata` profiles |
+| `pgo_generate_dir`  | string  | (empty)    | Directory for raw LLVM PGO profiles                   |
 | `build_timestamp`   | string  | (auto)     | Embedded build timestamp metadata                     |
+| `build_git_hash`    | string  | (auto)     | Git hash embedded in version metadata                 |
 | `deps_prefix_cmake` | string  | (empty)    | Prefix path for cmake dependency lookup               |
 
 Standard Meson built-in options used by Ant:
@@ -477,5 +537,5 @@ Example:
 
 ```bash
 meson setup build -Dstatic_link=true --prefer-static
-meson setup build-system -Dallocator=system
+meson setup build -Dallocator=system
 ```

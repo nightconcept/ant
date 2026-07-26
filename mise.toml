@@ -1,0 +1,7 @@
+min_version = "2026.7.0"
+
+# Windows uses mise only for tools not supplied by the supported MSYS2 CLANG64
+# environment. Linux and macOS use the Nix flake dev shell instead.
+[tools]
+zig = { version = "0.16.0", os = ["windows"] }
+just = { version = "1.57.0", os = ["windows"] }

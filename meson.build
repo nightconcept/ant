@@ -79,7 +79,8 @@ pkg_lib = custom_target(
   output: 'libpkg.a',
   command: [
     'sh', '-c',
-    '"$ZIG" build --build-file "$PKG_ZIG_DIR/build.zig" --prefix "$PKG_BUILD_DIR" && cp "$PKG_BUILD_DIR/lib/$PKG_LIB_NAME" "@OUTPUT@"'
+    '"$ZIG" build --build-file "$PKG_ZIG_DIR/build.zig" --prefix "$PKG_BUILD_DIR" && cp "$PKG_BUILD_DIR/lib/$PKG_LIB_NAME" "@OUTPUT@" && ranlib "@OUTPUT@"'
+
   ],
   env: {
     'ZIG': zig.full_path(),

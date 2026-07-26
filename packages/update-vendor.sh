@@ -54,4 +54,4 @@ for wrap in "${wraps[@]}"; do
 done
 
 echo "Updated vendor wrap revisions."
-echo "Run 'packages/nix/update-vendor-hashes.sh' to refresh the Nix vendor hash."
+

@@ -1,8 +1,13 @@
 .env
+.direnv
 .nova
 .maid
 .cache
+.deps
 .superset
+__pycache__/
+*.pyc
+
 
 .claude
 .github/artifacts
@@ -12,6 +17,8 @@
 *.dll
 
 /build
+/bench/bin
+/bench/results.json
 /traces
 /result
 /result-*

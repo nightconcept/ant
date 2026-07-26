@@ -2,6 +2,7 @@
 #define ARENA_H
 
 #include "common.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

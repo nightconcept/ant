@@ -12,20 +12,20 @@
   };
 
   outputs = { self, nixpkgs, flake-utils }:
-  flake-utils.lib.eachDefaultSystem (system:
-    let
-      pkgs = import nixpkgs { inherit system; };
-      toolchain = import ./packages/nix/toolchain.nix { inherit pkgs; };
-      ant = pkgs.callPackage ./packages/nix/package.nix {
-        gitRev = self.shortRev or self.dirtyShortRev or "unknown";
-        stdenv = toolchain.stdenv;
-      };
-    in {
-      packages.default = ant;
-      packages.ant = ant;
-      
-      devShells.default = import ./packages/nix/shell.nix {
-        inherit pkgs toolchain;
-      };
-    });
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+        toolchain = import ./packages/nix/toolchain.nix { inherit pkgs; };
+        ant = pkgs.callPackage ./packages/nix/package.nix {
+          gitRev = self.shortRev or self.dirtyShortRev or "unknown";
+          stdenv = toolchain.stdenv;
+        };
+      in {
+        packages.default = ant;
+        packages.ant = ant;
+
+        devShells.default = import ./packages/nix/shell.nix {
+          inherit pkgs toolchain;
+        };
+      });
 }

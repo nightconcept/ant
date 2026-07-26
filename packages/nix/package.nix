@@ -22,6 +22,44 @@
 }:
 
 let
+  sourceRoot = ../..;
+  sourceRootString = toString sourceRoot;
+  sourceFilter = path: type:
+    let
+      relative = lib.removePrefix "${sourceRootString}/" (toString path);
+      parts = lib.splitString "/" relative;
+      top = if parts == [] then "" else builtins.head parts;
+      generatedTopLevel = [
+        ".claude"
+        ".deps"
+        ".direnv"
+        ".git"
+        "build"
+        "result"
+        "todo"
+        "traces"
+      ];
+      generatedPart = part:
+        builtins.elem part [ ".cache" ".zig-cache" "__pycache__" "node_modules" ];
+      vendorSource =
+        top != "vendor"
+        || builtins.length parts == 1
+        || (builtins.length parts == 2
+          && (lib.hasSuffix ".wrap" (builtins.elemAt parts 1)
+            || builtins.elemAt parts 1 == "packagefiles"))
+        || (builtins.length parts > 2 && builtins.elemAt parts 1 == "packagefiles");
+    in
+      !(builtins.elem top generatedTopLevel)
+      && !(lib.hasPrefix "result-" top)
+      && !(lib.any generatedPart parts)
+      && vendorSource;
+
+  packageSource = lib.cleanSourceWith {
+    src = sourceRoot;
+    filter = sourceFilter;
+    name = "ant-source";
+  };
+
   zigPkg = if zig_0_16 != null then zig_0_16 else zig;
   antBaseStdenv =
     if stdenv.isLinux then
@@ -75,7 +113,7 @@ in
 
 antStdenv.mkDerivation (finalAttrs: {
   pname = "ant";
-  src = ../..;
+  src = packageSource;
   version = antVersion;
 
   nativeBuildInputs = [
