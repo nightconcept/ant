@@ -4200,10 +4200,19 @@ create_new:
 
   const char *interned_key = intern_string(key, (size_t)klen);
   if (!interned_key) return js_mkerr(js, "oom");
+
+  // Builtins registered as `js_setprop(obj, js_mkstr(js, "pow", 3), js_mkfun(f))`
+  // land here with an anonymous cfunc meta, which leaves them without the own
+  // `name` property every function is required to have. Adopt the key as the
+  // name, but only while the cfunc is still anonymous so that aliasing an
+  // existing builtin (`o.p = Math.pow`) cannot rename it.
+  v = js_cfunc_expose_anonymous_for_key(js, v, interned_key, (size_t)klen);
+  if (is_err(v)) return v;
+
   ant_value_t result = mkprop_interned_exact(js, obj, interned_key, v, 0);
   if (is_err(result)) return result;
   array_define_or_set_index(js, obj, key, (size_t)klen);
-  
+
   return v;
 }
 
@@ -18008,6 +18017,15 @@ ant_value_t js_cfunc_expose_named(ant_t *js, ant_value_t cfunc, const char *name
 
 static ant_value_t js_expose_cfunc_for_key(ant_t *js, ant_value_t value, const char *key, size_t key_len) {
   if (vtype(value) != T_CFUNC) return value;
+  return js_cfunc_expose_named(js, value, key, key_len);
+}
+
+ant_value_t js_cfunc_expose_anonymous_for_key(ant_t *js, ant_value_t value, const char *key, size_t key_len) {
+  if (vtype(value) != T_CFUNC) return value;
+
+  const ant_cfunc_meta_t *meta = js_as_cfunc_meta(value);
+  if (!meta || meta->name) return value;
+
   return js_cfunc_expose_named(js, value, key, key_len);
 }
 
