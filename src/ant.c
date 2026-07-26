@@ -634,6 +634,8 @@ static ant_value_t proxy_delete_index(ant_t *js, ant_value_t obj, ant_offset_t i
 static ant_value_t array_method_has_index(ant_t *js, ant_value_t arr, ant_offset_t idx);
 static ant_value_t array_method_get_index(ant_t *js, ant_value_t arr, ant_offset_t idx);
 static ant_value_t array_method_this_object(ant_t *js, ant_value_t this_val, const char *name);
+static ant_value_t array_method_reject_length_write(ant_t *js, ant_value_t arr);
+static ant_value_t array_method_reject_index_write(ant_t *js, ant_value_t arr, ant_offset_t idx);
 
 #define ARRAY_METHOD_THIS_OR_RETURN(var, name) \
   do { \
@@ -10129,9 +10131,9 @@ static ant_value_t array_shallow_copy(ant_t *js, ant_value_t arr, ant_offset_t l
 
 static ant_value_t builtin_array_push(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ) {
-    return js_mkerr(js, "push called on non-array");
-  }
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "push");
+  { ant_value_t rejected = array_method_reject_length_write(js, arr);
+    if (is_err(rejected)) return rejected; }
 
   if (is_proxy(arr)) {
     PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
@@ -10208,9 +10210,9 @@ void js_arr_push(ant_t *js, ant_value_t arr, ant_value_t val) {
 static ant_value_t builtin_array_pop(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
 
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ) {
-    return js_mkerr(js, "pop called on non-array");
-  }
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "pop");
+  { ant_value_t rejected = array_method_reject_length_write(js, arr);
+    if (is_err(rejected)) return rejected; }
 
   if (is_proxy(arr)) {
     PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
@@ -10800,8 +10802,7 @@ static ant_value_t builtin_array_reverse(ant_t *js, ant_value_t *args, int nargs
   (void)args; (void)nargs;
   ant_value_t arr = js->this_val;
 
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ)
-    return js_mkerr(js, "reverse called on non-array");
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "reverse");
 
   if (is_proxy(arr)) {
     PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
@@ -10835,6 +10836,11 @@ static ant_value_t builtin_array_reverse(ant_t *js, ant_value_t *args, int nargs
 
   PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
   if (len <= 1) return arr;
+
+  {
+    ant_value_t rejected = array_method_reject_index_write(js, arr, 0);
+    if (is_err(rejected)) return rejected;
+  }
 
   ant_offset_t doff = get_dense_buf(arr);
   if (doff) {
@@ -11133,9 +11139,7 @@ static ant_value_t builtin_array_at(ant_t *js, ant_value_t *args, int nargs) {
 
 static ant_value_t builtin_array_fill(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ) {
-    return js_mkerr(js, "fill called on non-array");
-  }
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "fill");
 
   ant_value_t value = nargs >= 1 ? args[0] : js_mkundef();
 
@@ -11156,6 +11160,11 @@ static ant_value_t builtin_array_fill(ant_t *js, ant_value_t *args, int nargs) {
   }
   if (start > len) start = len;
   if (end > len) end = len;
+  
+  if (end > start) {
+    ant_value_t rejected = array_method_reject_index_write(js, arr, start);
+    if (is_err(rejected)) return rejected;
+  }
   
   for (ant_offset_t i = start; i < end; i++) {
     arr_set(js, arr, i, value);
@@ -11417,9 +11426,9 @@ static ant_value_t builtin_array_shift(ant_t *js, ant_value_t *args, int nargs) 
   (void) args;
   (void) nargs;
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ) {
-    return js_mkerr(js, "shift called on non-array");
-  }
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "shift");
+  { ant_value_t rejected = array_method_reject_length_write(js, arr);
+    if (is_err(rejected)) return rejected; }
 
   PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
   if (len == 0) return js_mkundef();
@@ -11486,9 +11495,9 @@ static ant_value_t builtin_array_shift(ant_t *js, ant_value_t *args, int nargs) 
 
 static ant_value_t builtin_array_unshift(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ) {
-    return js_mkerr(js, "unshift called on non-array");
-  }
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "unshift");
+  { ant_value_t rejected = array_method_reject_length_write(js, arr);
+    if (is_err(rejected)) return rejected; }
 
   PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
 
@@ -11605,8 +11614,7 @@ static ant_value_t builtin_array_sort(ant_t *js, ant_value_t *args, int nargs) {
   gc_temp_root_scope_t temp_scope = {0};
   bool temp_scope_active = false;
   
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ)
-    return js_mkerr(js, "sort called on non-array");
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "sort");
   
   if (nargs >= 1) {
     uint8_t t = vtype(args[0]);
@@ -11620,8 +11628,16 @@ static ant_value_t builtin_array_sort(ant_t *js, ant_value_t *args, int nargs) {
   if (!gc_temp_root_handle_valid(gc_temp_root_add(&temp_scope, arr))) goto oom;
   if (!gc_temp_root_handle_valid(gc_temp_root_add(&temp_scope, compareFn))) goto oom;
   
-  len = get_array_length(js, arr);
+  {
+    ant_value_t len_result = proxy_aware_length(js, arr, &len);
+    if (is_err(len_result)) { result = len_result; goto done; }
+  }
   if (len == 0) goto done;
+
+  if (len > 1) {
+    ant_value_t rejected = array_method_reject_index_write(js, arr, 0);
+    if (is_err(rejected)) { result = rejected; goto done; }
+  }
   
   ant_offset_t doff = get_dense_buf(arr);
   if (doff) {
@@ -11740,9 +11756,9 @@ done:
 
 static ant_value_t builtin_array_splice(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ) {
-    return js_mkerr(js, "splice called on non-array");
-  }
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "splice");
+  { ant_value_t rejected = array_method_reject_length_write(js, arr);
+    if (is_err(rejected)) return rejected; }
 
   PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
   ant_value_t read_from = is_proxy(arr) ? proxy_read_target(js, arr) : arr;
@@ -11945,9 +11961,7 @@ static ant_value_t builtin_array_copyWithin(ant_t *js, ant_value_t *args, int na
   gc_temp_root_scope_t temp_roots = {0};
   
   bool temp_roots_active = false;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ) {
-    return js_mkerr(js, "copyWithin called on non-array");
-  }
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "copyWithin");
 
   PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
   ant_value_t read_from = is_proxy(arr) ? proxy_read_target(js, arr) : arr;
@@ -11973,6 +11987,11 @@ static ant_value_t builtin_array_copyWithin(ant_t *js, ant_value_t *args, int na
   int count = end - start;
   if (count > (int)len - target) count = (int)len - target;
   if (count <= 0) return arr;
+
+  {
+    ant_value_t rejected = array_method_reject_index_write(js, arr, (ant_offset_t)target);
+    if (is_err(rejected)) return rejected;
+  }
 
   ant_offset_t doff = get_dense_buf(arr);
   if (doff && !is_proxy(arr)) {
@@ -16285,6 +16304,38 @@ static ant_value_t proxy_delete_index(ant_t *js, ant_value_t obj, ant_offset_t i
   char idxstr[16];
   size_t idxlen = uint_to_str(idxstr, sizeof(idxstr), (uint64_t)idx);
   return proxy_delete(js, obj, idxstr, idxlen);
+}
+
+// True when `arr` is a String exotic object. Its own indices (below the
+// string's length) and its `length` are non-writable and non-configurable.
+static bool array_method_is_string_exotic(ant_t *js, ant_value_t arr) {
+  (void)js;
+  if (vtype(arr) != T_OBJ) return false;
+  ant_object_t *ptr = js_obj_ptr(arr);
+  if (!ptr || ant_object_extra_count(ptr) == 0) return false;
+  return vtype(obj_extra_get(ptr, SLOT_PRIMITIVE)) == T_STR;
+}
+
+// The mutating Array.prototype methods write with Set(O, key, value, true), so
+// a rejected write is a TypeError rather than being ignored the way a
+// sloppy-mode assignment is. Setting `length` on a String exotic always fails;
+// push/pop/shift/unshift/splice all finish with such a write.
+static ant_value_t array_method_reject_length_write(ant_t *js, ant_value_t arr) {
+  if (!array_method_is_string_exotic(js, arr)) return js_mkundef();
+  return js_mkerr_typed(
+    js, JS_ERR_TYPE,
+    "Cannot assign to read only property 'length' of object '[object String]'"
+  );
+}
+
+// Writing any index below a String exotic's length fails the same way.
+// reverse/sort/fill/copyWithin only ever write inside [0, len).
+static ant_value_t array_method_reject_index_write(ant_t *js, ant_value_t arr, ant_offset_t idx) {
+  if (!array_method_is_string_exotic(js, arr)) return js_mkundef();
+  return js_mkerr_typed(
+    js, JS_ERR_TYPE,
+    "Cannot assign to read only property '%u' of object '[object String]'", (unsigned)idx
+  );
 }
 
 static bool array_method_string_exotic_index(
