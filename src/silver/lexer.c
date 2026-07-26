@@ -477,10 +477,40 @@ static int parse_unicode_escape(const char *buf, ant_offset_t len, ant_offset_t 
   return 6;
 }
 
+// Unicode Other_ID_Start (PropList.txt): characters that are ID_Start despite
+// not falling in an ID_Start general category. Small and stable across versions.
+static bool is_other_id_start(utf8proc_int32_t cp) {
+  switch (cp) {
+    case 0x1885: case 0x1886:  // MONGOLIAN LETTER ALI GALI BALUDA..THREE BALUDA
+    case 0x2118:               // SCRIPT CAPITAL P (Sm)
+    case 0x212E:               // ESTIMATED SYMBOL (So)
+    case 0x309B: case 0x309C:  // KATAKANA-HIRAGANA (SEMI-)VOICED SOUND MARK (Sk)
+      return true;
+    default:
+      return false;
+  }
+}
+
+// Unicode Other_ID_Continue (PropList.txt): ID_Continue additions beyond the
+// ID_Continue general categories.
+static bool is_other_id_continue(utf8proc_int32_t cp) {
+  switch (cp) {
+    case 0x00B7:               // MIDDLE DOT
+    case 0x0387:               // GREEK ANO TELEIA
+    case 0x1369: case 0x136A: case 0x136B: case 0x136C: case 0x136D:
+    case 0x136E: case 0x136F: case 0x1370: case 0x1371:  // ETHIOPIC DIGIT ONE..NINE
+    case 0x19DA:               // NEW TAI LUE THAM DIGIT ONE
+      return true;
+    default:
+      return false;
+  }
+}
+
 static bool is_unicode_id_start(utf8proc_int32_t cp) {
   if (cp == 0x2E2F) return false;
+  if (is_other_id_start(cp)) return true;
   utf8proc_category_t cat = utf8proc_category(cp);
-  return 
+  return
     cat == UTF8PROC_CATEGORY_LU || cat == UTF8PROC_CATEGORY_LL ||
     cat == UTF8PROC_CATEGORY_LT || cat == UTF8PROC_CATEGORY_LM ||
     cat == UTF8PROC_CATEGORY_LO || cat == UTF8PROC_CATEGORY_NL;
@@ -488,8 +518,9 @@ static bool is_unicode_id_start(utf8proc_int32_t cp) {
 
 static bool is_unicode_id_continue(utf8proc_int32_t cp) {
   if (is_unicode_id_start(cp)) return true;
+  if (is_other_id_continue(cp)) return true;
   utf8proc_category_t cat = utf8proc_category(cp);
-  return 
+  return
     cat == UTF8PROC_CATEGORY_MN || cat == UTF8PROC_CATEGORY_MC ||
     cat == UTF8PROC_CATEGORY_ND || cat == UTF8PROC_CATEGORY_PC ||
     cp == 0x200C || cp == 0x200D;
