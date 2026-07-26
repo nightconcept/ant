@@ -10084,6 +10084,21 @@ static inline ant_value_t require_callback(ant_t *js, ant_value_t *args, int nar
   return args[0];
 }
 
+// Shallow copy of an array-like's indexed elements. Unlike array_shallow_copy
+// this reads through the generic element path, so array-likes, String exotics
+// and proxies are copied by index rather than by own-property iteration.
+static ant_value_t array_generic_copy(ant_t *js, ant_value_t arr, ant_offset_t len) {
+  ant_value_t result = mkarr(js);
+  if (is_err(result)) return result;
+
+  for (ant_offset_t i = 0; i < len; i++) {
+    ant_value_t v = array_method_get_index(js, arr, i);
+    if (is_err(v)) return v;
+    arr_set(js, result, i, v);
+  }
+  return result;
+}
+
 static ant_value_t array_shallow_copy(ant_t *js, ant_value_t arr, ant_offset_t len) {
   ant_value_t result = mkarr(js);
   if (is_err(result)) return result;
@@ -12069,10 +12084,12 @@ oom:
 
 static ant_value_t builtin_array_toSorted(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ)
-    return js_mkerr(js, "toSorted called on non-array");
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "toSorted");
   
-  ant_value_t result = array_shallow_copy(js, arr, get_array_length(js, arr));
+  PROXY_AWARE_LENGTH_OR_RETURN(arr, copy_len);
+  ant_value_t result = (vtype(arr) == T_ARR)
+    ? array_shallow_copy(js, arr, copy_len)
+    : array_generic_copy(js, arr, copy_len);
   if (is_err(result)) return result;
   
   ant_value_t saved_this = js->this_val;
@@ -12087,10 +12104,12 @@ static ant_value_t builtin_array_toSorted(ant_t *js, ant_value_t *args, int narg
 static ant_value_t builtin_array_toReversed(ant_t *js, ant_value_t *args, int nargs) {
   (void)args; (void)nargs;
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ)
-    return js_mkerr(js, "toReversed called on non-array");
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "toReversed");
   
-  ant_value_t result = array_shallow_copy(js, arr, get_array_length(js, arr));
+  PROXY_AWARE_LENGTH_OR_RETURN(arr, copy_len);
+  ant_value_t result = (vtype(arr) == T_ARR)
+    ? array_shallow_copy(js, arr, copy_len)
+    : array_generic_copy(js, arr, copy_len);
   if (is_err(result)) return result;
   
   ant_value_t saved_this = js->this_val;
@@ -12104,10 +12123,12 @@ static ant_value_t builtin_array_toReversed(ant_t *js, ant_value_t *args, int na
 
 static ant_value_t builtin_array_toSpliced(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ)
-    return js_mkerr(js, "toSpliced called on non-array");
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "toSpliced");
   
-  ant_value_t result = array_shallow_copy(js, arr, get_array_length(js, arr));
+  PROXY_AWARE_LENGTH_OR_RETURN(arr, copy_len);
+  ant_value_t result = (vtype(arr) == T_ARR)
+    ? array_shallow_copy(js, arr, copy_len)
+    : array_generic_copy(js, arr, copy_len);
   if (is_err(result)) return result;
   
   ant_value_t saved_this = js->this_val;
@@ -12120,13 +12141,11 @@ static ant_value_t builtin_array_toSpliced(ant_t *js, ant_value_t *args, int nar
 
 static ant_value_t builtin_array_with(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
-  if (vtype(arr) != T_ARR && vtype(arr) != T_OBJ) {
-    return js_mkerr(js, "with called on non-array");
-  }
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "with");
   
   if (nargs < 2) return js_mkerr(js, "with requires index and value arguments");
   
-  ant_offset_t len = get_array_length(js, arr);
+  PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
   
   int idx = (int) tod(args[0]);
   if (idx < 0) idx = (int)len + idx;
@@ -12136,7 +12155,11 @@ static ant_value_t builtin_array_with(ant_t *js, ant_value_t *args, int nargs) {
   if (is_err(result)) return result;
   
   for (ant_offset_t i = 0; i < len; i++) {
-    ant_value_t elem = ((ant_offset_t)idx == i) ? args[1] : arr_get(js, arr, i);
+    ant_value_t elem = args[1];
+    if ((ant_offset_t)idx != i) {
+      elem = array_method_get_index(js, arr, i);
+      if (is_err(elem)) return elem;
+    }
     arr_set(js, result, i, elem);
   }
   
@@ -12144,21 +12167,21 @@ static ant_value_t builtin_array_with(ant_t *js, ant_value_t *args, int nargs) {
 }
 
 static ant_value_t builtin_array_keys(ant_t *js, ant_value_t *args, int nargs) {
-  if (vtype(js->this_val) != T_ARR && vtype(js->this_val) != T_OBJ)
-    return js_mkerr(js, "keys called on non-array");
-  return make_array_iterator(js, js->this_val, ARR_ITER_KEYS);
+  ant_value_t arr = js->this_val;
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "keys");
+  return make_array_iterator(js, arr, ARR_ITER_KEYS);
 }
 
 static ant_value_t builtin_array_values(ant_t *js, ant_value_t *args, int nargs) {
-  if (vtype(js->this_val) != T_ARR && vtype(js->this_val) != T_OBJ)
-    return js_mkerr(js, "values called on non-array");
-  return make_array_iterator(js, js->this_val, ARR_ITER_VALUES);
+  ant_value_t arr = js->this_val;
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "values");
+  return make_array_iterator(js, arr, ARR_ITER_VALUES);
 }
 
 static ant_value_t builtin_array_entries(ant_t *js, ant_value_t *args, int nargs) {
-  if (vtype(js->this_val) != T_ARR && vtype(js->this_val) != T_OBJ)
-    return js_mkerr(js, "entries called on non-array");
-  return make_array_iterator(js, js->this_val, ARR_ITER_ENTRIES);
+  ant_value_t arr = js->this_val;
+  ARRAY_METHOD_THIS_OR_RETURN(arr, "entries");
+  return make_array_iterator(js, arr, ARR_ITER_ENTRIES);
 }
 
 static ant_value_t builtin_array_toString(ant_t *js, ant_value_t *args, int nargs) {
