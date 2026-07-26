@@ -1,6 +1,7 @@
 const { promisify } = require('node:util');
 const { execFile } = require('node:child_process');
 const path = require('node:path');
+const fs = require('node:fs');
 
 async function main() {
   const execFileAsync = promisify(execFile);
@@ -15,8 +16,15 @@ async function main() {
   if (!revParse || typeof revParse.stdout !== 'string') {
     throw new Error('expected rev-parse stdout string');
   }
-  if (!revParse.stdout.trim().endsWith('/ant')) {
-    throw new Error(`unexpected rev-parse output: ${JSON.stringify(revParse.stdout)}`);
+  // `cwd` is the checkout root regardless of what the containing directory is
+  // named (a linked worktree, for instance, need not be named "ant"), so
+  // compare against its real path rather than assuming a directory name.
+  const expectedToplevel = fs.realpathSync(cwd);
+  const actualToplevel = fs.realpathSync(revParse.stdout.trim());
+  if (actualToplevel !== expectedToplevel) {
+    throw new Error(
+      `unexpected rev-parse output: ${JSON.stringify(revParse.stdout)} (expected ${expectedToplevel})`
+    );
   }
 
   const status = await execFileAsync(
