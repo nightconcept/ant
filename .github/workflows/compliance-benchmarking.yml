@@ -1,0 +1,47 @@
+name: Compliance Benchmarking (Tiers 2 & 3)
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compliance-benchmarking:
+    name: Compliance Benchmarking (Tiers 2 & 3)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build clang
+
+      - name: Configure build
+        run: meson setup build -Dbuildtype=release
+
+      - name: Compile Ant
+        run: meson compile -C build
+
+      - name: Run Tier 2 Compliance Tracking
+        run: python3 scripts/run_compliance.py --tier 2 --all --allow-failures --log
+
+      - name: Run Tier 3 Compliance Tracking
+        run: python3 scripts/run_compliance.py --tier 3 --all --allow-failures --log
+
+      - name: Run Cold-Start Benchmarks & Upstream Threshold Assertions
+        run: |
+          strip build/ant || true
+          python3 bench/bench.py --check-thresholds --max-speed-lag 10.0 --max-size-growth 25.0

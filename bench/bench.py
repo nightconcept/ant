@@ -197,10 +197,13 @@ def run_benchmarks(bins, warmup=10, runs=100):
 
     return results_data
 
-def format_output(bins, results_data):
+def format_output(bins, results_data, check_thresholds=False, max_speed_lag=10.0, max_size_growth=25.0):
+    fork_bin = bins["ant_fork"]
+    upstream_bin = bins["ant_upstream"]
+
     # Map binary sizes
-    fork_size = get_file_size_mb(bins["ant_fork"])
-    upstream_size = get_file_size_mb(bins["ant_upstream"])
+    fork_size = get_file_size_mb(fork_bin)
+    upstream_size = get_file_size_mb(upstream_bin)
     node_size = get_file_size_mb(bins["node"])
     bun_size = get_file_size_mb(bins["bun"])
     deno_size = get_file_size_mb(bins["deno"])
@@ -216,14 +219,15 @@ def format_output(bins, results_data):
     overview_table.append(f"| Deno ({VERSIONS['deno']}) | V8 | ✓ | ✓ | {deno_size} |")
 
     # 2. Cold Start Table
-    # Sort or parse hyperfine output
     runs = results_data.get("results", [])
-    # Find baseline (fastest mean)
     fastest_mean = min(r["mean"] for r in runs) if runs else 1.0
 
     coldstart_table = []
     coldstart_table.append("| Runtime | Mean | Min | Max | Relative |")
     coldstart_table.append("| ------- | ---- | --- | --- | -------- |")
+
+    fork_mean = None
+    upstream_mean = None
 
     for r in sorted(runs, key=lambda x: x["mean"]):
         name = r["command"] # set by -n
@@ -231,6 +235,11 @@ def format_output(bins, results_data):
         min_ms = r["min"] * 1000
         max_ms = r["max"] * 1000
         rel = r["mean"] / fastest_mean
+
+        if name == "Ant (Fork)":
+            fork_mean = r["mean"]
+        elif name == "Ant (Upstream)":
+            upstream_mean = r["mean"]
 
         rel_str = "**1.00**" if rel == 1.0 else f"{rel:.2f}× slower"
         name_str = f"**{name}**" if rel == 1.0 else name
@@ -246,11 +255,94 @@ def format_output(bins, results_data):
     print("\n".join(coldstart_table))
     print("=" * 60 + "\n")
 
+    # 3. Threshold Checks against Upstream Ant
+    threshold_passed = True
+    threshold_summary = []
+
+    if fork_bin.exists() and upstream_bin.exists():
+        fork_bytes = fork_bin.stat().st_size
+        upstream_bytes = upstream_bin.stat().st_size
+        size_growth_pct = ((fork_bytes - upstream_bytes) / upstream_bytes) * 100.0
+
+        size_ok = size_growth_pct <= max_size_growth
+        if not size_ok:
+            threshold_passed = False
+
+        size_status = "PASS" if size_ok else "FAIL"
+        size_msg = (
+            f"Binary Size: Fork ({fork_bytes / (1024*1024):.2f} MB) vs Upstream ({upstream_bytes / (1024*1024):.2f} MB) "
+            f"-> {size_growth_pct:+.1f}% (Limit: +{max_size_growth:.1f}%) [{size_status}]"
+        )
+        print(size_msg)
+
+        threshold_summary.append("| Metric | Upstream | Fork | Diff | Max Limit | Status |")
+        threshold_summary.append("| ------ | -------- | ---- | ---- | --------- | ------ |")
+        threshold_summary.append(
+            f"| Binary Size | {upstream_bytes / (1024*1024):.2f} MB | {fork_bytes / (1024*1024):.2f} MB | "
+            f"{size_growth_pct:+.1f}% | +{max_size_growth:.1f}% | **{size_status}** |"
+        )
+
+        if fork_mean is not None and upstream_mean is not None:
+            speed_lag_pct = ((fork_mean - upstream_mean) / upstream_mean) * 100.0
+            speed_ok = speed_lag_pct <= max_speed_lag
+            if not speed_ok:
+                threshold_passed = False
+
+            speed_status = "PASS" if speed_ok else "FAIL"
+            speed_msg = (
+                f"Cold Start Speed: Fork ({fork_mean*1000:.1f} ms) vs Upstream ({upstream_mean*1000:.1f} ms) "
+                f"-> {speed_lag_pct:+.1f}% (Limit: +{max_speed_lag:.1f}% slower) [{speed_status}]"
+            )
+            print(speed_msg)
+
+            threshold_summary.append(
+                f"| Cold Start Speed | {upstream_mean*1000:.1f} ms | {fork_mean*1000:.1f} ms | "
+                f"{speed_lag_pct:+.1f}% | +{max_speed_lag:.1f}% | **{speed_status}** |"
+            )
+
+    gh_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if gh_summary:
+        try:
+            with open(gh_summary, "a", encoding="utf-8") as f:
+                f.write("### Cold-Start Benchmark & Threshold Results\n\n")
+                f.write("#### Feature & Size Comparison\n\n")
+                f.write("\n".join(overview_table) + "\n\n")
+                f.write("#### Cold Start Benchmark (Hono import & route registration)\n\n")
+                f.write("\n".join(coldstart_table) + "\n\n")
+                if threshold_summary:
+                    f.write("#### Performance & Size Threshold Assertions vs Upstream Ant\n\n")
+                    f.write("\n".join(threshold_summary) + "\n\n")
+        except Exception:
+            pass
+
+    if check_thresholds and not threshold_passed:
+        print("\nERROR: Performance or size threshold assertion failed against Upstream Ant!")
+        return False
+
+    return True
+
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Ant Cold-Start Benchmark & Threshold Runner")
+    parser.add_argument("--warmup", type=int, default=10, help="Hyperfine warmup iterations (default: 10)")
+    parser.add_argument("--runs", type=int, default=100, help="Hyperfine benchmark iterations (default: 100)")
+    parser.add_argument("--check-thresholds", action="store_true", help="Assert performance and size thresholds against Upstream Ant")
+    parser.add_argument("--max-speed-lag", type=float, default=10.0, help="Maximum allowed speed lag vs Upstream Ant in % (default: 10.0)")
+    parser.add_argument("--max-size-growth", type=float, default=25.0, help="Maximum allowed binary size growth vs Upstream Ant in % (default: 25.0)")
+    args = parser.parse_args()
+
     print("Ensuring benchmark runtimes and tools exist...")
     bins = ensure_binaries()
-    results = run_benchmarks(bins)
-    format_output(bins, results)
+    results = run_benchmarks(bins, warmup=args.warmup, runs=args.runs)
+    passed = format_output(
+        bins,
+        results,
+        check_thresholds=args.check_thresholds,
+        max_speed_lag=args.max_speed_lag,
+        max_size_growth=args.max_size_growth
+    )
+    if not passed:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

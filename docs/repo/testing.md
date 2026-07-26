@@ -39,6 +39,11 @@ This guide keeps validation proportional to the change while still protecting ru
 - Validate any new repo-knowledge or workflow checks locally with
   `maid knowledge` and `maid structure`.
 
+## CI Compliance Workflows
+
+- **Tier 1 (Gated)**: Runs on every `push`, `pull_request`, and manual dispatch via `.github/workflows/compliance-tier1.yml`. Fails if any Tier 1 test fails.
+- **Tiers 2 & 3 (Benchmarking / Metric Tracking)**: Runs on nightly schedule, `push` to `main`, and manual dispatch via `.github/workflows/compliance-benchmarking.yml`. Runs with `--allow-failures` for Tier 2/3 compliance metrics, and asserts that cold-start execution speed is never slower by >10% and binary size is never larger by >25% vs Upstream Ant (`python3 bench/bench.py --check-thresholds`).
+
 ## Notes
 
 - Keep new tests close to the behavior they protect so future agent runs can
