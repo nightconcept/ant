@@ -8447,6 +8447,20 @@ static bool define_lookup_existing_meta(
   return true;
 }
 
+// ToPropertyDescriptor reads each field with HasProperty followed by Get, so a
+// field inherited from the prototype chain counts and an accessor field is
+// invoked. Returns false when the field is absent; on a throwing getter the
+// error is written to *out and true is returned, so callers must check is_err.
+static bool descriptor_field_get(
+  ant_t *js, ant_value_t descriptor,
+  const char *key, size_t key_len,
+  ant_value_t *out
+) {
+  if (lkp_proto(js, descriptor, key, key_len) == 0) return false;
+  *out = js_getprop_fallback(js, descriptor, key);
+  return true;
+}
+
 // TODO: decompose this huge function into small pieces
 static ant_value_t builtin_object_defineProperty(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 3) return js_mkerr(js, "Object.defineProperty requires 3 arguments");
@@ -8472,11 +8486,18 @@ static ant_value_t builtin_object_defineProperty(ant_t *js, ant_value_t *args, i
     size_t len = tostr(js, prop, buf, sizeof(buf));
     prop = js_mkstr(js, buf, len);
   }
-  
-  if (vtype(descriptor) != T_OBJ) {
+
+  // ToPropertyDescriptor accepts any Object, not just a plain one: functions,
+  // arrays, and boxed primitives all carry descriptor fields on themselves or
+  // their prototype chain.
+  if (vtype(descriptor) == T_CFUNC) {
+    descriptor = js_cfunc_promote(js, descriptor);
+    args[2] = descriptor;
+  }
+  if (!is_object_type(descriptor)) {
     return js_mkerr(js, "Property descriptor must be an object");
   }
-  
+
   ant_value_t as_obj = js_as_obj(obj);
   if (is_proxy(as_obj)) {
     ant_value_t proxy_result = proxy_define_property(js, as_obj, prop, descriptor);
@@ -8539,49 +8560,42 @@ static ant_value_t builtin_object_defineProperty(ant_t *js, ant_value_t *args, i
     if (has_set && vtype(setter_val) != T_FUNC && vtype(setter_val) != T_CFUNC)
       return js_mkerr(js, "Setter must be a function");
   } else {
-    ant_offset_t value_off = lkp(js, descriptor, "value", 5);
-    if (value_off != 0) {
-      has_value = true;
-      value = propref_load(js, value_off);
-    }
-    
-    ant_offset_t get_off = lkp_interned(js, descriptor, js->intern.get);
-    if (get_off != 0) {
-      has_get = true;
-      getter_val = propref_load(js, get_off);
+    has_value = descriptor_field_get(js, descriptor, "value", 5, &value);
+    if (has_value && is_err(value)) return value;
+
+    has_get = descriptor_field_get(js, descriptor, "get", 3, &getter_val);
+    if (has_get) {
+      if (is_err(getter_val)) return getter_val;
       if (vtype(getter_val) != T_FUNC && vtype(getter_val) != T_CFUNC && vtype(getter_val) != T_UNDEF) {
         return js_mkerr(js, "Getter must be a function");
       }
     }
-    
-    ant_offset_t set_off = lkp_interned(js, descriptor, js->intern.set);
-    if (set_off != 0) {
-      has_set = true;
-      setter_val = propref_load(js, set_off);
+
+    has_set = descriptor_field_get(js, descriptor, "set", 3, &setter_val);
+    if (has_set) {
+      if (is_err(setter_val)) return setter_val;
       if (vtype(setter_val) != T_FUNC && vtype(setter_val) != T_CFUNC && vtype(setter_val) != T_UNDEF) {
         return js_mkerr(js, "Setter must be a function");
       }
     }
-    
-    ant_offset_t writable_off = lkp(js, descriptor, "writable", 8);
-    if (writable_off != 0) {
-      has_writable = true;
-      ant_value_t w_val = propref_load(js, writable_off);
-      writable = js_truthy(js, w_val);
+
+    ant_value_t flag_val = js_mkundef();
+    has_writable = descriptor_field_get(js, descriptor, "writable", 8, &flag_val);
+    if (has_writable) {
+      if (is_err(flag_val)) return flag_val;
+      writable = js_truthy(js, flag_val);
     }
-    
-    ant_offset_t enumerable_off = lkp(js, descriptor, "enumerable", 10);
-    if (enumerable_off != 0) {
-      has_enumerable = true;
-      ant_value_t e_val = propref_load(js, enumerable_off);
-      enumerable = js_truthy(js, e_val);
+
+    has_enumerable = descriptor_field_get(js, descriptor, "enumerable", 10, &flag_val);
+    if (has_enumerable) {
+      if (is_err(flag_val)) return flag_val;
+      enumerable = js_truthy(js, flag_val);
     }
-    
-    ant_offset_t configurable_off = lkp(js, descriptor, "configurable", 12);
-    if (configurable_off != 0) {
-      has_configurable = true;
-      ant_value_t c_val = propref_load(js, configurable_off);
-      configurable = js_truthy(js, c_val);
+
+    has_configurable = descriptor_field_get(js, descriptor, "configurable", 12, &flag_val);
+    if (has_configurable) {
+      if (is_err(flag_val)) return flag_val;
+      configurable = js_truthy(js, flag_val);
     }
   }
 
