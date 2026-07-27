@@ -213,64 +213,106 @@ static bool utf8_json_quote_append_u_escape(
   return utf8_json_quote_append(buf, len, cap, escape, sizeof(escape));
 }
 
-char *utf8_json_quote(const char *str, size_t byte_len, size_t *out_len) {
-  size_t utf16_len = utf16_strlen(str, byte_len);
-  size_t raw_len = 0;
-  size_t raw_cap = byte_len + 4;
-  
-  char *raw = malloc(raw_cap);
-  if (!raw) return NULL;
+/* Bytes that cannot be copied through verbatim inside a JSON string literal:
+   C0 controls, '"', '\\', and every lead/continuation byte (surrogates need
+   escaping, so multi-byte sequences are decoded instead of blindly copied). */
+static const uint8_t json_quote_special[256] = {
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  0,0,1,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0, 0,0,0,0,1,0,0,0,
+  0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+};
 
-  if (!utf8_json_quote_append_char(&raw, &raw_len, &raw_cap, '"')) goto oom;
+/* Decodes the surrogate code point of a 3-byte ED A0..BF xx sequence. */
+static inline uint32_t utf8_surrogate_at(const unsigned char *p) {
+  return 0xD000u | ((uint32_t)(p[1] & 0x3F) << 6) | (uint32_t)(p[2] & 0x3F);
+}
 
-  for (size_t i = 0; i < utf16_len; i++) {
-    uint32_t cu = utf16_code_unit_at(str, byte_len, i);
-    
-    if (cu >= 0xD800 && cu <= 0xDBFF && i + 1 < utf16_len) {
-    uint32_t cu2 = utf16_code_unit_at(str, byte_len, i + 1);
-    if (cu2 >= 0xDC00 && cu2 <= 0xDFFF) {
-      uint32_t cp = utf16_codepoint_at(str, byte_len, i);
-      char utf8[4];
-      int n = utf8_encode(cp, utf8);
-      if (n <= 0 || !utf8_json_quote_append(&raw, &raw_len, &raw_cap, utf8, (size_t)n)) goto oom;
+static inline bool utf8_is_surrogate_seq(const unsigned char *p, size_t avail) {
+  return avail >= 3 && p[0] == 0xED && (p[1] & 0xE0) == 0xA0;
+}
+
+bool utf8_json_quote_into(
+  char **buf, size_t *len, size_t *cap, const char *str, size_t byte_len
+) {
+  const unsigned char *p = (const unsigned char *)str;
+
+  if (!utf8_json_quote_reserve(buf, cap, *len + byte_len + 3)) return false;
+  if (!utf8_json_quote_append_char(buf, len, cap, '"')) return false;
+
+  size_t i = 0;
+  while (i < byte_len) {
+    size_t start = i;
+    while (i < byte_len && !json_quote_special[p[i]]) i++;
+    if (i > start && !utf8_json_quote_append(buf, len, cap, p + start, i - start)) return false;
+    if (i >= byte_len) break;
+
+    unsigned char c = p[i];
+
+    if (c < 0x80) {
+      const char *esc = NULL;
+      switch (c) {
+        case '"':  esc = "\\\""; break;
+        case '\\': esc = "\\\\"; break;
+        case '\b': esc = "\\b";  break;
+        case '\f': esc = "\\f";  break;
+        case '\n': esc = "\\n";  break;
+        case '\r': esc = "\\r";  break;
+        case '\t': esc = "\\t";  break;
+        default: break;
+      }
+      if (esc) {
+        if (!utf8_json_quote_append(buf, len, cap, esc, 2)) return false;
+      } else if (!utf8_json_quote_append_u_escape(buf, len, cap, c)) return false;
       i++;
       continue;
-    }}
-    
-    if (cu >= 0xD800 && cu <= 0xDFFF) {
-      if (!utf8_json_quote_append_u_escape(&raw, &raw_len, &raw_cap, cu)) goto oom;
+    }
+
+    int seq = utf8_sequence_length(c);
+    if (seq <= 0 || i + (size_t)seq > byte_len) {
+      /* Lenient like the scanning decoder: pass malformed bytes through. */
+      if (!utf8_json_quote_append(buf, len, cap, p + i, 1)) return false;
+      i++;
       continue;
     }
-    
-    switch (cu) {
-      case '"':  if (!utf8_json_quote_append(&raw, &raw_len, &raw_cap, "\\\"", 2)) goto oom; continue;
-      case '\\': if (!utf8_json_quote_append(&raw, &raw_len, &raw_cap, "\\\\", 2)) goto oom; continue;
-      case '\b': if (!utf8_json_quote_append(&raw, &raw_len, &raw_cap, "\\b", 2)) goto oom; continue;
-      case '\f': if (!utf8_json_quote_append(&raw, &raw_len, &raw_cap, "\\f", 2)) goto oom; continue;
-      case '\n': if (!utf8_json_quote_append(&raw, &raw_len, &raw_cap, "\\n", 2)) goto oom; continue;
-      case '\r': if (!utf8_json_quote_append(&raw, &raw_len, &raw_cap, "\\r", 2)) goto oom; continue;
-      case '\t': if (!utf8_json_quote_append(&raw, &raw_len, &raw_cap, "\\t", 2)) goto oom; continue;
-      default: break;
-    }
-    
-    if (cu < 0x20) {
-      if (!utf8_json_quote_append_u_escape(&raw, &raw_len, &raw_cap, cu)) goto oom;
+
+    if (utf8_is_surrogate_seq(p + i, byte_len - i)) {
+      uint32_t cu = utf8_surrogate_at(p + i);
+
+      if (cu < 0xDC00 && utf8_is_surrogate_seq(p + i + 3, byte_len - i - 3)) {
+        uint32_t low = utf8_surrogate_at(p + i + 3);
+        if (low >= 0xDC00) {
+          uint32_t cp = 0x10000 + ((cu - 0xD800) << 10) + (low - 0xDC00);
+          char utf8[4];
+          int n = utf8_encode(cp, utf8);
+          if (n <= 0 || !utf8_json_quote_append(buf, len, cap, utf8, (size_t)n)) return false;
+          i += 6;
+          continue;
+        }
+      }
+
+      if (!utf8_json_quote_append_u_escape(buf, len, cap, cu)) return false;
+      i += 3;
       continue;
     }
-    
-    char utf8[4];
-    int n = utf8_encode(cu, utf8);
-    if (n <= 0 || !utf8_json_quote_append(&raw, &raw_len, &raw_cap, utf8, (size_t)n)) goto oom;
+
+    if (!utf8_json_quote_append(buf, len, cap, p + i, (size_t)seq)) return false;
+    i += (size_t)seq;
   }
 
-  if (!utf8_json_quote_append_char(&raw, &raw_len, &raw_cap, '"')) goto oom;
-  if (out_len) *out_len = raw_len;
-  return raw;
-
-oom:
-  free(raw);
-  if (out_len) *out_len = 0;
-  return NULL;
+  return utf8_json_quote_append_char(buf, len, cap, '"');
 }
 
 size_t utf8_char_len_at(const char *str, size_t byte_len, size_t pos) {
