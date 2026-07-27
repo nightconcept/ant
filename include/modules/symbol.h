@@ -62,14 +62,21 @@ static inline ant_value_t sym_this_cb(ant_t *js, ant_value_t *args, int nargs) {
   return js->this_val;
 }
 
+/*
+ * Hot path: one iterator result object per iteration step. Going through
+ * js_set() would allocate a fresh JS string for each key, so use the
+ * pre-interned "done"/"value" keys instead. Key order stays done-then-value
+ * because it is observable through Object.keys on the result. The result is a
+ * freshly allocated (young) object, so no write barrier is required.
+ */
 static inline ant_value_t js_iter_result(ant_t *js, bool has_value, ant_value_t value) {
   ant_value_t result = js_mkobj(js);
   if (__builtin_expect(has_value, 1)) {
-    js_set(js, result, "done", js_false);
-    js_set(js, result, "value", value);
+    mkprop_interned(js, result, js->intern.done, js_false, 0);
+    mkprop_interned(js, result, js->intern.value, value, 0);
   } else {
-    js_set(js, result, "done", js_true);
-    js_set(js, result, "value", js_mkundef());
+    mkprop_interned(js, result, js->intern.done, js_true, 0);
+    mkprop_interned(js, result, js->intern.value, js_mkundef(), 0);
   }
   return result;
 }

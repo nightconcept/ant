@@ -243,8 +243,15 @@ static inline sv_vm_t *sv_async_prepare_materialization(
     if (f && f->max_stack > headroom) headroom = f->max_stack;
   }
 
+  /*
+   * One spare frame, not two: sv_frame_t is 144 bytes and an activation VM is
+   * live for as long as its await is pending, so the spare capacity is
+   * multiplied by every suspended async call. A single spare absorbs the
+   * common "resume then call one function" shape; anything deeper hits
+   * sv_vm_grow_frames, which doubles on demand.
+   */
   sv_vm_t *async_vm = sv_vm_create_sized(
-    js, stack_count + headroom, frame_count + 2);
+    js, stack_count + headroom, frame_count + 1);
   if (!async_vm) return NULL;
   if (stack_count > async_vm->stack_size || frame_count > async_vm->max_frames) {
     sv_vm_destroy(async_vm);
