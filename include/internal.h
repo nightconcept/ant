@@ -570,6 +570,13 @@ ant_value_t str_materialize(ant_t *js, ant_value_t value);
 
 ant_value_t js_for_in_keys(ant_t *js, ant_value_t obj);
 ant_value_t js_own_property_keys(ant_t *js, ant_value_t obj, bool include_symbols, bool enumerable_only);
+
+/* Allocation-free snapshot of a plain object's own enumerable string keys as
+   interned pointers, which stay valid across GC and user callbacks. Writes at
+   most `cap` entries but always returns the full count, so a caller can size a
+   buffer from a first probing call. Returns -1 when `obj` is exotic, indexed,
+   or otherwise needs js_own_property_keys. */
+int32_t js_own_plain_keys(ant_t *js, ant_value_t obj, const char **keys, uint32_t cap);
 ant_value_t js_delete_prop(ant_t *js, ant_value_t obj, const char *key, size_t len);
 ant_value_t js_delete_sym_prop(ant_t *js, ant_value_t obj, ant_value_t sym);
 

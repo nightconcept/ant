@@ -7283,6 +7283,41 @@ done:
   return arr;
 }
 
+int32_t js_own_plain_keys(ant_t *js, ant_value_t obj, const char **keys, uint32_t cap) {
+  if (vtype(obj) != T_OBJ) return -1;
+
+  ant_object_t *ptr = js_obj_ptr(obj);
+  if (!ptr || !ptr->shape) return -1;
+  if (ptr->flags.is_exotic) return -1;
+  if (get_dense_buf(obj)) return -1;
+
+  if (
+    ant_object_extra_count(ptr) != 0 &&
+    vtype(obj_extra_get(ptr, SLOT_PRIMITIVE)) == T_STR
+  ) return -1;
+
+  uint32_t count = ant_shape_count(ptr->shape);
+  uint32_t out = 0;
+
+  for (uint32_t i = 0; i < count; i++) {
+    const ant_shape_prop_t *prop = ant_shape_prop_at(ptr->shape, i);
+    if (!prop) return -1;
+    if (prop->type != ANT_SHAPE_KEY_STRING) continue;
+    if (i >= ptr->prop_count) continue;
+    if (!own_key_is_enumerable(js, obj, ptr, i)) continue;
+
+    const char *key = prop->key.interned;
+    /* Integer-like keys enumerate ascending before string keys; leave that
+       reordering to the general path. */
+    if (own_key_is_array_index(key, strlen(key), NULL)) return -1;
+
+    if (out < cap) keys[out] = key;
+    out++;
+  }
+
+  return (int32_t)out;
+}
+
 static bool proxy_key_same(ant_t *js, ant_value_t a, ant_value_t b) {
   if (vtype(a) != vtype(b)) return false;
   if (vtype(a) == T_SYMBOL) return vdata(a) == vdata(b);

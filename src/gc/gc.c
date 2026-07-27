@@ -203,7 +203,12 @@ void gc_run_minor(ant_t *js) {
   gc_objects_run_minor(js, NULL);
   ant_ic_epoch_bump();
 
-  js->gc_last_live = js->obj_arena.live_count;
+  /* gc_last_live is the major-collection baseline. A minor cannot prove old-gen
+     garbage dead, so refreshing it here would let the threshold chase the heap
+     upward and defer the major that actually reclaims. The exception is a heap
+     whose majors keep coming back empty: there the old generation really is
+     live, and holding the baseline down would only buy repeated full scans. */
+  if (gc_major_recl_ewma <= 13) js->gc_last_live = js->obj_arena.live_count;
   js->old_live_count = js->obj_arena.live_count;
   js->minor_gc_count++;
 
