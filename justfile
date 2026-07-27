@@ -76,8 +76,11 @@ test:
 
 # Run benchmark suite
 bench +args="":
-    meson compile -C build
     python3 bench/bench.py {{args}}
+
+# Run compliance benchmark suite across runtimes
+bench-compliance +args="":
+    python3 bench/compliance.py --allow-failures {{args}}
 
 # Run compliance test suite (generic escape hatch; prefer compliance-t1/t2/t3 below)
 compliance +args="":
