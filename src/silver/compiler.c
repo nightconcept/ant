@@ -515,6 +515,21 @@ static void compile_expr_with_inferred_name(
   c->inferred_name_len = saved_len;
 }
 
+/* IsIdentifierRef: a parenthesized identifier is not one, so `(x) = function(){}`
+ * leaves the function anonymous. */
+static inline bool is_identifier_ref(const sv_ast_t *node) {
+  return node && node->type == N_IDENT && !(node->flags & FN_PAREN);
+}
+
+/* NamedEvaluation for a default initializer: only a plain identifier target
+ * names the anonymous function or class it defaults to. */
+static void compile_default_init(sv_compiler_t *c, sv_ast_t *value, sv_ast_t *target) {
+  if (is_identifier_ref(target))
+    compile_expr_with_inferred_name(c, value, target->str, target->len);
+  else
+    compile_expr(c, value);
+}
+
 static void emit_const_assign_error(sv_compiler_t *c, const char *name, uint32_t len) {
   static const char prefix[] = "Assignment to constant variable '";
   static const char suffix[] = "'";
@@ -2701,7 +2716,9 @@ void compile_assign(sv_compiler_t *c, sv_ast_t *node) {
       return;
     }
 
-    compile_expr(c, node->right);
+    if (is_identifier_ref(target))
+      compile_expr_with_inferred_name(c, node->right, target->str, target->len);
+    else compile_expr(c, node->right);
     compile_lhs_set(c, target, true);
     return;
   }
@@ -4161,10 +4178,10 @@ static void compile_destructure_pattern(
         emit_op(c, OP_IS_UNDEF);
         int skip = emit_jump(c, OP_JMP_FALSE);
         emit_op(c, OP_POP);
-        compile_expr(c, default_val);
+        compile_default_init(c, default_val, target);
         patch_jump(c, skip);
       }
-      
+
       compile_destructure_store(c, target, mode, kind);
     }
 
@@ -4226,7 +4243,7 @@ static void compile_destructure_pattern(
         emit_op(c, OP_IS_UNDEF);
         int skip = emit_jump(c, OP_JMP_FALSE);
         emit_op(c, OP_POP);
-        compile_expr(c, default_val);
+        compile_default_init(c, default_val, value);
         patch_jump(c, skip);
       }
 
@@ -6299,7 +6316,7 @@ sv_func_t *compile_function_body(
         emit_op(&comp, OP_IS_UNDEF);
         int skip = emit_jump(&comp, OP_JMP_FALSE);
         emit_op(&comp, OP_POP);
-        compile_expr(&comp, p->right);
+        compile_default_init(&comp, p->right, p->left);
         patch_jump(&comp, skip);
         if (p->left && p->left->type == N_IDENT) {
           emit_op(&comp, OP_PUT_ARG);
@@ -6391,7 +6408,7 @@ sv_func_t *compile_function_body(
         emit_op(&comp, OP_IS_UNDEF);
         int skip = emit_jump(&comp, OP_JMP_FALSE);
         emit_op(&comp, OP_POP);
-        compile_expr(&comp, p->right);
+        compile_default_init(&comp, p->right, p->left);
         patch_jump(&comp, skip);
         if (p->left && p->left->type == N_IDENT && bind_lb < comp.local_count) {
           int slot = bind_lb - comp.param_locals;
