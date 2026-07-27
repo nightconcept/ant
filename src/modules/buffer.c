@@ -790,6 +790,52 @@ static ant_value_t js_typedarray_findIndex(ant_t *js, ant_value_t *args, int nar
   return js_mknum(-1);
 }
 
+static ant_value_t js_typedarray_findLast(ant_t *js, ant_value_t *args, int nargs) {
+  if (nargs < 1 || !is_callable(args[0]))
+    return js_mkerr_typed(js, JS_ERR_TYPE, "TypedArray.prototype.findLast requires a callable");
+
+  ant_value_t this_val = js_getthis(js);
+  TypedArrayData *ta_data = buffer_get_typedarray_data(this_val);
+  if (!ta_data) return js_mkerr(js, "Invalid TypedArray");
+  if (!ta_data->buffer || ta_data->buffer->is_detached)
+    return js_mkerr(js, "Cannot operate on a detached TypedArray");
+
+  ant_value_t this_arg = nargs > 1 ? args[1] : js_mkundef();
+  for (size_t i = ta_data->length; i-- > 0;) {
+    ant_value_t value = js_mkundef();
+    if (!buffer_typedarray_data_read_index(js, ta_data, i, &value)) return js_mkundef();
+    ant_value_t call_args[3] = { value, js_mknum((double)i), this_val };
+    ant_value_t result = sv_vm_call(js->vm, js, args[0], this_arg, call_args, 3, NULL, false);
+    if (is_err(result)) return result;
+    if (js_truthy(js, result)) return value;
+  }
+
+  return js_mkundef();
+}
+
+static ant_value_t js_typedarray_findLastIndex(ant_t *js, ant_value_t *args, int nargs) {
+  if (nargs < 1 || !is_callable(args[0]))
+    return js_mkerr_typed(js, JS_ERR_TYPE, "TypedArray.prototype.findLastIndex requires a callable");
+
+  ant_value_t this_val = js_getthis(js);
+  TypedArrayData *ta_data = buffer_get_typedarray_data(this_val);
+  if (!ta_data) return js_mkerr(js, "Invalid TypedArray");
+  if (!ta_data->buffer || ta_data->buffer->is_detached)
+    return js_mkerr(js, "Cannot operate on a detached TypedArray");
+
+  ant_value_t this_arg = nargs > 1 ? args[1] : js_mkundef();
+  for (size_t i = ta_data->length; i-- > 0;) {
+    ant_value_t value = js_mkundef();
+    if (!buffer_typedarray_data_read_index(js, ta_data, i, &value)) return js_mknum(-1);
+    ant_value_t call_args[3] = { value, js_mknum((double)i), this_val };
+    ant_value_t result = sv_vm_call(js->vm, js, args[0], this_arg, call_args, 3, NULL, false);
+    if (is_err(result)) return result;
+    if (js_truthy(js, result)) return js_mknum((double)i);
+  }
+
+  return js_mknum(-1);
+}
+
 static ant_value_t js_typedarray_map(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1 || !is_callable(args[0]))
     return js_mkerr_typed(js, JS_ERR_TYPE, "TypedArray.prototype.map requires a callable");
@@ -3364,6 +3410,8 @@ void init_buffer_module(ant_t *js) {
   js_set(js, typedarray_proto, "filter", js_mkfun(js_typedarray_filter));
   js_set(js, typedarray_proto, "find", js_mkfun(js_typedarray_find));
   js_set(js, typedarray_proto, "findIndex", js_mkfun(js_typedarray_findIndex));
+  js_set(js, typedarray_proto, "findLast", js_mkfun(js_typedarray_findLast));
+  js_set(js, typedarray_proto, "findLastIndex", js_mkfun(js_typedarray_findLastIndex));
   js_set(js, typedarray_proto, "forEach", js_mkfun(js_typedarray_forEach));
   js_set(js, typedarray_proto, "map", js_mkfun(js_typedarray_map));
   js_set(js, typedarray_proto, "reduce", js_mkfun(js_typedarray_reduce));
