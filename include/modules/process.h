@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-void init_process_module(void);
+void init_process_module(ant_t *js);
 ant_value_t process_library(ant_t *js);
 
 void process_refresh_sandbox_argv(void);

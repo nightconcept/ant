@@ -5,7 +5,6 @@
 #include "ant.h"
 #include "internal.h"
 #include "errors.h"
-#include "runtime.h"
 #include "utils.h"
 #include "silver/lexer.h"
 
@@ -1567,9 +1566,7 @@ static ant_value_t builtin_bigint_toString(ant_t *js, ant_value_t *args, int nar
   return out;
 }
 
-void init_bigint_module(void) {
-  ant_t *js = rt->js;
-
+void init_bigint_module(ant_t *js) {
   ant_value_t glob = js_glob(js);
   ant_value_t object_proto = js->sym.object_proto;
   ant_value_t function_proto = js_get_slot(glob, SLOT_FUNC_PROTO);
@@ -1586,5 +1583,5 @@ void init_bigint_module(void) {
   js_setprop(js, bigint_ctor_obj, js_mkstr(js, "asUintN", 7), js_mkfun(builtin_BigInt_asUintN));
   js_setprop_nonconfigurable(js, bigint_ctor_obj, "prototype", 9, bigint_proto);
   js_setprop(js, bigint_ctor_obj, ANT_STRING("name"), ANT_STRING("BigInt"));
-  js_setprop(js, glob, js_mkstr(js, "BigInt", 6), js_obj_to_func(bigint_ctor_obj));
+  js_setprop(js, glob, js_mkstr(js, "BigInt", 6), js_obj_to_func(js, bigint_ctor_obj));
 }

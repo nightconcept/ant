@@ -6,7 +6,7 @@
 ant_value_t timers_library(ant_t *js);
 ant_value_t timers_promises_library(ant_t *js);
 
-void init_timer_module(void);
+void init_timer_module(ant_t *js);
 void process_microtasks(ant_t *js);
 void process_immediates(ant_t *js);
 void queue_promise_trigger(ant_t *js, ant_value_t promise);

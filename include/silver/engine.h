@@ -421,8 +421,8 @@ static inline void gc_upvalue_write_barrier(ant_t *js, sv_upvalue_t *uv, ant_val
   if (gc_value_is_heap_ref(new_val)) gc_remember_upvalue(js, uv);
 }
 
-static inline sv_upvalue_t *js_upvalue_alloc(void) {
-  return (sv_upvalue_t *)fixed_arena_alloc(&rt->js->upvalue_arena);
+static inline sv_upvalue_t *js_upvalue_alloc(ant_t *js) {
+  return (sv_upvalue_t *)fixed_arena_alloc(&js->upvalue_arena);
 }
 
 #define SV_CALL_HAS_BOUND_ARGS   (1u << 0)

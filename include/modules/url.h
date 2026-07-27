@@ -17,7 +17,7 @@ typedef struct {
 } url_state_t;
 
 
-void init_url_module(void);
+void init_url_module(ant_t *js);
 void url_state_clear(url_state_t *s);
 void url_free_state(url_state_t *s);
 bool usp_is_urlsearchparams(ant_t *js, ant_value_t obj);

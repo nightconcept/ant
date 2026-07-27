@@ -13,7 +13,7 @@ typedef void (*headers_foreach_cb)(
   void *ctx
 );
 
-void init_headers_module(void);
+void init_headers_module(ant_t *js);
 void headers_set_immutable(ant_value_t hdrs, bool immutable);
 void headers_append_if_missing(ant_value_t hdrs, const char *name, const char *value);
 void headers_for_each(ant_value_t hdrs, headers_foreach_cb cb, void *ctx);

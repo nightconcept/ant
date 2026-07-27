@@ -22,7 +22,6 @@
 #include "errors.h"
 #include "watch.h"
 #include "internal.h"
-#include "runtime.h"
 #include "descriptors.h"
 
 #include "gc/roots.h"
@@ -1970,7 +1969,7 @@ static void on_realpath_complete(uv_fs_t *uv_req) {
 
 static ant_value_t create_dirent_object(ant_t *js, const char *name, size_t name_len, uv_dirent_type_t type) {
   ant_value_t obj = js_newobj(js);
-  js_set_proto(obj, g_dirent_proto);
+  js_set_proto(js, obj, g_dirent_proto);
   js_set(js, obj, "name", js_mkstr(js, name, name_len));
   js_set_slot(obj, SLOT_DATA, tov((double)type));
   return obj;
@@ -4772,10 +4771,9 @@ static ant_value_t builtin_fs_unwatchFile(ant_t *js, ant_value_t *args, int narg
   return js_mkundef();
 }
 
-void init_fs_module(void) {
+void init_fs_module(ant_t *js) {
   utarray_new(pending_requests, &ut_ptr_icd);
-  
-  ant_t *js = rt->js;
+
   ant_value_t glob = js->global;
   
   ant_value_t stats_ctor = js_mkobj(js);
@@ -4790,7 +4788,7 @@ void init_fs_module(void) {
   js_mkprop_fast(js, stats_ctor, "name", 4, js_mkstr(js, "Stats", 5));
   js_set_descriptor(js, stats_ctor, "name", 4, 0);
   
-  js_set(js, glob, "Stats", js_obj_to_func(stats_ctor));
+  js_set(js, glob, "Stats", js_obj_to_func(js, stats_ctor));
 
   g_dirent_proto = js_mkobj(js);
   js_set(js, g_dirent_proto, "isFile", js_mkfun(dirent_isFile));
