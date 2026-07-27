@@ -3,6 +3,7 @@
 #include "ant.h"
 #include "errors.h"
 #include "internal.h"
+#include "utils.h"
 
 #include "modules/symbol.h"
 #include "modules/crypto.h"
@@ -113,6 +114,12 @@ static ant_value_t builtin_Math_expm1(ant_params_t) {
   double x = (nargs < 1) ? JS_NAN : js_to_number(js, args[0]);
   if (isnan(x)) return tov(JS_NAN);
   return tov(expm1(x));
+}
+
+static ant_value_t builtin_Math_f16round(ant_params_t) {
+  double x = (nargs < 1) ? JS_NAN : js_to_number(js, args[0]);
+  if (isnan(x)) return tov(JS_NAN);
+  return tov(half_to_double(double_to_half(x)));
 }
 
 static ant_value_t builtin_Math_floor(ant_params_t) {
@@ -302,6 +309,7 @@ void init_math_module(ant_t *js) {
   js_setprop(js, math_obj, js_mkstr(js, "cosh", 4), js_mkfun(builtin_Math_cosh));
   js_setprop(js, math_obj, js_mkstr(js, "exp", 3), js_mkfun(builtin_Math_exp));
   js_setprop(js, math_obj, js_mkstr(js, "expm1", 5), js_mkfun(builtin_Math_expm1));
+  js_setprop(js, math_obj, js_mkstr(js, "f16round", 8), js_mkfun(builtin_Math_f16round));
   js_setprop(js, math_obj, js_mkstr(js, "floor", 5), js_mkfun(builtin_Math_floor));
   js_setprop(js, math_obj, js_mkstr(js, "fround", 6), js_mkfun(builtin_Math_fround));
   js_setprop(js, math_obj, js_mkstr(js, "hypot", 5), js_mkfun(builtin_Math_hypot));
