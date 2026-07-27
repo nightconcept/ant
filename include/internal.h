@@ -150,7 +150,8 @@ struct ant_isolate_t {
   ant_module_t *module;
   ant_object_t *objects;
   ant_object_t *permanent_objects;
-  
+  ant_process_state_t *process_state;
+
   ant_fixed_arena_t obj_arena;
   ant_prop_ref_t *prop_refs;
 

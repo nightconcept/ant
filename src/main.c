@@ -483,7 +483,7 @@ static int execute_sandbox_request(ant_t *js, ant_sandbox_request_t *sandbox, co
   char **request_argv = build_sandbox_process_argv(argv0, sandbox, &request_argc);
   
   ant_runtime_set_argv(js, request_argc, request_argv);
-  process_refresh_sandbox_argv();
+  process_refresh_sandbox_argv(js);
 
   if (sandbox->cwd && chdir(sandbox->cwd) != 0) {
     fprintf(stderr, "sandbox daemon: failed to chdir to %s: %s\n", sandbox->cwd, strerror(errno));
@@ -492,7 +492,7 @@ static int execute_sandbox_request(ant_t *js, ant_sandbox_request_t *sandbox, co
   }
 
   io_set_sandbox_terminal(sandbox->capabilities);
-  process_set_sandbox_terminal(sandbox->capabilities, sandbox->tty_rows, sandbox->tty_cols);
+  process_set_sandbox_terminal(js, sandbox->capabilities, sandbox->tty_rows, sandbox->tty_cols);
   tty_set_sandbox_terminal(sandbox->capabilities, sandbox->tty_rows, sandbox->tty_cols);
   ant_sandbox_policy_set_forwards(sandbox->forward_ports, sandbox->forward_count);
 
@@ -874,7 +874,7 @@ int main(int argc, char *argv[]) {
   
   if (sandbox_daemon) {
     io_set_sandbox_terminal(sandbox.capabilities);
-    process_set_sandbox_terminal(sandbox.capabilities, sandbox.tty_rows, sandbox.tty_cols);
+    process_set_sandbox_terminal(js, sandbox.capabilities, sandbox.tty_rows, sandbox.tty_cols);
     tty_set_sandbox_terminal(sandbox.capabilities, sandbox.tty_rows, sandbox.tty_cols);
     ant_sandbox_policy_set_forwards(sandbox.forward_ports, sandbox.forward_count);
   }
