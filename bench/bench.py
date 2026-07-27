@@ -1,348 +1,931 @@
 #!/usr/bin/env python3
 import os
 import sys
+import re
 import json
+import stat
 import shutil
-import urllib.request
-import tarfile
+import platform
 import zipfile
 import subprocess
-import platform
+import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
-# Paths
-REPO_ROOT = Path(__file__).resolve().parent.parent
-BENCH_DIR = REPO_ROOT / "bench"
-BIN_DIR = BENCH_DIR / "bin"
+ROOT_DIR = Path(__file__).parent.resolve()
+BIN_DIR = ROOT_DIR / "bin"
+BENCH_DIR = ROOT_DIR / "benchmarks"
+MANIFEST_PATH = ROOT_DIR / "versions.json"
 
-# Specified versions for external binaries
-VERSIONS = {
-    "ant_upstream": "v12.2.1d8040ee.1",
-    "node": "v22.14.0",
-    "bun": "v1.2.2",
-    "deno": "v2.2.3",
-    "hyperfine": "v1.18.0"
-}
+BENCHMARKS = [
+    {
+        "id": "fib",
+        "name": "Fibonacci Recursion",
+        "desc": "Recursive computation fib(34) - CPU & recursion overhead",
+        "ts": "fib.ts",
+        "js": "fib.js"
+    },
+    {
+        "id": "json",
+        "name": "JSON Serialization",
+        "desc": "100 iterations of stringifying & parsing 5,000 objects",
+        "ts": "json.ts",
+        "js": "json.js"
+    },
+    {
+        "id": "string",
+        "name": "String Manipulations",
+        "desc": "Regex replace, upper-case, split & join (50 iterations)",
+        "ts": "string.ts",
+        "js": "string.js"
+    },
+    {
+        "id": "array",
+        "name": "Array Operations",
+        "desc": "Filter, map, sort & reduce on 100k items (10 passes)",
+        "ts": "array.ts",
+        "js": "array.js"
+    },
+    {
+        "id": "async",
+        "name": "Async & Microtasks",
+        "desc": "500 concurrent async promise chains (100 steps each)",
+        "ts": "async.ts",
+        "js": "async.js"
+    },
+    {
+        "id": "coldstart",
+        "name": "Cold Start (Hono App)",
+        "desc": "Import Hono router, register routes & exit - module init overhead",
+        "ts": "coldstart.js",
+        "js": "coldstart.js"
+    },
+    {
+        "id": "object_graph",
+        "name": "Object Graph & AST",
+        "desc": "150k AST object nodes creation, linking & traversal - heap & GC overhead",
+        "ts": "object_graph.ts",
+        "js": "object_graph.js"
+    },
+    {
+        "id": "string_rope",
+        "name": "Rope String Concatenation",
+        "desc": "50k high-frequency string concatenations, slicing & indexOf search",
+        "ts": "string_rope.ts",
+        "js": "string_rope.js"
+    },
+    {
+        "id": "ic_polymorphic",
+        "name": "Polymorphic IC Lookup",
+        "desc": "Property accesses across 4 object shapes in a hot loop (500 passes)",
+        "ts": "ic_polymorphic.ts",
+        "js": "ic_polymorphic.js"
+    },
+    {
+        "id": "proxy_trap",
+        "name": "Proxy Trap Interception",
+        "desc": "100k property get/set intercept traps via ES6 Proxy handler",
+        "ts": "proxy_trap.ts",
+        "js": "proxy_trap.js"
+    },
+    {
+        "id": "typedarray_matrix",
+        "name": "TypedArray Compute",
+        "desc": "20 passes of vector math over Float64Array(100k) elements",
+        "ts": "typedarray_matrix.ts",
+        "js": "typedarray_matrix.js"
+    },
+    {
+        "id": "text_codec",
+        "name": "TextEncoder/Decoder UTF-8",
+        "desc": "50 iterations of UTF-8 encoding/decoding multi-MB Unicode strings",
+        "ts": "text_codec.ts",
+        "js": "text_codec.js"
+    }
+]
+
+# ANSI Colors
+CYAN = "\033[96m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+BLUE = "\033[94m"
+MAGENTA = "\033[95m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+RUNTIMES = [
+    {
+        "id": "ant",
+        "name": "ant",
+        "repo": "themackabu/ant",
+        "color": GREEN,
+        "ts_file": True,
+        "args": []
+    },
+    {
+        "id": "tjs",
+        "name": "txiki.js",
+        "repo": "saghul/txiki.js",
+        "color": YELLOW,
+        "ts_file": False,
+        "args": ["run"]
+    },
+    {
+        "id": "node",
+        "name": "Node.js",
+        "repo": "nodejs/node",
+        "color": BLUE,
+        "ts_file": False,
+        "args": []
+    },
+    {
+        "id": "deno",
+        "name": "Deno",
+        "repo": "denoland/deno",
+        "color": MAGENTA,
+        "ts_file": True,
+        "args": ["run"]
+    },
+    {
+        "id": "bun",
+        "name": "Bun",
+        "repo": "oven-sh/bun",
+        "color": CYAN,
+        "ts_file": True,
+        "args": ["run"]
+    }
+]
+
+def strip_ansi(text: str) -> str:
+    return re.sub(r'\x1b\[[0-9;]*m', '', text)
+
+def pad_cell(text: str, width: int, align="left") -> str:
+    visible_len = len(strip_ansi(text))
+    padding = max(0, width - visible_len)
+    if align == "right":
+        return " " * padding + text
+    elif align == "center":
+        left = padding // 2
+        right = padding - left
+        return " " * left + text + " " * right
+    return text + " " * padding
 
 def get_platform_info():
-    sys_name = platform.system().lower()
+    system = platform.system().lower()
     machine = platform.machine().lower()
-    
-    if sys_name not in ("linux", "darwin"):
-        raise RuntimeError(f"Unsupported operating system: {sys_name}")
-    
-    is_arm = machine in ("aarch64", "arm64")
-    return sys_name, is_arm
+    is_mac = system == "darwin"
+    is_linux = system == "linux"
+    is_arm = machine in ("arm64", "aarch64")
+    return system, machine, is_mac, is_linux, is_arm
 
-def download_file(url, target_path):
-    print(f"Downloading {url} ...")
-    req = urllib.request.Request(url, headers={"User-Agent": "ant-bench-runner"})
-    with urllib.request.urlopen(req) as resp, open(target_path, "wb") as f:
-        shutil.copyfileobj(resp, f)
-
-def ensure_binaries():
-    BIN_DIR.mkdir(parents=True, exist_ok=True)
-    sys_name, is_arm = get_platform_info()
-
-    # Helper map for downloads
-    # 1. Upstream Ant
-    ant_bin = BIN_DIR / "ant_upstream"
-    if not ant_bin.exists():
-        ant_tag = VERSIONS["ant_upstream"]
-        ant_arch = "aarch64" if is_arm else "x64"
-        ant_os = "darwin" if sys_name == "darwin" else "linux"
-        ant_url = f"https://github.com/theMackabu/ant/releases/download/{ant_tag}/ant-{ant_os}-{ant_arch}.zip"
-        zip_path = BIN_DIR / "ant.zip"
-        download_file(ant_url, zip_path)
-        with zipfile.ZipFile(zip_path, 'r') as zf:
-            for item in zf.namelist():
-                if item.endswith("ant") or item == "ant":
-                    with zf.open(item) as src, open(ant_bin, "wb") as dst:
-                        shutil.copyfileobj(src, dst)
-                    break
-        ant_bin.chmod(0o755)
-        zip_path.unlink(missing_ok=True)
-
-    # 2. Node.js
-    node_bin = BIN_DIR / "node"
-    if not node_bin.exists():
-        node_ver = VERSIONS["node"]
-        node_arch = "arm64" if is_arm else "x64"
-        node_os = "darwin" if sys_name == "darwin" else "linux"
-        node_ext = "tar.gz" if sys_name == "darwin" else "tar.xz"
-        node_url = f"https://nodejs.org/dist/{node_ver}/node-{node_ver}-{node_os}-{node_arch}.{node_ext}"
-        archive_path = BIN_DIR / f"node.{node_ext}"
-        download_file(node_url, archive_path)
-        mode = "r:gz" if node_ext == "tar.gz" else "r:xz"
-        with tarfile.open(archive_path, mode) as tf:
-            for member in tf.getmembers():
-                if member.name.endswith("/bin/node"):
-                    extracted = tf.extractfile(member)
-                    with open(node_bin, "wb") as dst:
-                        shutil.copyfileobj(extracted, dst)
-                    break
-        node_bin.chmod(0o755)
-        archive_path.unlink(missing_ok=True)
-
-    # 3. Bun
-    bun_bin = BIN_DIR / "bun"
-    if not bun_bin.exists():
-        bun_ver = VERSIONS["bun"]
-        bun_arch = "aarch64" if is_arm else "x64"
-        bun_os = "darwin" if sys_name == "darwin" else "linux"
-        bun_url = f"https://github.com/oven-sh/bun/releases/download/bun-{bun_ver}/bun-{bun_os}-{bun_arch}.zip"
-        zip_path = BIN_DIR / "bun.zip"
-        download_file(bun_url, zip_path)
-        with zipfile.ZipFile(zip_path, 'r') as zf:
-            for item in zf.namelist():
-                if item.endswith("/bun") or item == "bun":
-                    with zf.open(item) as src, open(bun_bin, "wb") as dst:
-                        shutil.copyfileobj(src, dst)
-                    break
-        bun_bin.chmod(0o755)
-        zip_path.unlink(missing_ok=True)
-
-    # 4. Deno
-    deno_bin = BIN_DIR / "deno"
-    if not deno_bin.exists():
-        deno_ver = VERSIONS["deno"]
-        deno_arch = "aarch64" if is_arm else "x86_64"
-        deno_os = "apple-darwin" if sys_name == "darwin" else "unknown-linux-gnu"
-        deno_url = f"https://github.com/denoland/deno/releases/download/{deno_ver}/deno-{deno_arch}-{deno_os}.zip"
-        zip_path = BIN_DIR / "deno.zip"
-        download_file(deno_url, zip_path)
-        with zipfile.ZipFile(zip_path, 'r') as zf:
-            for item in zf.namelist():
-                if item.endswith("deno") or item == "deno":
-                    with zf.open(item) as src, open(deno_bin, "wb") as dst:
-                        shutil.copyfileobj(src, dst)
-                    break
-        deno_bin.chmod(0o755)
-        zip_path.unlink(missing_ok=True)
-
-    # 5. Hyperfine
-    hyperfine_bin = shutil.which("hyperfine")
-    if hyperfine_bin:
-        hyperfine_path = Path(hyperfine_bin)
-    else:
-        hyperfine_path = BIN_DIR / "hyperfine"
-        if not hyperfine_path.exists():
-            hf_ver = VERSIONS["hyperfine"]
-            hf_arch = "aarch64" if is_arm else "x86_64"
-            hf_os = "apple-darwin" if sys_name == "darwin" else "unknown-linux-gnu"
-            hf_url = f"https://github.com/sharkdp/hyperfine/releases/download/{hf_ver}/hyperfine-{hf_ver}-{hf_arch}-{hf_os}.tar.gz"
-            archive_path = BIN_DIR / "hyperfine.tar.gz"
-            download_file(hf_url, archive_path)
-            with tarfile.open(archive_path, "r:gz") as tf:
-                for member in tf.getmembers():
-                    if member.name.endswith("/hyperfine") or member.name == "hyperfine":
-                        extracted = tf.extractfile(member)
-                        with open(hyperfine_path, "wb") as dst:
-                            shutil.copyfileobj(extracted, dst)
-                        break
-            hyperfine_path.chmod(0o755)
-            archive_path.unlink(missing_ok=True)
-
-    return {
-        "ant_fork": REPO_ROOT / "build" / "ant",
-        "ant_upstream": ant_bin,
-        "node": node_bin,
-        "bun": bun_bin,
-        "deno": deno_bin,
-        "hyperfine": hyperfine_path
-    }
-
-def get_file_size_mb(path):
-    if not path.exists():
-        return "N/A"
-    size_bytes = path.stat().st_size
-    size_mb = size_bytes / (1024 * 1024)
-    return f"~{size_mb:.1f} MB"
-
-def run_benchmarks(bins, warmup=10, runs=100):
-    script_path = REPO_ROOT / "examples" / "npm" / "hono" / "bench-coldstart.js"
-    if not script_path.exists():
-        raise RuntimeError(f"Benchmark script not found at {script_path}")
-
-    hono_dir = script_path.parent
-    node_modules_dir = hono_dir / "node_modules"
-    if not node_modules_dir.exists():
-        print("Installing dependencies in examples/npm/hono...")
-        subprocess.run(["npm", "install"], check=True, cwd=hono_dir)
-
-    # Build commands
-    commands = {
-        "Ant (Fork)": f"'{bins['ant_fork']} {script_path}'",
-        "Ant (Upstream)": f"'{bins['ant_upstream']} {script_path}'",
-        "Bun": f"'{bins['bun']} {script_path}'",
-        "Deno": f"'{bins['deno']} run --allow-read --allow-env {script_path}'",
-        "Node": f"'{bins['node']} {script_path}'",
-    }
-
-    hyperfine_cmd = [
-        str(bins["hyperfine"]),
-        "--warmup", str(warmup),
-        "--runs", str(runs),
-        "--export-json", str(BENCH_DIR / "results.json")
-    ]
-    for label, cmd_str in commands.items():
-        hyperfine_cmd.extend(["-n", label, cmd_str.strip("'")])
-
-    print("\nRunning cold-start benchmark using hyperfine...")
-    subprocess.run(hyperfine_cmd, check=True, cwd=REPO_ROOT)
-
-    # Read hyperfine JSON results
-    with open(BENCH_DIR / "results.json", "r") as f:
-        results_data = json.load(f)
-
-    return results_data
-
-def format_output(bins, results_data, check_thresholds=False, max_speed_lag=10.0, max_size_growth=25.0):
-    fork_bin = bins["ant_fork"]
-    upstream_bin = bins["ant_upstream"]
-
-    # Map binary sizes
-    fork_size = get_file_size_mb(fork_bin)
-    upstream_size = get_file_size_mb(upstream_bin)
-    node_size = get_file_size_mb(bins["node"])
-    bun_size = get_file_size_mb(bins["bun"])
-    deno_size = get_file_size_mb(bins["deno"])
-
-    # 1. Overview Table
-    overview_table = []
-    overview_table.append("| Runtime | Engine | JIT | WinterTC | Binary size |")
-    overview_table.append("| ------- | ------ | --- | -------- | ----------- |")
-    overview_table.append(f"| **Ant (Fork)** | Ant Silver | ✓ | ✓ | **{fork_size}** |")
-    overview_table.append(f"| Ant (Upstream {VERSIONS['ant_upstream']}) | Ant Silver | ✓ | ✓ | {upstream_size} |")
-    overview_table.append(f"| Node ({VERSIONS['node']}) | V8 | ✓ | partial | {node_size} |")
-    overview_table.append(f"| Bun ({VERSIONS['bun']}) | JSC | ✓ | ✓ | {bun_size} |")
-    overview_table.append(f"| Deno ({VERSIONS['deno']}) | V8 | ✓ | ✓ | {deno_size} |")
-
-    # 2. Cold Start Table
-    runs = results_data.get("results", [])
-    fastest_mean = min(r["mean"] for r in runs) if runs else 1.0
-
-    coldstart_table = []
-    coldstart_table.append("| Runtime | Mean | Min | Max | Relative |")
-    coldstart_table.append("| ------- | ---- | --- | --- | -------- |")
-
-    fork_mean = None
-    upstream_mean = None
-
-    for r in sorted(runs, key=lambda x: x["mean"]):
-        name = r["command"] # set by -n
-        mean_ms = r["mean"] * 1000
-        min_ms = r["min"] * 1000
-        max_ms = r["max"] * 1000
-        rel = r["mean"] / fastest_mean
-
-        if name == "Ant (Fork)":
-            fork_mean = r["mean"]
-        elif name == "Ant (Upstream)":
-            upstream_mean = r["mean"]
-
-        rel_str = "**1.00**" if rel == 1.0 else f"{rel:.2f}× slower"
-        name_str = f"**{name}**" if rel == 1.0 else name
-
-        coldstart_table.append(
-            f"| {name_str} | {mean_ms:.1f} ms | {min_ms:.1f} ms | {max_ms:.1f} ms | {rel_str} |"
-        )
-
-    print("\n" + "=" * 60)
-    print("### Feature & Size Comparison")
-    print("\n".join(overview_table))
-    print("\n### Cold Start Benchmark (Hono import & route registration)")
-    print("\n".join(coldstart_table))
-    print("=" * 60 + "\n")
-
-    # 3. Threshold Checks against Upstream Ant
-    threshold_passed = True
-    threshold_summary = []
-
-    if fork_bin.exists() and upstream_bin.exists():
-        fork_bytes = fork_bin.stat().st_size
-        upstream_bytes = upstream_bin.stat().st_size
-        size_growth_pct = ((fork_bytes - upstream_bytes) / upstream_bytes) * 100.0
-
-        size_ok = size_growth_pct <= max_size_growth
-        if not size_ok:
-            threshold_passed = False
-
-        size_status = "PASS" if size_ok else "FAIL"
-        size_msg = (
-            f"Binary Size: Fork ({fork_bytes / (1024*1024):.2f} MB) vs Upstream ({upstream_bytes / (1024*1024):.2f} MB) "
-            f"-> {size_growth_pct:+.1f}% (Limit: +{max_size_growth:.1f}%) [{size_status}]"
-        )
-        print(size_msg)
-
-        threshold_summary.append("| Metric | Upstream | Fork | Diff | Max Limit | Status |")
-        threshold_summary.append("| ------ | -------- | ---- | ---- | --------- | ------ |")
-        threshold_summary.append(
-            f"| Binary Size | {upstream_bytes / (1024*1024):.2f} MB | {fork_bytes / (1024*1024):.2f} MB | "
-            f"{size_growth_pct:+.1f}% | +{max_size_growth:.1f}% | **{size_status}** |"
-        )
-
-        if fork_mean is not None and upstream_mean is not None:
-            speed_lag_pct = ((fork_mean - upstream_mean) / upstream_mean) * 100.0
-            speed_ok = speed_lag_pct <= max_speed_lag
-            if not speed_ok:
-                threshold_passed = False
-
-            speed_status = "PASS" if speed_ok else "FAIL"
-            speed_msg = (
-                f"Cold Start Speed: Fork ({fork_mean*1000:.1f} ms) vs Upstream ({upstream_mean*1000:.1f} ms) "
-                f"-> {speed_lag_pct:+.1f}% (Limit: +{max_speed_lag:.1f}% slower) [{speed_status}]"
-            )
-            print(speed_msg)
-
-            threshold_summary.append(
-                f"| Cold Start Speed | {upstream_mean*1000:.1f} ms | {fork_mean*1000:.1f} ms | "
-                f"{speed_lag_pct:+.1f}% | +{max_speed_lag:.1f}% | **{speed_status}** |"
-            )
-
-    gh_summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    if gh_summary:
+def resolve_binary(name: str) -> Path:
+    if MANIFEST_PATH.exists():
         try:
-            with open(gh_summary, "a", encoding="utf-8") as f:
-                f.write("### Cold-Start Benchmark & Threshold Results\n\n")
-                f.write("#### Feature & Size Comparison\n\n")
-                f.write("\n".join(overview_table) + "\n\n")
-                f.write("#### Cold Start Benchmark (Hono import & route registration)\n\n")
-                f.write("\n".join(coldstart_table) + "\n\n")
-                if threshold_summary:
-                    f.write("#### Performance & Size Threshold Assertions vs Upstream Ant\n\n")
-                    f.write("\n".join(threshold_summary) + "\n\n")
+            with open(MANIFEST_PATH, "r") as f:
+                vdata = json.load(f)
+                r_info = vdata.get("runtimes", {}).get(name, {})
+                vp = r_info.get("binary_path")
+                if vp:
+                    p = Path(vp)
+                    if p.is_absolute() and p.exists() and p.is_file():
+                        return p
+                    rel_p = ROOT_DIR / p
+                    if rel_p.exists() and rel_p.is_file():
+                        return rel_p
+                    parent_p = ROOT_DIR.parent / p
+                    if parent_p.exists() and parent_p.is_file():
+                        return parent_p
         except Exception:
             pass
 
-    if check_thresholds and not threshold_passed:
-        print("\nERROR: Performance or size threshold assertion failed against Upstream Ant!")
-        return False
+    local_bin = BIN_DIR / name
+    if local_bin.exists() and local_bin.is_file():
+        return local_bin
+    local_bin_exe = BIN_DIR / f"{name}.exe"
+    if local_bin_exe.exists() and local_bin_exe.is_file():
+        return local_bin_exe
 
-    return True
+    build_bin = ROOT_DIR.parent / "build" / name
+    if build_bin.exists() and build_bin.is_file():
+        return build_bin
+
+    which_path = shutil.which(name)
+    if which_path:
+        return Path(which_path)
+
+    if shutil.which("mise"):
+        try:
+            res = subprocess.run(["mise", "which", name], capture_output=True, text=True)
+            if res.returncode == 0 and res.stdout.strip():
+                p = Path(res.stdout.strip())
+                if p.exists():
+                    return p
+        except Exception:
+            pass
+
+    return local_bin
+
+def fetch_latest_release_asset(repo: str, asset_name_exact: str = "", asset_substr: str = ""):
+    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Python/3.13)"})
+    with urllib.request.urlopen(req) as resp:
+        data = json.loads(resp.read().decode())
+        tag = data.get("tag_name", "latest")
+        if asset_name_exact:
+            for asset in data.get("assets", []):
+                if asset["name"] == asset_name_exact:
+                    return tag, asset["name"], asset["browser_download_url"]
+        if asset_substr:
+            for asset in data.get("assets", []):
+                name = asset["name"]
+                if asset_substr in name and not name.endswith(".bsdiff") and "profile" not in name and "baseline" not in name:
+                    return tag, name, asset["browser_download_url"]
+    raise RuntimeError(f"No asset matching '{asset_name_exact or asset_substr}' found in {repo} releases")
+
+def ensure_binaries(force_update=False):
+    BIN_DIR.mkdir(exist_ok=True)
+    bin_map = {}
+    asset_info = {}
+    system, machine, is_mac, is_linux, is_arm = get_platform_info()
+
+    for r in RUNTIMES:
+        r_id = r["id"]
+        bin_path = resolve_binary(r_id)
+
+        if r_id == "ant":
+            build_bin = ROOT_DIR.parent / "build" / "ant"
+            if build_bin.exists() and build_bin.is_file() and build_bin.stat().st_size > 0:
+                target = BIN_DIR / "ant"
+                try:
+                    shutil.copy2(build_bin, target)
+                    target.chmod(target.stat().st_mode | stat.S_IEXEC)
+                except Exception:
+                    pass
+                bin_map["ant"] = target
+                continue
+
+        if not force_update and bin_path.exists() and bin_path.is_file():
+            bin_map[r_id] = bin_path
+            continue
+
+        if r_id == "ant":
+            ant_pattern = "ant-darwin-aarch64" if (is_mac and is_arm) else \
+                          "ant-darwin-x64" if is_mac else \
+                          "ant-linux-aarch64" if (is_linux and is_arm) else "ant-linux-x64"
+            try:
+                tag, name, download_url = fetch_latest_release_asset("themackabu/ant", asset_substr=ant_pattern)
+                print(f"  ➜ Downloading ant {tag} ({name})...", flush=True)
+                ant_zip = BIN_DIR / "ant.zip"
+                urllib.request.urlretrieve(download_url, ant_zip)
+                with zipfile.ZipFile(ant_zip, 'r') as zip_ref:
+                    zip_ref.extractall(BIN_DIR)
+                ant_zip.unlink(missing_ok=True)
+                target = BIN_DIR / "ant"
+                target.chmod(target.stat().st_mode | stat.S_IEXEC)
+                bin_map["ant"] = target
+                asset_info["ant"] = {"tag": tag, "url": download_url, "asset": name}
+            except Exception as e:
+                print(f"⚠️ Failed to fetch ant release: {e}", flush=True)
+                bin_map["ant"] = bin_path
+
+        elif r_id == "tjs":
+            txiki_pattern = "txiki-macos-arm64" if (is_mac and is_arm) else \
+                            "txiki-macos-x86_64" if is_mac else \
+                            "txiki-linux-x86_64" if is_linux else "txiki-windows"
+            try:
+                tag, name, download_url = fetch_latest_release_asset("saghul/txiki.js", asset_substr=txiki_pattern)
+                print(f"  ➜ Downloading txiki.js {tag} ({name})...", flush=True)
+                txiki_zip = BIN_DIR / "txiki.zip"
+                urllib.request.urlretrieve(download_url, txiki_zip)
+                with zipfile.ZipFile(txiki_zip, 'r') as zip_ref:
+                    zip_ref.extractall(BIN_DIR)
+                txiki_zip.unlink(missing_ok=True)
+                target = BIN_DIR / "tjs"
+                for p in BIN_DIR.rglob("tjs"):
+                    if p.is_file() and p != target:
+                        shutil.copy2(p, target)
+                        break
+                target.chmod(target.stat().st_mode | stat.S_IEXEC)
+                bin_map["tjs"] = target
+                asset_info["tjs"] = {"tag": tag, "url": download_url, "asset": name}
+            except Exception as e:
+                print(f"  ➜ Release asset unavailable ({e}). Building txiki.js from source...", flush=True)
+                try:
+                    tmp_dir = BIN_DIR / ".tmp_tjs"
+                    if tmp_dir.exists():
+                        shutil.rmtree(tmp_dir, ignore_errors=True)
+                    subprocess.run(["git", "clone", "--depth", "1", "https://github.com/saghul/txiki.js.git", str(tmp_dir)], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.run(["git", "submodule", "update", "--init", "--recursive", "--depth", "1"], cwd=tmp_dir, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.run(["cmake", "-B", "build"], cwd=tmp_dir, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.run(["cmake", "--build", "build", "-j"], cwd=tmp_dir, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    target = BIN_DIR / "tjs"
+                    shutil.copy2(tmp_dir / "build" / "tjs", target)
+                    target.chmod(target.stat().st_mode | stat.S_IEXEC)
+                    shutil.rmtree(tmp_dir, ignore_errors=True)
+                    bin_map["tjs"] = target
+                    asset_info["tjs"] = {"tag": "source-build", "url": "https://github.com/saghul/txiki.js", "asset": "source"}
+                    print("  ✓ Built txiki.js successfully", flush=True)
+                except Exception as build_err:
+                    print(f"⚠️ Failed to build txiki.js from source: {build_err}", flush=True)
+                    bin_map["tjs"] = bin_path
+
+        elif r_id == "bun":
+            bun_exact = "bun-darwin-aarch64.zip" if (is_mac and is_arm) else \
+                        "bun-darwin-x64.zip" if is_mac else \
+                        "bun-linux-aarch64.zip" if (is_linux and is_arm) else "bun-linux-x64.zip"
+            try:
+                tag, name, download_url = fetch_latest_release_asset("oven-sh/bun", asset_name_exact=bun_exact, asset_substr=bun_exact.replace(".zip", ""))
+                print(f"  ➜ Downloading Bun {tag} ({name})...", flush=True)
+                bun_zip = BIN_DIR / "bun.zip"
+                urllib.request.urlretrieve(download_url, bun_zip)
+                with zipfile.ZipFile(bun_zip, 'r') as zip_ref:
+                    zip_ref.extractall(BIN_DIR)
+                bun_zip.unlink(missing_ok=True)
+                target = BIN_DIR / "bun"
+                for p in BIN_DIR.rglob("bun"):
+                    if p.is_file() and p != target:
+                        shutil.copy2(p, target)
+                        break
+                target.chmod(target.stat().st_mode | stat.S_IEXEC)
+                bin_map["bun"] = target
+                asset_info["bun"] = {"tag": tag, "url": download_url, "asset": name}
+            except Exception as e:
+                print(f"⚠️ Failed to fetch Bun release: {e}", flush=True)
+                bin_map["bun"] = bin_path
+
+        elif r_id == "deno":
+            deno_exact = "deno-aarch64-apple-darwin.zip" if (is_mac and is_arm) else \
+                         "deno-x86_64-apple-darwin.zip" if is_mac else \
+                         "deno-aarch64-unknown-linux-gnu.zip" if (is_linux and is_arm) else "deno-x86_64-unknown-linux-gnu.zip"
+            try:
+                tag, name, download_url = fetch_latest_release_asset("denoland/deno", asset_name_exact=deno_exact, asset_substr=deno_exact.replace(".zip", ""))
+                print(f"  ➜ Downloading Deno {tag} ({name})...", flush=True)
+                deno_zip = BIN_DIR / "deno.zip"
+                urllib.request.urlretrieve(download_url, deno_zip)
+                with zipfile.ZipFile(deno_zip, 'r') as zip_ref:
+                    zip_ref.extractall(BIN_DIR)
+                deno_zip.unlink(missing_ok=True)
+                target = BIN_DIR / "deno"
+                for p in BIN_DIR.rglob("deno"):
+                    if p.is_file() and p != target:
+                        shutil.copy2(p, target)
+                        break
+                target.chmod(target.stat().st_mode | stat.S_IEXEC)
+                bin_map["deno"] = target
+                asset_info["deno"] = {"tag": tag, "url": download_url, "asset": name}
+            except Exception as e:
+                print(f"⚠️ Failed to fetch Deno release: {e}", flush=True)
+                bin_map["deno"] = bin_path
+
+        elif r_id == "node":
+            try:
+                if shutil.which("mise"):
+                    print("  ➜ Installing Node.js via mise...", flush=True)
+                    subprocess.run(["mise", "install", "node@latest"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    node_p = resolve_binary("node")
+                    if node_p.exists() and node_p.is_file():
+                        bin_map["node"] = node_p
+                        asset_info["node"] = {"tag": "latest", "url": "https://nodejs.org", "asset": "mise"}
+                        continue
+
+                node_arch = "arm64" if is_arm else "x64"
+                node_os = "darwin" if is_mac else "linux"
+                node_url = "https://nodejs.org/dist/index.json"
+                req = urllib.request.Request(node_url, headers={"User-Agent": "Mozilla/5.0 (Python/3.13)"})
+                with urllib.request.urlopen(req) as resp:
+                    n_data = json.loads(resp.read().decode())
+                    latest_node = n_data[0]["version"]
+                tar_name = f"node-{latest_node}-{node_os}-{node_arch}.tar.gz"
+                dl_url = f"https://nodejs.org/dist/{latest_node}/{tar_name}"
+                print(f"  ➜ Downloading Node.js {latest_node} ({tar_name})...", flush=True)
+                node_tar = BIN_DIR / "node.tar.gz"
+                urllib.request.urlretrieve(dl_url, node_tar)
+                import tarfile
+                with tarfile.open(node_tar, "r:gz") as tar_ref:
+                    tar_ref.extractall(BIN_DIR)
+                node_tar.unlink(missing_ok=True)
+                extracted_dir = BIN_DIR / f"node-{latest_node}-{node_os}-{node_arch}"
+                extracted_node = extracted_dir / "bin" / "node"
+                target = BIN_DIR / "node"
+                if extracted_node.exists():
+                    shutil.copy2(extracted_node, target)
+                    target.chmod(target.stat().st_mode | stat.S_IEXEC)
+                    shutil.rmtree(extracted_dir, ignore_errors=True)
+                    bin_map["node"] = target
+                    asset_info["node"] = {"tag": latest_node, "url": dl_url, "asset": tar_name}
+                else:
+                    bin_map["node"] = bin_path
+            except Exception as e:
+                print(f"⚠️ Failed to fetch Node.js release: {e}", flush=True)
+                bin_map["node"] = bin_path
+
+        else:
+            bin_map[r_id] = bin_path
+
+    return bin_map, asset_info
+
+def get_runtime_version(bin_path: Path, r_id: str) -> str:
+    try:
+        if r_id == "ant":
+            proc = subprocess.run([str(bin_path), "-v"], capture_output=True, text=True, timeout=3)
+            lines = (proc.stdout + proc.stderr).splitlines()
+            for line in lines:
+                line = strip_ansi(line.strip())
+                if line and ("released" in line or re.match(r"^\d+\.\d+", line)):
+                    ver = line.split()[0]
+                    return f"v{ver}" if not ver.startswith("v") else ver
+        elif r_id == "tjs":
+            proc = subprocess.run([str(bin_path), "-v"], capture_output=True, text=True, timeout=3)
+            ver = strip_ansi((proc.stdout or proc.stderr).strip().splitlines()[0])
+            return ver
+        elif r_id == "node":
+            proc = subprocess.run([str(bin_path), "-v"], capture_output=True, text=True, timeout=3)
+            ver = strip_ansi((proc.stdout or proc.stderr).strip().splitlines()[0])
+            return ver
+        elif r_id == "deno":
+            proc = subprocess.run([str(bin_path), "--version"], capture_output=True, text=True, timeout=3)
+            first_line = strip_ansi((proc.stdout or proc.stderr).splitlines()[0].strip())
+            match = re.search(r"deno\s+(\d+\.\d+\.\d+)", first_line)
+            if match:
+                return f"v{match.group(1)}"
+            return first_line
+        elif r_id == "bun":
+            proc = subprocess.run([str(bin_path), "-v"], capture_output=True, text=True, timeout=3)
+            ver = strip_ansi((proc.stdout or proc.stderr).strip().splitlines()[0])
+            return f"v{ver}" if not ver.startswith("v") else ver
+    except Exception:
+        pass
+    return "unknown"
+
+def update_version_manifest(bin_map: dict, versions: dict, asset_info: dict):
+    manifest_data = {
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "runtimes": {}
+    }
+
+    for r in RUNTIMES:
+        r_id = r["id"]
+        b_path = bin_map.get(r_id, Path(r_id))
+        info = asset_info.get(r_id, {})
+        size_mb = b_path.stat().st_size / (1024 * 1024) if b_path.exists() else 0.0
+        manifest_data["runtimes"][r_id] = {
+            "name": r["name"],
+            "repo": r["repo"],
+            "version": versions.get(r_id, "unknown"),
+            "binary_path": str(b_path.relative_to(ROOT_DIR)) if b_path.is_relative_to(ROOT_DIR) else str(b_path),
+            "binary_size_mb": round(size_mb, 2),
+            "download_url": info.get("url", f"https://github.com/{r['repo']}/releases/latest"),
+            "asset_name": info.get("asset", "N/A"),
+            "ts_native": r["ts_file"]
+        }
+
+    with open(MANIFEST_PATH, "w") as f:
+        json.dump(manifest_data, f, indent=2)
+
+def ensure_js_bundles(tjs_bin: Path):
+    if not tjs_bin or not tjs_bin.exists():
+        return
+    for bench in BENCHMARKS:
+        ts_path = BENCH_DIR / bench["ts"]
+        js_path = BENCH_DIR / bench["js"]
+        if ts_path.exists() and not js_path.exists():
+            cmd = [str(tjs_bin), "bundle", str(ts_path), str(js_path)]
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+def measure_peak_rss(cmd: list) -> float:
+    system = platform.system().lower()
+    if system == "darwin":
+        try:
+            proc = subprocess.run(["/usr/bin/time", "-l"] + cmd, capture_output=True, text=True)
+            match = re.search(r'(\d+)\s+maximum resident set size', proc.stderr)
+            if match:
+                return int(match.group(1)) / (1024 * 1024)
+        except Exception:
+            pass
+    elif system == "linux":
+        try:
+            proc = subprocess.run(["/usr/bin/time", "-v"] + cmd, capture_output=True, text=True)
+            match = re.search(r'Maximum resident set size \(kbytes\):\s*(\d+)', proc.stderr)
+            if match:
+                return int(match.group(1)) / 1024
+        except Exception:
+            pass
+    return 0.0
+
+def get_hyperfine_base_cmd():
+    local_hf = BIN_DIR / "hyperfine"
+    if local_hf.exists() and local_hf.is_file():
+        return [str(local_hf)]
+    if shutil.which("hyperfine"):
+        return [shutil.which("hyperfine")]
+    if shutil.which("mise"):
+        return ["mise", "exec", "--", "hyperfine"]
+    home = Path.home()
+    mise_installs = list(home.glob(".local/share/mise/installs/hyperfine/**/hyperfine"))
+    if mise_installs:
+        return [str(mise_installs[0])]
+    return ["hyperfine"]
+
+def run_hyperfine(cmds_map: dict) -> dict:
+    temp_json = ROOT_DIR / "temp_hyperfine.json"
+    r_order = list(cmds_map.keys())
+    cmd_strs = [" ".join(str(c) for c in cmds_map[r_id]) for r_id in r_order]
+
+    base_cmd = get_hyperfine_base_cmd()
+    cmd = base_cmd + [
+        "--warmup", "2",
+        "--runs", "10",
+        "--export-json", str(temp_json),
+    ] + cmd_strs
+
+    try:
+        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if proc.returncode != 0 and base_cmd[0] != "mise":
+            cmd = ["mise", "exec", "--"] + cmd
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        cmd = ["mise", "exec", "--"] + cmd
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    res_by_id = {}
+    if temp_json.exists():
+        try:
+            if temp_json.stat().st_size > 0:
+                with open(temp_json, "r") as f:
+                    data = json.load(f)
+                results = data.get("results", [])
+                for idx, r_id in enumerate(r_order):
+                    if idx < len(results):
+                        res_by_id[r_id] = results[idx]
+        except (json.JSONDecodeError, OSError):
+            pass
+        finally:
+            temp_json.unlink(missing_ok=True)
+    return res_by_id
+
+def draw_header_box(versions: dict, width=96) -> str:
+    r_names = ", ".join(f"{r['color']}{r['name']}{RESET}" for r in RUNTIMES)
+    v_strs = " | ".join(f"{r['color']}{r['name']}{RESET}: {versions.get(r['id'], 'unknown')}" for r in RUNTIMES)
+    lines = [
+        f"{BOLD}{MAGENTA}JS RUNTIME BENCHMARK SUITE: 5-WAY COMPARISON{RESET}",
+        f"{DIM}Target Runtimes: {r_names}{RESET}",
+        f"{DIM}Detected Versions: {v_strs}{RESET}",
+        f"{DIM}Metrics: Execution Time (Hyperfine), Binary Size & Memory Usage (Peak RSS){RESET}"
+    ]
+    box = []
+    box.append("╔" + "═" * (width - 2) + "╗")
+    for l in lines:
+        box.append("║  " + pad_cell(l, width - 6, "center") + "  ║")
+    box.append("╚" + "═" * (width - 2) + "╝")
+    return "\n".join(box)
+
+def draw_binary_size_box(bin_map: dict, width=96) -> str:
+    lines = [
+        f"{BOLD}{MAGENTA}RUNTIME BINARY SIZE COMPARISON{RESET}",
+        "─" * (width - 6),
+        f"{BOLD}{pad_cell('Runtime', 14)} {pad_cell('Binary Path', 52)} {pad_cell('Size (MB)', 14, 'right')}{RESET}",
+        "─" * (width - 6),
+    ]
+
+    sizes = {}
+    for r in RUNTIMES:
+        r_id = r["id"]
+        b_p = bin_map.get(r_id, Path(r_id))
+        sz = b_p.stat().st_size / (1024 * 1024) if b_p.exists() else 0.0
+        sizes[r_id] = sz
+
+    sorted_r = sorted(RUNTIMES, key=lambda r: sizes.get(r["id"], 0.0))
+    for r in sorted_r:
+        r_id = r["id"]
+        sz = sizes[r_id]
+        b_p = bin_map.get(r_id, Path(r_id))
+        path_str = str(b_p.relative_to(ROOT_DIR)) if b_p.is_relative_to(ROOT_DIR) else str(b_p)
+        name_col = f"{r['color']}{pad_cell(r['name'], 14)}{RESET}"
+        lines.append(f"{name_col} {pad_cell(path_str, 52)} {pad_cell(f'{sz:.2f} MB', 14, 'right')}")
+
+    lines.append("─" * (width - 6))
+
+    ant_sz = sizes.get("ant", 0.0)
+    tjs_sz = sizes.get("tjs", 0.0)
+    if ant_sz > 0 and tjs_sz > 0:
+        if ant_sz <= tjs_sz:
+            ratio = tjs_sz / ant_sz
+            h2h_str = f"{BOLD}Head-to-Head (ant vs txiki.js):{RESET} {GREEN}ant{RESET} is {ant_sz:.2f} MB ({GREEN}{ratio:.2f}x smaller{RESET} than txiki.js {tjs_sz:.2f} MB)"
+        else:
+            ratio = ant_sz / tjs_sz
+            h2h_str = f"{BOLD}Head-to-Head (ant vs txiki.js):{RESET} {YELLOW}txiki.js{RESET} is {tjs_sz:.2f} MB ({YELLOW}{ratio:.2f}x smaller{RESET} than ant {ant_sz:.2f} MB)"
+    else:
+        smallest = sorted_r[0]
+        h2h_str = f"{GREEN}⚡ {smallest['color']}{smallest['name']}{RESET} is smallest ({sizes[smallest['id']]:.2f} MB)"
+
+    lines.append(pad_cell(h2h_str, width - 6, "center"))
+
+    box = []
+    box.append("┌" + "─" * (width - 2) + "┐")
+    for l in lines:
+        box.append("│  " + pad_cell(l, width - 6) + "  │")
+    box.append("└" + "─" * (width - 2) + "┘")
+    return "\n".join(box)
+
+def draw_benchmark_box(bench_info: dict, bench_results: dict, rss_map: dict, width=96) -> str:
+    b_name = f"{BOLD}{CYAN}{bench_info['name']}{RESET}"
+    b_desc = f"{DIM}{bench_info['desc']}{RESET}"
+
+    lines = [
+        f"{b_name} - {b_desc}",
+        "─" * (width - 6),
+        f"{BOLD}Runtime          Mean Time (ms)      Min..Max (ms)       Peak RSS{RESET}",
+        "─" * (width - 6),
+    ]
+
+    r_means = {}
+    for r in RUNTIMES:
+        r_id = r["id"]
+        res = bench_results.get(r_id, {})
+        mean = res.get("mean", 0.0) * 1000.0
+        stddev = res.get("stddev", 0.0) * 1000.0
+        min_t = res.get("min", 0.0) * 1000.0
+        max_t = res.get("max", 0.0) * 1000.0
+        rss = rss_map.get(r_id, 0.0)
+        r_means[r_id] = mean
+
+        name_colored = f"{r['color']}{pad_cell(r['name'], 12)}{RESET}"
+        lines.append(
+            f"{name_colored}     {mean:>8.2f} ± {stddev:<5.2f}    {min_t:>6.1f} .. {max_t:<6.1f}    {rss:>6.1f} MB"
+        )
+
+    lines.append("─" * (width - 6))
+
+    ant_m = r_means.get("ant", 0.0)
+    tjs_m = r_means.get("tjs", 0.0)
+    if ant_m > 0 and tjs_m > 0:
+        if ant_m <= tjs_m:
+            ratio = tjs_m / ant_m
+            h2h_str = f"{BOLD}Head-to-Head:{RESET} {GREEN}ant{RESET} ({ant_m:.2f} ms) vs {YELLOW}txiki.js{RESET} ({tjs_m:.2f} ms) ➔ {GREEN}ant is {ratio:.2f}x faster{RESET}"
+        else:
+            ratio = ant_m / tjs_m
+            h2h_str = f"{BOLD}Head-to-Head:{RESET} {GREEN}ant{RESET} ({ant_m:.2f} ms) vs {YELLOW}txiki.js{RESET} ({tjs_m:.2f} ms) ➔ {YELLOW}txiki.js is {ratio:.2f}x faster{RESET}"
+    else:
+        valid_means = [(r_id, m) for r_id, m in r_means.items() if m > 0]
+        if valid_means:
+            valid_means.sort(key=lambda x: x[1])
+            w_id, w_m = valid_means[0]
+            w_name = next(r["name"] for r in RUNTIMES if r["id"] == w_id)
+            w_color = next(r["color"] for r in RUNTIMES if r["id"] == w_id)
+            h2h_str = f"{GREEN}⚡ {w_color}{w_name}{RESET} is fastest ({w_m:.2f} ms)"
+        else:
+            h2h_str = "N/A"
+
+    lines.append(pad_cell(h2h_str, width - 6, "center"))
+
+    box = []
+    box.append("┌" + "─" * (width - 2) + "┐")
+    for l in lines:
+        box.append("│  " + pad_cell(l, width - 6) + "  │")
+    box.append("└" + "─" * (width - 2) + "┘")
+    return "\n".join(box)
+
+def draw_summary_table(summary_data: list, width=96) -> str:
+    lines = [
+        f"{BOLD}{MAGENTA}FINAL EXECUTION TIME SUMMARY (Mean Time in ms){RESET}",
+        "─" * (width - 6),
+    ]
+
+    bench_short_names = [item["name"].split()[0] for item in summary_data]
+    header_cols = [pad_cell("Runtime", 14)]
+    for b_short in bench_short_names:
+        header_cols.append(pad_cell(b_short, 10, "right"))
+    header_cols.append(pad_cell("Perf Wins", 12, "right"))
+
+    lines.append(f"{BOLD}{' '.join(header_cols)}{RESET}")
+    lines.append("─" * (width - 6))
+
+    wins = {r["id"]: 0 for r in RUNTIMES}
+    for item in summary_data:
+        means = item["means"]
+        valid = [(r_id, m) for r_id, m in means.items() if m > 0]
+        if valid:
+            valid.sort(key=lambda x: x[1])
+            winner_id = valid[0][0]
+            wins[winner_id] += 1
+
+    for r in RUNTIMES:
+        r_id = r["id"]
+        r_color = r.get("color", "")
+        row = [pad_cell(f"{r_color}{r['name']}{RESET}", 14)]
+
+        for item in summary_data:
+            m_val = item["means"].get(r_id, 0.0)
+            row.append(pad_cell(f"{m_val:.2f}", 10, "right"))
+
+        w_cnt = wins[r_id]
+        row.append(pad_cell(f"{w_cnt}", 12, "right"))
+        lines.append(" ".join(row))
+
+    lines.append("─" * (width - 6))
+
+    ant_wins = 0
+    tjs_wins = 0
+    total_b = len(summary_data)
+    for item in summary_data:
+        means = item["means"]
+        ant_m = means.get("ant", 0.0)
+        tjs_m = means.get("tjs", 0.0)
+        if ant_m > 0 and tjs_m > 0:
+            if ant_m <= tjs_m:
+                ant_wins += 1
+            else:
+                tjs_wins += 1
+
+    summary_str = f"{BOLD}Head-to-Head (ant vs txiki.js):{RESET} {GREEN}ant{RESET} won {ant_wins}/{total_b} benchmarks | {YELLOW}txiki.js{RESET} won {tjs_wins}/{total_b}"
+    lines.append(pad_cell(summary_str, width - 6, "center"))
+
+    box = []
+    box.append("╔" + "═" * (width - 2) + "╗")
+    for l in lines:
+        box.append("║  " + pad_cell(l, width - 6) + "  ║")
+    box.append("╚" + "═" * (width - 2) + "╝")
+    return "\n".join(box)
+
+def draw_memory_summary_table(summary_data: list, width=96) -> str:
+    lines = [
+        f"{BOLD}{MAGENTA}FINAL PEAK RSS MEMORY USAGE SUMMARY (in MB){RESET}",
+        "─" * (width - 6),
+    ]
+
+    bench_short_names = [item["name"].split()[0] for item in summary_data]
+    header_cols = [pad_cell("Runtime", 14)]
+    for b_short in bench_short_names:
+        header_cols.append(pad_cell(b_short, 10, "right"))
+    header_cols.append(pad_cell("Avg RSS", 10, "right"))
+    header_cols.append(pad_cell("Mem Wins", 10, "right"))
+
+    lines.append(f"{BOLD}{' '.join(header_cols)}{RESET}")
+    lines.append("─" * (width - 6))
+
+    wins = {r["id"]: 0 for r in RUNTIMES}
+    for item in summary_data:
+        rss_map = item["rss"]
+        valid = [(r_id, rss) for r_id, rss in rss_map.items() if rss > 0]
+        if valid:
+            valid.sort(key=lambda x: x[1])
+            winner_id = valid[0][0]
+            wins[winner_id] += 1
+
+    for r in RUNTIMES:
+        r_id = r["id"]
+        r_color = r.get("color", "")
+        row = [pad_cell(f"{r_color}{r['name']}{RESET}", 14)]
+
+        rss_vals = []
+        for item in summary_data:
+            rss_val = item["rss"].get(r_id, 0.0)
+            if rss_val > 0:
+                rss_vals.append(rss_val)
+            row.append(pad_cell(f"{rss_val:.1f}", 10, "right"))
+
+        avg_rss = (sum(rss_vals) / len(rss_vals)) if rss_vals else 0.0
+        row.append(pad_cell(f"{avg_rss:.1f}", 10, "right"))
+        row.append(pad_cell(f"{wins[r_id]}", 10, "right"))
+        lines.append(" ".join(row))
+
+    lines.append("─" * (width - 6))
+
+    ant_rss = [item["rss"].get("ant", 0.0) for item in summary_data if item["rss"].get("ant", 0.0) > 0]
+    tjs_rss = [item["rss"].get("tjs", 0.0) for item in summary_data if item["rss"].get("tjs", 0.0) > 0]
+    avg_ant = (sum(ant_rss) / len(ant_rss)) if ant_rss else 0.0
+    avg_tjs = (sum(tjs_rss) / len(tjs_rss)) if tjs_rss else 0.0
+
+    if avg_ant > 0 and avg_tjs > 0:
+        if avg_ant <= avg_tjs:
+            ratio = avg_tjs / avg_ant
+            mem_h2h = f"{BOLD}Head-to-Head Memory (ant vs txiki.js):{RESET} {GREEN}ant{RESET} avg peak RSS {avg_ant:.1f} MB vs {YELLOW}txiki.js{RESET} {avg_tjs:.1f} MB ({GREEN}ant uses {ratio:.2f}x less memory{RESET})"
+        else:
+            ratio = avg_ant / avg_tjs
+            mem_h2h = f"{BOLD}Head-to-Head Memory (ant vs txiki.js):{RESET} {GREEN}ant{RESET} avg peak RSS {avg_ant:.1f} MB vs {YELLOW}txiki.js{RESET} {avg_tjs:.1f} MB ({YELLOW}txiki.js uses {ratio:.2f}x less memory{RESET})"
+    else:
+        mem_h2h = "N/A"
+
+    lines.append(pad_cell(mem_h2h, width - 6, "center"))
+
+    box = []
+    box.append("╔" + "═" * (width - 2) + "╗")
+    for l in lines:
+        box.append("║  " + pad_cell(l, width - 6) + "  ║")
+    box.append("╚" + "═" * (width - 2) + "╝")
+    return "\n".join(box)
+
+def save_bench_json_and_baseline(bin_map: dict, versions: dict, summary_results: list, update_baseline: bool = False) -> tuple[Path, Path | None]:
+    import time
+    from datetime import datetime, timezone
+    from compliance_common import git_revision
+
+    logs_dir = ROOT_DIR.parent / ".deps" / "compliance" / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    manifest_path = logs_dir / f"bench_{ts}.json"
+    latest_path = logs_dir / "bench-latest.json"
+
+    rev = git_revision()
+
+    manifest_data = {
+        "schema_version": 1,
+        "type": "performance_benchmark",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "revision": rev,
+        "runtimes": {
+            r["id"]: {
+                "name": r["name"],
+                "version": versions.get(r["id"], "unknown"),
+                "binary_path": str(bin_map.get(r["id"], ""))
+            } for r in RUNTIMES
+        },
+        "benchmarks": summary_results
+    }
+
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest_data, f, indent=2)
+        f.write("\n")
+
+    try:
+        if latest_path.exists() or latest_path.is_symlink():
+            latest_path.unlink()
+        latest_path.symlink_to(manifest_path.name)
+    except Exception:
+        pass
+
+    baseline_written = None
+    if update_baseline:
+        baseline_path = ROOT_DIR.parent / "docs" / "repo" / "bench-baseline.json"
+        baseline_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(baseline_path, "w", encoding="utf-8") as f:
+            json.dump(manifest_data, f, indent=2)
+            f.write("\n")
+        baseline_written = baseline_path
+
+    return manifest_path, baseline_written
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="Ant Cold-Start Benchmark & Threshold Runner")
-    parser.add_argument("--warmup", type=int, default=10, help="Hyperfine warmup iterations (default: 10)")
-    parser.add_argument("--runs", type=int, default=100, help="Hyperfine benchmark iterations (default: 100)")
-    parser.add_argument("--check-thresholds", action="store_true", help="Assert performance and size thresholds against Upstream Ant")
-    parser.add_argument("--max-speed-lag", type=float, default=10.0, help="Maximum allowed speed lag vs Upstream Ant in % (default: 10.0)")
-    parser.add_argument("--max-size-growth", type=float, default=25.0, help="Maximum allowed binary size growth vs Upstream Ant in % (default: 25.0)")
-    args = parser.parse_args()
+    force_update = "--update-binaries" in sys.argv
+    update_baseline = "--update-baseline" in sys.argv
 
-    print("Ensuring benchmark runtimes and tools exist...")
-    bins = ensure_binaries()
-    results = run_benchmarks(bins, warmup=args.warmup, runs=args.runs)
-    passed = format_output(
-        bins,
-        results,
-        check_thresholds=args.check_thresholds,
-        max_speed_lag=args.max_speed_lag,
-        max_size_growth=args.max_size_growth
-    )
-    if not passed:
-        sys.exit(1)
+    bin_map, asset_info = ensure_binaries(force_update=force_update)
+    ensure_js_bundles(bin_map.get("tjs", resolve_binary("tjs")))
+
+    versions = {r["id"]: get_runtime_version(bin_map[r["id"]], r["id"]) for r in RUNTIMES}
+    update_version_manifest(bin_map, versions, asset_info)
+
+    print(flush=True)
+    print(draw_header_box(versions), flush=True)
+    print(flush=True)
+    print(draw_binary_size_box(bin_map), flush=True)
+    print(flush=True)
+
+    summary_results = []
+
+    for b in BENCHMARKS:
+        cmds_map = {}
+        for r in RUNTIMES:
+            r_id = r["id"]
+            bin_p = bin_map[r_id]
+            if not bin_p or not bin_p.exists():
+                continue
+            file_path = BENCH_DIR / (b["ts"] if r["ts_file"] else b["js"])
+            cmds_map[r_id] = [str(bin_p)] + r["args"] + [str(file_path)]
+
+        print(f"⏳ Running Benchmark: {CYAN}{b['name']}{RESET}...", flush=True)
+
+        bench_results = run_hyperfine(cmds_map)
+
+        rss_map = {}
+        for r_id, cmd in cmds_map.items():
+            rss_map[r_id] = measure_peak_rss(cmd)
+
+        print(draw_benchmark_box(b, bench_results, rss_map), flush=True)
+        print(flush=True)
+
+        means = {}
+        for r in RUNTIMES:
+            r_id = r["id"]
+            means[r_id] = bench_results.get(r_id, {}).get("mean", 0.0) * 1000.0
+
+        summary_results.append({
+            "name": b["name"],
+            "means": means,
+            "rss": rss_map
+        })
+
+    print(draw_summary_table(summary_results), flush=True)
+    print(flush=True)
+    print(draw_memory_summary_table(summary_results), flush=True)
+    print(flush=True)
+
+    manifest_path, baseline_path = save_bench_json_and_baseline(bin_map, versions, summary_results, update_baseline=update_baseline)
+    print(f"  {CYAN}Benchmark Manifest JSON : {manifest_path}{RESET}", flush=True)
+    if baseline_path:
+        print(f"  {GREEN}Benchmark Baseline Updated: {baseline_path}{RESET}", flush=True)
 
 if __name__ == "__main__":
     main()
