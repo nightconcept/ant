@@ -836,13 +836,11 @@ static char *esm_resolve_package_entrypoint(const char *package_dir, const char 
   return resolved;
 }
 
-static char *esm_resolve_package_imports(const char *specifier, const char *base_path, bool prefer_require) {
-  char *start_dir = esm_get_base_dir(base_path);
-  if (!start_dir) return NULL;
+static yyjson_doc *esm_find_nearest_package_json(const char *start_dir, char *scope_dir, size_t scope_dir_size) {
+  if (!start_dir || !start_dir[0]) return NULL;
 
   char current[PATH_MAX];
   snprintf(current, sizeof(current), "%s", start_dir);
-  free(start_dir);
 
   while (true) {
     char pkg_json_path[PATH_MAX];
@@ -850,18 +848,13 @@ static char *esm_resolve_package_imports(const char *specifier, const char *base
 
     yyjson_doc *doc = esm_package_json_cache_read(pkg_json_path);
     if (doc) {
-      yyjson_val *root = yyjson_doc_get_root(doc);
-      yyjson_val *imports = (root && yyjson_is_obj(root)) ? yyjson_obj_get(root, "imports") : NULL;
-      char *resolved = NULL;
-      if (imports && yyjson_is_obj(imports)) resolved = esm_resolve_package_map(
-        imports, specifier, current,
-        base_path, true, prefer_require
-      );
-      return resolved;
+      snprintf(scope_dir, scope_dir_size, "%s", current);
+      return doc;
     }
 
     if (esm_path_is_root(current)) break;
     char *slash = esm_path_last_sep(current);
+
     if (!slash) break;
     if (slash == current) current[1] = '\0';
     else if (esm_has_windows_drive_letter(current) && slash == current + 2) slash[1] = '\0';
@@ -869,6 +862,44 @@ static char *esm_resolve_package_imports(const char *specifier, const char *base
   }
 
   return NULL;
+}
+
+static char *esm_resolve_package_imports(const char *specifier, const char *base_path, bool prefer_require) {
+  char *start_dir = esm_get_base_dir(base_path);
+  if (!start_dir) return NULL;
+
+  char scope_dir[PATH_MAX];
+  yyjson_doc *doc = esm_find_nearest_package_json(start_dir, scope_dir, sizeof(scope_dir));
+  free(start_dir);
+  if (!doc) return NULL;
+
+  yyjson_val *root = yyjson_doc_get_root(doc);
+  yyjson_val *imports = (root && yyjson_is_obj(root)) ? yyjson_obj_get(root, "imports") : NULL;
+  if (!imports || !yyjson_is_obj(imports)) return NULL;
+
+  return esm_resolve_package_map(imports, specifier, scope_dir, base_path, true, prefer_require);
+}
+
+static char *esm_resolve_package_self_reference(
+  const char *start_dir,
+  const char *package_name,
+  const char *subpath,
+  const char *base_path,
+  bool prefer_require
+) {
+  char scope_dir[PATH_MAX];
+  yyjson_doc *doc = esm_find_nearest_package_json(start_dir, scope_dir, sizeof(scope_dir));
+  if (!doc) return NULL;
+
+  yyjson_val *root = yyjson_doc_get_root(doc);
+  if (!root || !yyjson_is_obj(root)) return NULL;
+
+  yyjson_val *name = yyjson_obj_get(root, "name");
+  const char *name_str = (name && yyjson_is_str(name)) ? yyjson_get_str(name) : NULL;
+  if (!name_str || strcmp(name_str, package_name) != 0) return NULL;
+  if (!yyjson_obj_get(root, "exports")) return NULL;
+
+  return esm_resolve_package_entrypoint(scope_dir, subpath, base_path, prefer_require);
 }
 
 static char *esm_resolve_node_module_cond(const char *specifier, const char *base_path, bool prefer_require) {
@@ -881,12 +912,16 @@ static char *esm_resolve_node_module_cond(const char *specifier, const char *bas
   char *start_dir = esm_get_base_dir(base_path);
   if (!start_dir) return NULL;
 
-  char *package_dir = esm_find_node_module_dir(start_dir, package_name);
-  free(start_dir);
-  if (!package_dir) return NULL;
+  char *resolved = esm_resolve_package_self_reference(start_dir, package_name, subpath, base_path, prefer_require);
+  if (!resolved) {
+    char *package_dir = esm_find_node_module_dir(start_dir, package_name);
+    if (package_dir) {
+      resolved = esm_resolve_package_entrypoint(package_dir, subpath, base_path, prefer_require);
+      free(package_dir);
+    }
+  }
 
-  char *resolved = esm_resolve_package_entrypoint(package_dir, subpath, base_path, prefer_require);
-  free(package_dir);
+  free(start_dir);
   return resolved;
 }
 
@@ -1035,27 +1070,6 @@ static bool esm_path_contains_node_modules(const char *path) {
   return strstr(path, "\\node_modules\\") != NULL;
 }
 
-static bool esm_read_package_json_type(const char *pkg_json_path, esm_package_type_t *out_type) {
-  if (out_type) *out_type = ESM_PACKAGE_TYPE_NONE;
-
-  yyjson_doc *doc = esm_package_json_cache_read(pkg_json_path);
-  if (!doc) return false;
-
-  yyjson_val *root = yyjson_doc_get_root(doc);
-  yyjson_val *type = (root && yyjson_is_obj(root)) ? yyjson_obj_get(root, "type") : NULL;
-
-  if (!type || !yyjson_is_str(type)) return true;
-  const char *type_str = yyjson_get_str(type);
-  
-  if (type_str && strcmp(type_str, "module") == 0) {
-    if (out_type) *out_type = ESM_PACKAGE_TYPE_MODULE;
-  } else if (type_str && strcmp(type_str, "commonjs") == 0) {
-    if (out_type) *out_type = ESM_PACKAGE_TYPE_COMMONJS;
-  }
-  
-  return true;
-}
-
 static bool esm_lookup_package_type(const char *resolved_path, esm_package_type_t *out_type) {
   if (out_type) *out_type = ESM_PACKAGE_TYPE_NONE;
   if (!resolved_path || !resolved_path[0]) return false;
@@ -1065,29 +1079,23 @@ static bool esm_lookup_package_type(const char *resolved_path, esm_package_type_
   char *dir = dirname(path_copy);
   if (!dir || !dir[0]) return false;
 
-  char current[PATH_MAX];
-  snprintf(current, sizeof(current), "%s", dir);
+  char scope_dir[PATH_MAX];
+  yyjson_doc *doc = esm_find_nearest_package_json(dir, scope_dir, sizeof(scope_dir));
+  if (!doc) return false;
 
-  while (true) {
-    char pkg_json_path[PATH_MAX];
-    snprintf(pkg_json_path, sizeof(pkg_json_path), "%s/package.json", current);
+  yyjson_val *root = yyjson_doc_get_root(doc);
+  yyjson_val *type = (root && yyjson_is_obj(root)) ? yyjson_obj_get(root, "type") : NULL;
 
-    esm_package_type_t pkg_type = ESM_PACKAGE_TYPE_NONE;
-    if (esm_read_package_json_type(pkg_json_path, &pkg_type)) {
-      if (out_type) *out_type = pkg_type;
-      return true;
-    }
-    
-    if (esm_path_is_root(current)) break;
-    char *slash = esm_path_last_sep(current);
-    
-    if (!slash) break;
-    if (slash == current) current[1] = '\0';
-    else if (esm_has_windows_drive_letter(current) && slash == current + 2) slash[1] = '\0';
-    else *slash = '\0';
+  if (!type || !yyjson_is_str(type)) return true;
+  const char *type_str = yyjson_get_str(type);
+
+  if (type_str && strcmp(type_str, "module") == 0) {
+    if (out_type) *out_type = ESM_PACKAGE_TYPE_MODULE;
+  } else if (type_str && strcmp(type_str, "commonjs") == 0) {
+    if (out_type) *out_type = ESM_PACKAGE_TYPE_COMMONJS;
   }
 
-  return false;
+  return true;
 }
 
 static ant_module_format_t esm_decide_module_format(const char *resolved_path) {
