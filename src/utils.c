@@ -242,41 +242,50 @@ double half_to_double(uint16_t bits16) {
 }
 
 uint16_t double_to_half(double value) {
-  float input = (float)value;
-  
-  uint32_t bits32 = 0;
-  uint32_t sign = 0;
-  uint32_t exp = 0;
-  uint32_t mant = 0;
-  int32_t exp16 = 0;
-  uint16_t out = 0;
+  uint64_t bits = 0;
+  memcpy(&bits, &value, sizeof(bits));
 
-  memcpy(&bits32, &input, sizeof(bits32));
-  sign = (bits32 >> 16) & 0x8000u;
-  exp = (bits32 >> 23) & 0xffu;
-  mant = bits32 & 0x007fffffu;
+  uint16_t sign = (uint16_t)((bits >> 48) & 0x8000u);
+  int32_t exp = (int32_t)((bits >> 52) & 0x7ffu);
+  uint64_t mant = bits & UINT64_C(0x000fffffffffffff);
 
-  if (exp == 0xffu) {
+  if (exp == 0x7ff) {
     if (mant != 0) return (uint16_t)(sign | 0x7e00u);
     return (uint16_t)(sign | 0x7c00u);
   }
 
-  exp16 = (int32_t)exp - 127 + 15;
-  if (exp16 >= 0x1f) return (uint16_t)(sign | 0x7c00u);
+  // Doubles below 2^-1022 are far under half's smallest subnormal (2^-24), so
+  // every subnormal double - and zero - rounds to a signed zero.
+  if (exp == 0) return sign;
 
+  // Round the full 53-bit significand in one step: going through float first
+  // would round twice and land on the wrong neighbour for exact ties.
+  int32_t exp16 = exp - 1023 + 15;
+  uint64_t sig = mant | (UINT64_C(1) << 52);
+  uint32_t shift = 42;
+
+  if (exp16 > 30) return (uint16_t)(sign | 0x7c00u);
   if (exp16 <= 0) {
-    if (exp16 < -10) return (uint16_t)sign;
-    mant |= 0x00800000u;
-    uint32_t shift = (uint32_t)(14 - exp16);
-    uint16_t sub = (uint16_t)(mant >> shift);
-    if ((mant >> (shift - 1)) & 1u) sub++;
-    return (uint16_t)(sign | sub);
+    shift = (uint32_t)(43 - exp16);
+    if (shift > 63) return sign;
   }
 
-  out = (uint16_t)(sign | ((uint32_t)exp16 << 10) | (mant >> 13));
-  if (mant & 0x00001000u) out++;
-  
-  return out;
+  uint64_t quotient = sig >> shift;
+  uint64_t remainder = sig & ((UINT64_C(1) << shift) - 1);
+  uint64_t midpoint = UINT64_C(1) << (shift - 1);
+
+  // Round half to even.
+  if (remainder > midpoint || (remainder == midpoint && (quotient & 1))) quotient++;
+
+  // For a normal result the significand still carries its implicit bit, so
+  // adding it to the biased exponent field folds a rounding carry into the
+  // exponent for free.
+  uint32_t out = (exp16 <= 0)
+    ? (uint32_t)quotient
+    : (((uint32_t)(exp16 - 1) << 10) + (uint32_t)quotient);
+
+  if (out >= 0x7c00u) return (uint16_t)(sign | 0x7c00u);
+  return (uint16_t)(sign | out);
 }
 
 int is_typescript_file(const char *filename) {
