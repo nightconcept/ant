@@ -15086,18 +15086,18 @@ static ant_value_t mkpromise_with_ctor(ant_t *js, ant_value_t ctor) {
 
 static ant_value_t builtin_Promise_all_resolve_handler(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t me = js->current_func;
-  ant_value_t tracker = js_get(js, me, "tracker");
-  ant_value_t index_val = js_get(js, me, "index");
+  ant_value_t tracker = get_slot(me, SLOT_PCOMB_TRACKER);
+  ant_value_t index_val = get_slot(me, SLOT_PCOMB_INDEX);
   
   int index = (int)tod(index_val);
   ant_value_t value = nargs > 0 ? args[0] : js_mkundef();
   
-  ant_value_t results = js_get(js, tracker, "results");
+  ant_value_t results = get_slot(tracker, SLOT_PCOMB_RESULTS);
   arr_set(js, results, (ant_offset_t)index, value);
   
-  ant_value_t remaining_val = js_get(js, tracker, "remaining");
+  ant_value_t remaining_val = get_slot(tracker, SLOT_PCOMB_REMAINING);
   int remaining = (int)tod(remaining_val) - 1;
-  js_setprop(js, tracker, js_mkstr(js, "remaining", 9), tov((double)remaining));
+  set_slot(tracker, SLOT_PCOMB_REMAINING, tov((double)remaining));
   
   if (remaining == 0) {
     ant_value_t result_promise = get_slot(tracker, SLOT_DATA);
@@ -15109,7 +15109,7 @@ static ant_value_t builtin_Promise_all_resolve_handler(ant_t *js, ant_value_t *a
 
 static ant_value_t builtin_Promise_all_reject_handler(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t me = js->current_func;
-  ant_value_t tracker = js_get(js, me, "tracker");
+  ant_value_t tracker = get_slot(me, SLOT_PCOMB_TRACKER);
   ant_value_t result_promise = get_slot(tracker, SLOT_DATA);
   
   ant_value_t reason = nargs > 0 ? args[0] : js_mkundef();
@@ -15143,7 +15143,7 @@ static ant_value_t promise_all_settled_store_result(
   bool fulfilled,
   ant_value_t value
 ) {
-  ant_value_t results = js_get(js, tracker, "results");
+  ant_value_t results = get_slot(tracker, SLOT_PCOMB_RESULTS);
   ant_value_t result = promise_all_settled_make_result(js, fulfilled, value);
   ant_value_t remaining_val = 0;
   int remaining = 0;
@@ -15151,9 +15151,9 @@ static ant_value_t promise_all_settled_store_result(
   if (is_err(result)) return result;
   arr_set(js, results, (ant_offset_t)index, result);
 
-  remaining_val = js_get(js, tracker, "remaining");
+  remaining_val = get_slot(tracker, SLOT_PCOMB_REMAINING);
   remaining = (int)tod(remaining_val) - 1;
-  js_setprop(js, tracker, js_mkstr(js, "remaining", 9), tov((double)remaining));
+  set_slot(tracker, SLOT_PCOMB_REMAINING, tov((double)remaining));
 
   if (remaining == 0) {
     ant_value_t result_promise = get_slot(tracker, SLOT_DATA);
@@ -15165,8 +15165,8 @@ static ant_value_t promise_all_settled_store_result(
 
 static ant_value_t builtin_Promise_allSettled_resolve_handler(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t me = js->current_func;
-  ant_value_t tracker = js_get(js, me, "tracker");
-  ant_value_t index_val = js_get(js, me, "index");
+  ant_value_t tracker = get_slot(me, SLOT_PCOMB_TRACKER);
+  ant_value_t index_val = get_slot(me, SLOT_PCOMB_INDEX);
   int index = (int)tod(index_val);
   ant_value_t value = nargs > 0 ? args[0] : js_mkundef();
 
@@ -15175,8 +15175,8 @@ static ant_value_t builtin_Promise_allSettled_resolve_handler(ant_t *js, ant_val
 
 static ant_value_t builtin_Promise_allSettled_reject_handler(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t me = js->current_func;
-  ant_value_t tracker = js_get(js, me, "tracker");
-  ant_value_t index_val = js_get(js, me, "index");
+  ant_value_t tracker = get_slot(me, SLOT_PCOMB_TRACKER);
+  ant_value_t index_val = get_slot(me, SLOT_PCOMB_INDEX);
   int index = (int)tod(index_val);
   ant_value_t reason = nargs > 0 ? args[0] : js_mkundef();
 
@@ -15209,8 +15209,8 @@ static iter_action_t promise_all_iter_cb(ant_t *js, ant_value_t value, void *ctx
   }
   GC_ROOT_PIN(js, resolve_obj);
   set_slot(resolve_obj, SLOT_CFUNC, js_mkfun(builtin_Promise_all_resolve_handler));
-  js_setprop(js, resolve_obj, js_mkstr(js, "index", 5), tov((double)pctx->index));
-  js_setprop(js, resolve_obj, js_mkstr(js, "tracker", 7), pctx->tracker);
+  set_slot(resolve_obj, SLOT_PCOMB_INDEX, tov((double)pctx->index));
+  set_slot_wb(js, resolve_obj, SLOT_PCOMB_TRACKER, pctx->tracker);
   ant_value_t resolve_fn = js_obj_to_func(js, resolve_obj);
   GC_ROOT_PIN(js, resolve_fn);
 
@@ -15222,7 +15222,7 @@ static iter_action_t promise_all_iter_cb(ant_t *js, ant_value_t value, void *ctx
   }
   GC_ROOT_PIN(js, reject_obj);
   set_slot(reject_obj, SLOT_CFUNC, js_mkfun(builtin_Promise_all_reject_handler));
-  js_setprop(js, reject_obj, js_mkstr(js, "tracker", 7), pctx->tracker);
+  set_slot_wb(js, reject_obj, SLOT_PCOMB_TRACKER, pctx->tracker);
   ant_value_t reject_fn = js_obj_to_func(js, reject_obj);
   GC_ROOT_PIN(js, reject_fn);
 
@@ -15263,8 +15263,8 @@ static iter_action_t promise_all_settled_iter_cb(ant_t *js, ant_value_t value, v
   }
   GC_ROOT_PIN(js, resolve_obj);
   set_slot(resolve_obj, SLOT_CFUNC, js_mkfun(builtin_Promise_allSettled_resolve_handler));
-  js_setprop(js, resolve_obj, js_mkstr(js, "index", 5), tov((double)pctx->index));
-  js_setprop(js, resolve_obj, js_mkstr(js, "tracker", 7), pctx->tracker);
+  set_slot(resolve_obj, SLOT_PCOMB_INDEX, tov((double)pctx->index));
+  set_slot_wb(js, resolve_obj, SLOT_PCOMB_TRACKER, pctx->tracker);
   ant_value_t resolve_fn = js_obj_to_func(js, resolve_obj);
   GC_ROOT_PIN(js, resolve_fn);
 
@@ -15276,8 +15276,8 @@ static iter_action_t promise_all_settled_iter_cb(ant_t *js, ant_value_t value, v
   }
   GC_ROOT_PIN(js, reject_obj);
   set_slot(reject_obj, SLOT_CFUNC, js_mkfun(builtin_Promise_allSettled_reject_handler));
-  js_setprop(js, reject_obj, js_mkstr(js, "index", 5), tov((double)pctx->index));
-  js_setprop(js, reject_obj, js_mkstr(js, "tracker", 7), pctx->tracker);
+  set_slot(reject_obj, SLOT_PCOMB_INDEX, tov((double)pctx->index));
+  set_slot_wb(js, reject_obj, SLOT_PCOMB_TRACKER, pctx->tracker);
   ant_value_t reject_fn = js_obj_to_func(js, reject_obj);
   GC_ROOT_PIN(js, reject_fn);
 
@@ -15327,8 +15327,8 @@ static ant_value_t builtin_Promise_all(ant_t *js, ant_value_t *args, int nargs) 
   ant_value_t results = mkarr(js);
   GC_ROOT_PIN(js, results);
 
-  js_setprop(js, tracker, js_mkstr(js, "remaining", 9), tov(0.0));
-  js_setprop(js, tracker, js_mkstr(js, "results", 7), results);
+  set_slot(tracker, SLOT_PCOMB_REMAINING, tov(0.0));
+  set_slot_wb(js, tracker, SLOT_PCOMB_RESULTS, results);
   set_slot(tracker, SLOT_DATA, result_promise);
 
   promise_all_iter_ctx_t ctx = { .tracker = tracker, .index = 0 };
@@ -15354,7 +15354,7 @@ static ant_value_t builtin_Promise_all(ant_t *js, ant_value_t *args, int nargs) 
     return result_promise;
   }
 
-  js_setprop(js, tracker, js_mkstr(js, "remaining", 9), tov((double)len));
+  set_slot(tracker, SLOT_PCOMB_REMAINING, tov((double)len));
   GC_ROOT_RESTORE(js, root_mark);
   return result_promise;
 }
@@ -15388,8 +15388,8 @@ static ant_value_t builtin_Promise_allSettled(ant_t *js, ant_value_t *args, int 
   ant_value_t results = mkarr(js);
   GC_ROOT_PIN(js, results);
 
-  js_setprop(js, tracker, js_mkstr(js, "remaining", 9), tov(0.0));
-  js_setprop(js, tracker, js_mkstr(js, "results", 7), results);
+  set_slot(tracker, SLOT_PCOMB_REMAINING, tov(0.0));
+  set_slot_wb(js, tracker, SLOT_PCOMB_RESULTS, results);
   set_slot(tracker, SLOT_DATA, result_promise);
 
   promise_all_iter_ctx_t ctx = { .tracker = tracker, .index = 0 };
@@ -15413,7 +15413,7 @@ static ant_value_t builtin_Promise_allSettled(ant_t *js, ant_value_t *args, int 
     return result_promise;
   }
 
-  js_setprop(js, tracker, js_mkstr(js, "remaining", 9), tov((double)len));
+  set_slot(tracker, SLOT_PCOMB_REMAINING, tov((double)len));
   GC_ROOT_RESTORE(js, root_mark);
   return result_promise;
 }
@@ -15535,33 +15535,33 @@ static ant_value_t mk_aggregate_error(ant_t *js, ant_value_t errors) {
 }
 
 static bool promise_any_try_resolve(ant_t *js, ant_value_t tracker, ant_value_t value) {
-  if (js_truthy(js, js_get(js, tracker, "resolved"))) return false;
-  js_set(js, tracker, "resolved", js_true);
+  if (js_truthy(js, get_slot(tracker, SLOT_PCOMB_RESOLVED))) return false;
+  set_slot(tracker, SLOT_PCOMB_RESOLVED, js_true);
   js_resolve_promise(js, get_slot(tracker, SLOT_DATA), value);
   return true;
 }
 
 static void promise_any_record_rejection(ant_t *js, ant_value_t tracker, int index, ant_value_t reason) {
-  ant_value_t errors = js_get(js, tracker, "errors");
+  ant_value_t errors = get_slot(tracker, SLOT_PCOMB_RESULTS);
   arr_set(js, errors, (ant_offset_t)index, reason);
   
-  int remaining = (int)tod(js_get(js, tracker, "remaining")) - 1;
-  js_set(js, tracker, "remaining", tov((double)remaining));
+  int remaining = (int)tod(get_slot(tracker, SLOT_PCOMB_REMAINING)) - 1;
+  set_slot(tracker, SLOT_PCOMB_REMAINING, tov((double)remaining));
   
   if (remaining == 0) js_reject_promise(js, get_slot(tracker, SLOT_DATA), mk_aggregate_error(js, errors));
 }
 
 static ant_value_t builtin_Promise_any_resolve_handler(ant_t *js, ant_value_t *args, int nargs) {
-  ant_value_t tracker = js_get(js, js->this_val, "tracker");
+  ant_value_t tracker = get_slot(js->this_val, SLOT_PCOMB_TRACKER);
   promise_any_try_resolve(js, tracker, nargs > 0 ? args[0] : js_mkundef());
   return js_mkundef();
 }
 
 static ant_value_t builtin_Promise_any_reject_handler(ant_t *js, ant_value_t *args, int nargs) {
-  ant_value_t tracker = js_get(js, js->this_val, "tracker");
-  if (js_truthy(js, js_get(js, tracker, "resolved"))) return js_mkundef();
+  ant_value_t tracker = get_slot(js->this_val, SLOT_PCOMB_TRACKER);
+  if (js_truthy(js, get_slot(tracker, SLOT_PCOMB_RESOLVED))) return js_mkundef();
   
-  int index = (int)tod(js_get(js, js->this_val, "index"));
+  int index = (int)tod(get_slot(js->this_val, SLOT_PCOMB_INDEX));
   promise_any_record_rejection(js, tracker, index, nargs > 0 ? args[0] : js_mkundef());
   return js_mkundef();
 }
@@ -15596,9 +15596,9 @@ static ant_value_t builtin_Promise_any(ant_t *js, ant_value_t *args, int nargs) 
 
   set_slot(tracker, SLOT_DATA, result_promise);
 
-  js_setprop(js, tracker, js_mkstr(js, "remaining", 9), tov((double)len));
-  js_setprop(js, tracker, js_mkstr(js, "errors", 6), errors);
-  js_setprop(js, tracker, js_mkstr(js, "resolved", 8), js_false);
+  set_slot(tracker, SLOT_PCOMB_REMAINING, tov((double)len));
+  set_slot_wb(js, tracker, SLOT_PCOMB_RESULTS, errors);
+  set_slot(tracker, SLOT_PCOMB_RESOLVED, js_false);
   
   {
     ant_offset_t doff = get_dense_buf(errors);
@@ -15637,7 +15637,7 @@ static ant_value_t builtin_Promise_any(ant_t *js, ant_value_t *args, int nargs) 
     }
     GC_ROOT_PIN(js, resolve_obj);
     set_slot(resolve_obj, SLOT_CFUNC, js_mkfun(builtin_Promise_any_resolve_handler));
-    js_setprop(js, resolve_obj, js_mkstr(js, "tracker", 7), tracker);
+    set_slot_wb(js, resolve_obj, SLOT_PCOMB_TRACKER, tracker);
 
     ant_value_t reject_obj = mkobj(js, 0);
     if (is_err(reject_obj)) {
@@ -15646,8 +15646,8 @@ static ant_value_t builtin_Promise_any(ant_t *js, ant_value_t *args, int nargs) 
     }
     GC_ROOT_PIN(js, reject_obj);
     set_slot(reject_obj, SLOT_CFUNC, js_mkfun(builtin_Promise_any_reject_handler));
-    js_setprop(js, reject_obj, js_mkstr(js, "index", 5), tov((double)i));
-    js_setprop(js, reject_obj, js_mkstr(js, "tracker", 7), tracker);
+    set_slot(reject_obj, SLOT_PCOMB_INDEX, tov((double)i));
+    set_slot_wb(js, reject_obj, SLOT_PCOMB_TRACKER, tracker);
 
     ant_value_t resolve_fn = js_obj_to_func(js, resolve_obj);
     GC_ROOT_PIN(js, resolve_fn);

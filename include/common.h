@@ -48,6 +48,11 @@
   X(SLOT_ITER_STATE)              \
   X(SLOT_ENTRIES)                 \
   X(SLOT_SETTLED)                 \
+  X(SLOT_PCOMB_INDEX)             \
+  X(SLOT_PCOMB_TRACKER)           \
+  X(SLOT_PCOMB_RESULTS)           \
+  X(SLOT_PCOMB_REMAINING)         \
+  X(SLOT_PCOMB_RESOLVED)          \
   X(SLOT_WT_ON_MESSAGE)           \
   X(SLOT_WT_ONCE_MESSAGE)         \
   X(SLOT_WT_ON_EXIT)              \
