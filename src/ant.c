@@ -674,7 +674,8 @@ static size_t strpromise(ant_t *js, ant_value_t value, char *buf, size_t len);
 static ant_value_t js_call_valueOf(ant_t *js, ant_value_t value);
 static ant_value_t js_call_toString(ant_t *js, ant_value_t value);
 static ant_value_t js_call_method(ant_t *js, ant_value_t obj, const char *method, ant_value_t *args, int nargs);
-static ant_value_t builtin_object_defineProperty(ant_t *js, ant_value_t *args, int nargs);
+static ant_value_t object_define_property(ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor);
+static ant_value_t object_define_properties(ant_t *js, ant_value_t obj, ant_value_t props);
 
 static inline bool is_slot_prop(ant_offset_t header);
 static inline ant_offset_t next_prop(ant_offset_t header);
@@ -8134,9 +8135,7 @@ static ant_value_t builtin_object___defineGetter__(ant_t *js, ant_value_t *args,
     js_setprop(js, desc, js_mkstr(js, "enumerable", 10), js_true);
     js_setprop(js, desc, js_mkstr(js, "configurable", 12), js_true);
     
-    ant_value_t define_args[3] = { obj, key_val, desc };
-    ant_value_t result = builtin_object_defineProperty(js, define_args, 3);
-    
+    ant_value_t result = object_define_property(js, obj, key_val, desc);
     GC_ROOT_RESTORE(js, root_mark);
     if (is_err(result)) return result;
     
@@ -8188,9 +8187,7 @@ static ant_value_t builtin_object___defineSetter__(ant_t *js, ant_value_t *args,
     js_setprop(js, desc, js_mkstr(js, "enumerable", 10), js_true);
     js_setprop(js, desc, js_mkstr(js, "configurable", 12), js_true);
     
-    ant_value_t define_args[3] = { obj, key_val, desc };
-    ant_value_t result = builtin_object_defineProperty(js, define_args, 3);
-    
+    ant_value_t result = object_define_property(js, obj, key_val, desc);
     GC_ROOT_RESTORE(js, root_mark);
     if (is_err(result)) return result;
     
@@ -8278,33 +8275,16 @@ static ant_value_t builtin_object_create(ant_t *js, ant_value_t *args, int nargs
   ant_value_t proto = args[0];
   uint8_t pt = vtype(proto);
   
-  if (pt != T_OBJ && pt != T_ARR && pt != T_FUNC && pt != T_NULL) {
+  if (pt != T_OBJ && pt != T_ARR && pt != T_FUNC && pt != T_NULL)
     return js_mkerr(js, "Object.create: prototype must be an object or null");
-  }
-  
+
   ant_value_t obj = js_mkobj(js);
-  if (pt == T_NULL) {
-    js_set_proto_init(obj, js_mknull());
-  } else js_set_proto_init(obj, proto);
+  if (pt == T_NULL) js_set_proto_init(obj, js_mknull());
+  else js_set_proto_init(obj, proto);
 
-  if (nargs >= 2 && vtype(args[1]) == T_OBJ) {
-    ant_value_t props = args[1];
-    ant_iter_t iter = js_prop_iter_begin(js, props);
-    
-    const char *key = NULL;
-    size_t klen = 0;
-    ant_value_t descriptor = js_mkundef();
-
-    while (js_prop_iter_next(&iter, &key, &klen, &descriptor)) {
-      if (vtype(descriptor) != T_OBJ) continue;
-      ant_offset_t val_off = lkp(js, descriptor, "value", 5);
-      if (val_off == 0) continue;
-      ant_value_t val = propref_load(js, val_off);
-      ant_value_t key_str = js_mkstr(js, key, klen);
-      js_setprop(js, obj, key_str, val);
-    }
-    
-    js_prop_iter_end(&iter);
+  if (nargs >= 2 && vtype(args[1]) != T_UNDEF) {
+    ant_value_t result = object_define_properties(js, obj, args[1]);
+    if (is_err(result)) return result;
   }
 
   return obj;
@@ -8471,20 +8451,9 @@ static bool descriptor_field_get(
 }
 
 // TODO: decompose this huge function into small pieces
-static ant_value_t builtin_object_defineProperty(ant_t *js, ant_value_t *args, int nargs) {
-  if (nargs < 3) return js_mkerr(js, "Object.defineProperty requires 3 arguments");
-  
-  ant_value_t obj = args[0];
-  ant_value_t prop = args[1];
-  ant_value_t descriptor = args[2];
-  uint8_t t = vtype(obj);
-  
-  if (t == T_CFUNC) {
-    obj = js_cfunc_promote(js, obj);
-    args[0] = obj;
-    t = T_FUNC;
-  }
-  
+static ant_value_t object_define_property(ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor) {
+  if (vtype(obj) == T_CFUNC) obj = js_cfunc_promote(js, obj);
+
   if (!is_object_type(obj)) {
     return js_mkerr(js, "Object.defineProperty called on non-object");
   }
@@ -8868,6 +8837,11 @@ static ant_value_t builtin_object_defineProperty(ant_t *js, ant_value_t *args, i
   return obj;
 }
 
+static ant_value_t builtin_object_defineProperty(ant_t *js, ant_value_t *args, int nargs) {
+  if (nargs < 3) return js_mkerr(js, "Object.defineProperty requires 3 arguments");
+  return object_define_property(js, args[0], args[1], args[2]);
+}
+
 typedef struct {
   bool thrown_exists;
   ant_value_t thrown_value;
@@ -8922,31 +8896,31 @@ static ant_value_t strobj_call_custom_inspect(ant_t *js, ant_value_t obj) {
 
 ant_value_t js_define_property(ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor, bool reflect_mode) {
   js_exception_state_t saved = js_save_exception(js);
-  ant_value_t args[3] = { obj, prop, descriptor };
-  ant_value_t result = builtin_object_defineProperty(js, args, 3);
+  ant_value_t result = object_define_property(js, obj, prop, descriptor);
 
   if (!reflect_mode) return result;
   if (is_err(result)) {
     js_restore_exception(js, &saved);
     return js_false;
   }
+  
   return js_true;
 }
 
-static ant_value_t builtin_object_defineProperties(ant_t *js, ant_value_t *args, int nargs) {
-  if (nargs < 2) return js_mkerr(js, "Object.defineProperties requires 2 arguments");
-  
-  ant_value_t obj = args[0];
-  ant_value_t props = args[1];
-  
-  uint8_t t = vtype(obj);
-  if (t != T_OBJ && t != T_ARR && t != T_FUNC) {
-    return js_mkerr(js, "Object.defineProperties called on non-object");
+static ant_value_t object_define_properties(ant_t *js, ant_value_t obj, ant_value_t props) {
+  uint8_t pt = vtype(props);
+
+  if (pt == T_UNDEF || pt == T_NULL)
+    return js_mkerr_typed(js, JS_ERR_TYPE, "Cannot convert undefined or null to object");
+
+  if (pt == T_STR) {
+    ant_offset_t str_len = 0;
+    ant_offset_t str_off = vstr(js, props, &str_len);
+    if (str_len == 0) return obj;
+    return js_mkerr_typed(js, JS_ERR_TYPE, "Property description must be an object: %.1s", (const char *)(uintptr_t)str_off);
   }
-  
-  if (vtype(props) != T_OBJ) {
-    return js_mkerr(js, "Property descriptors must be an object");
-  }
+
+  if (pt != T_OBJ && pt != T_ARR && pt != T_FUNC) return obj;
 
   if (is_proxy(props)) {
     GC_ROOT_SAVE(root_mark, js);
@@ -8974,8 +8948,7 @@ static ant_value_t builtin_object_defineProperties(ant_t *js, ant_value_t *args,
         return descriptor;
       }
 
-      ant_value_t define_args[3] = { obj, prop_key, descriptor };
-      ant_value_t result = builtin_object_defineProperty(js, define_args, 3);
+      ant_value_t result = object_define_property(js, obj, prop_key, descriptor);
       if (is_err(result)) {
         GC_ROOT_RESTORE(js, iter_mark);
         GC_ROOT_RESTORE(js, root_mark);
@@ -8987,24 +8960,39 @@ static ant_value_t builtin_object_defineProperties(ant_t *js, ant_value_t *args,
     GC_ROOT_RESTORE(js, root_mark);
     return obj;
   }
-  
+
+  if (pt == T_ARR) {
+    ant_offset_t arr_len = js_arr_len(js, props);
+    for (ant_offset_t i = 0; i < arr_len; i++) {
+      if (!arr_has(js, props, i)) continue;
+      ant_value_t result = object_define_property(js, obj, js_mknum((double)i), js_arr_get(js, props, i));
+      if (is_err(result)) return result;
+    }
+  }
+
   ant_iter_t iter = js_prop_iter_begin(js, props);
   const char *key = NULL;
   size_t key_len = 0;
   ant_value_t descriptor = js_mkundef();
 
   while (js_prop_iter_next(&iter, &key, &key_len, &descriptor)) {
-    ant_value_t prop_key = js_mkstr(js, key, key_len);
-    ant_value_t define_args[3] = { obj, prop_key, descriptor };
-    ant_value_t result = builtin_object_defineProperty(js, define_args, 3);
+    ant_value_t result = object_define_property(js, obj, js_mkstr(js, key, key_len), descriptor);
     if (is_err(result)) {
       js_prop_iter_end(&iter);
       return result;
     }
   }
-  js_prop_iter_end(&iter);
   
+  js_prop_iter_end(&iter);
   return obj;
+}
+
+static ant_value_t builtin_object_defineProperties(ant_t *js, ant_value_t *args, int nargs) {
+  ant_value_t obj = nargs >= 1 ? args[0] : js_mkundef();
+  uint8_t t = vtype(obj);
+  if (t != T_OBJ && t != T_ARR && t != T_FUNC)
+    return js_mkerr(js, "Object.defineProperties called on non-object");
+  return object_define_properties(js, obj, nargs >= 2 ? args[1] : js_mkundef());
 }
 
 bool js_is_own_enumerable_prop(
@@ -17046,9 +17034,9 @@ static ant_value_t proxy_define_property(ant_t *js, ant_value_t proxy, ant_value
     return js_true;
   }
 
-  ant_value_t args[3] = { target, key_val, descriptor };
-  ant_value_t result = builtin_object_defineProperty(js, args, 3);
+  ant_value_t result = object_define_property(js, target, key_val, descriptor);
   if (is_err(result)) return result;
+  
   return js_true;
 }
 
