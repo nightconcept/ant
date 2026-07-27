@@ -226,17 +226,27 @@ static inline sv_vm_t *sv_async_prepare_materialization(
   int handler_base = entry_frame->handler_base;
   int handler_count = source_vm->handler_depth - handler_base;
 
-  sv_vm_t *async_vm = sv_vm_create(js, SV_VM_ASYNC);
+  if (stack_count < 0 || frame_count < 1) return NULL;
+  if (handler_count < 0 || handler_count > SV_HANDLER_MAX) return NULL;
+
+  /*
+   * Size the activation's VM to what it is carrying plus operand headroom,
+   * rather than to a fixed worst-case stack. Every copied frame can resume and
+   * push, not just the innermost one, so take the deepest frame's need: each
+   * frame's own base and slots are already inside stack_count, so
+   * stack_count + max(max_stack) bounds every reachable sp. Deeper calls made
+   * after resuming grow the VM on demand.
+   */
+  int headroom = 0;
+  for (int i = 0; i < frame_count; i++) {
+    sv_func_t *f = source_vm->frames[entry_fp + i].func;
+    if (f && f->max_stack > headroom) headroom = f->max_stack;
+  }
+
+  sv_vm_t *async_vm = sv_vm_create_sized(
+    js, stack_count + headroom, frame_count + 2);
   if (!async_vm) return NULL;
-  if (stack_count < 0 || stack_count > async_vm->stack_size) {
-    sv_vm_destroy(async_vm);
-    return NULL;
-  }
-  if (frame_count < 1 || frame_count > async_vm->max_frames) {
-    sv_vm_destroy(async_vm);
-    return NULL;
-  }
-  if (handler_count < 0 || handler_count > SV_HANDLER_MAX) {
+  if (stack_count > async_vm->stack_size || frame_count > async_vm->max_frames) {
     sv_vm_destroy(async_vm);
     return NULL;
   }
@@ -269,6 +279,10 @@ static inline sv_vm_t *sv_async_prepare_materialization(
   }
 
   if (handler_count > 0) {
+    if (!sv_vm_reserve_handlers(async_vm, handler_count)) {
+      sv_vm_destroy(async_vm);
+      return NULL;
+    }
     memcpy(
       async_vm->handler_stack,
       &source_vm->handler_stack[handler_base],
@@ -518,8 +532,15 @@ static inline ant_value_t sv_start_async_closure(
     GC_ROOT_PIN(js, super_val);
     GC_ROOT_PIN(js, this_val);
     
+    /*
+     * `args` usually points into the caller's VM stack, which is reallocated
+     * when it grows. Rooting the slots by address would leave the GC reading
+     * freed memory, so root the values themselves.
+     */
+    gc_temp_root_scope_t arg_roots;
+    gc_temp_root_scope_begin(js, &arg_roots);
     if (args) {
-      for (int i = 0; i < argc; i++) GC_ROOT_PIN(js, args[i]);
+      for (int i = 0; i < argc; i++) gc_temp_root_add(&arg_roots, args[i]);
     }
     
     ant_value_t promise = js_mkpromise(js);
@@ -536,6 +557,7 @@ static inline ant_value_t sv_start_async_closure(
       js_reject_promise(js, promise, reject_value);
     } else js_resolve_promise(js, promise, result);
     
+    gc_temp_root_scope_end(&arg_roots);
     GC_ROOT_RESTORE(js, root_mark);
     return promise;
   }
@@ -546,14 +568,22 @@ static inline ant_value_t sv_start_async_closure(
     GC_ROOT_PIN(js, super_val);
     GC_ROOT_PIN(js, this_val);
     
+    /*
+     * `args` usually points into the caller's VM stack, which is reallocated
+     * when it grows. Rooting the slots by address would leave the GC reading
+     * freed memory, so root the values themselves.
+     */
+    gc_temp_root_scope_t arg_roots;
+    gc_temp_root_scope_begin(js, &arg_roots);
     if (args) {
-      for (int i = 0; i < argc; i++) GC_ROOT_PIN(js, args[i]);
+      for (int i = 0; i < argc; i++) gc_temp_root_add(&arg_roots, args[i]);
     }
     
     ant_value_t promise = js_mkpromise(js);
     GC_ROOT_PIN(js, promise);
     coroutine_t *coro = (coroutine_t *)CORO_MALLOC(sizeof(coroutine_t));
     if (!coro) {
+      gc_temp_root_scope_end(&arg_roots);
       GC_ROOT_RESTORE(js, root_mark);
       return js_mkerr(js, "out of memory for async coroutine");
     }
@@ -573,6 +603,7 @@ static inline ant_value_t sv_start_async_closure(
 
     if (coro->sv_vm && coro->sv_vm->suspended) {
       coroutine_release(coro);
+      gc_temp_root_scope_end(&arg_roots);
       GC_ROOT_RESTORE(js, root_mark);
       return promise;
     }
@@ -586,6 +617,7 @@ static inline ant_value_t sv_start_async_closure(
       js_resolve_promise(js, promise, result);
     }
     coroutine_release(coro);
+    gc_temp_root_scope_end(&arg_roots);
     GC_ROOT_RESTORE(js, root_mark);
     
     return promise;

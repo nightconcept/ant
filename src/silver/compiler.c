@@ -21,6 +21,19 @@ enum {
   SV_ITER_HINT_STRING = 4,
 };
 
+/*
+ * Upper bound on the operand slots a single activation of `func` can hold.
+ *
+ * Callers reserve this on top of the frame's argument and local slots before
+ * entering the frame, which is what lets an async activation start with a
+ * right-sized stack instead of a fixed 64KB one. Returns a negative value if
+ * no bound could be established; callers fall back to SV_MAX_STACK_FALLBACK.
+ */
+static int sv_compute_max_stack(const uint8_t *code, int code_len);
+
+#define SV_MAX_STACK_FALLBACK 1024
+#define SV_MAX_STACK_MARGIN   16
+
 static const char *pin_source_text(const char *source, ant_offset_t source_len) {
   if (!source || source_len <= 0) return source;
   const char *pinned = code_arena_alloc(source, (size_t)source_len);
@@ -5894,7 +5907,7 @@ static int compile_static_child_function(sv_compiler_t *c, sv_ast_t *node, bool 
   }
 
   fn->max_locals = comp.max_local_count;
-  fn->max_stack = fn->max_locals + 64;
+  fn->max_stack = sv_func_max_stack_bound(fn->code, fn->code_len, fn->max_locals);
   sv_func_finalize_type_data(fn, &comp, fn->max_locals);
   fn->param_count = 0;
   fn->function_length = 0;
@@ -6117,7 +6130,7 @@ void compile_class(sv_compiler_t *c, sv_ast_t *node) {
       fn->upvalue_count = comp.upvalue_count;
     }
     fn->max_locals = comp.max_local_count;
-    fn->max_stack = fn->max_locals + 64;
+    fn->max_stack = sv_func_max_stack_bound(fn->code, fn->code_len, fn->max_locals);
     sv_func_finalize_type_data(fn, &comp, fn->max_locals);
     
     fn->param_count = (uint16_t)comp.param_count;
@@ -6589,7 +6602,7 @@ sv_func_t *compile_function_body(
   }
 
   func->max_locals = max_locals;
-  func->max_stack = max_locals + 64;
+  func->max_stack = sv_func_max_stack_bound(func->code, func->code_len, max_locals);
   sv_func_finalize_type_data(func, &comp, max_locals);
   
   func->param_count = (uint16_t)comp.param_count;
@@ -6652,6 +6665,144 @@ static const uint8_t sv_op_fmts[OP__COUNT] = {
 #define OP_DEF(name, size, n_pop, n_push, f) [OP_##name] = SVF_##f,
 #include "silver/opcode.h"
 };
+
+/* Opcodes that never fall through to the following instruction. */
+static bool sv_op_ends_flow(sv_op_t op) {
+  switch (op) {
+    case OP_JMP: case OP_JMP8:
+    case OP_RETURN: case OP_RETURN_UNDEF: case OP_RETURN_ASYNC:
+    case OP_THROW: case OP_THROW_ERROR:
+    case OP_TAIL_CALL: case OP_TAIL_CALL_METHOD:
+    case OP_FINALLY_RET: case OP_UNWIND_JMP:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/*
+ * Abstract interpretation over the bytecode, tracking the operand depth on
+ * entry to each instruction and recording the peak.
+ *
+ * Every propagation edge is seeded with an upper bound on the real depth, so
+ * the result can over-estimate but never under-estimate:
+ *  - merge points keep the deepest incoming depth;
+ *  - exception edges are seeded with the depth at the guarding instruction,
+ *    which is >= the `saved_sp` the runtime restores before entering the
+ *    handler.
+ */
+static int sv_compute_max_stack(const uint8_t *code, int code_len) {
+  if (!code || code_len <= 0) return 0;
+
+  int *depth = malloc(sizeof(int) * (size_t)code_len);
+  uint8_t *queued = calloc((size_t)code_len, 1);
+  int *work = malloc(sizeof(int) * (size_t)code_len);
+  int result = -1;
+
+  if (!depth || !queued || !work) goto out;
+  for (int i = 0; i < code_len; i++) depth[i] = -1;
+
+  int work_len = 0;
+  int peak = 0;
+  /* Bounds the walk so malformed or stack-unbalanced loops cannot spin. */
+  int64_t budget = (int64_t)code_len * 64 + 4096;
+
+  depth[0] = 0;
+  queued[0] = 1;
+  work[work_len++] = 0;
+
+  while (work_len > 0) {
+    int off = work[--work_len];
+    queued[off] = 0;
+    int cur = depth[off];
+
+    while (off >= 0 && off < code_len) {
+      if (--budget < 0) goto out;
+
+      sv_op_t op = (sv_op_t)code[off];
+      if (op >= OP__COUNT) goto out;
+
+      int size = sv_op_size[op];
+      int fmt = sv_op_fmts[op];
+      if (size <= 0) goto out;
+      if (off + size > code_len) goto out;
+
+      int pops = sv_op_npop[op];
+      if (fmt == SVF_npop) {
+        uint16_t extra;
+        memcpy(&extra, code + off + 1, sizeof(extra));
+        pops += (int)extra;
+      }
+
+      int after = cur - pops + (int)sv_op_npush[op];
+      if (after < 0) after = 0;
+
+      if (cur > peak) peak = cur;
+      if (after > peak) peak = after;
+      if (peak > SV_STACK_HARD_MAX) goto out;
+
+      int target = -1;
+      if (op == OP_UNWIND_JMP) {
+        /* Operand layout differs: the label is followed by two counts. */
+        int32_t rel;
+        memcpy(&rel, code + off + 1, sizeof(rel));
+        target = off + 5 + (int)rel;
+      } else if (fmt == SVF_label) {
+        int32_t rel;
+        memcpy(&rel, code + off + 1, sizeof(rel));
+        target = off + size + (int)rel;
+      } else if (fmt == SVF_label8) {
+        target = off + size + (int)(int8_t)code[off + 1];
+      }
+
+      if (target >= 0 && target < code_len) {
+        /*
+         * Branch edges carry the post-op depth; handler and unwind edges are
+         * entered with the stack cut back, so the pre-op depth bounds them.
+         */
+        int seed = after;
+        switch (op) {
+          case OP_TRY_PUSH: case OP_TRY_PUSH_FINALLY:
+          case OP_CATCH: case OP_FINALLY: case OP_UNWIND_JMP:
+            seed = (cur > after) ? cur : after;
+            break;
+          default: break;
+        }
+        if (seed > depth[target]) {
+          depth[target] = seed;
+          if (!queued[target]) {
+            queued[target] = 1;
+            work[work_len++] = target;
+          }
+        }
+      }
+
+      if (sv_op_ends_flow(op)) break;
+
+      int next = off + size;
+      if (next >= code_len) break;
+      if (depth[next] >= after) break;
+
+      depth[next] = after;
+      cur = after;
+      off = next;
+    }
+  }
+
+  result = peak;
+
+out:
+  free(depth);
+  free(queued);
+  free(work);
+  return result;
+}
+
+int sv_func_max_stack_bound(const uint8_t *code, int code_len, int max_locals) {
+  int peak = sv_compute_max_stack(code, code_len);
+  if (peak < 0) return max_locals + SV_MAX_STACK_FALLBACK;
+  return peak + SV_MAX_STACK_MARGIN;
+}
 
 void sv_disasm(ant_t *js, sv_func_t *func, const char *label) {
   const char *fname = func->debug->name ? func->debug->name : "";

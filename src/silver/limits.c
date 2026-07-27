@@ -16,7 +16,8 @@
 #endif
 
 #define SV_DEFAULT_STACK_KB  984
-#define SV_ASYNC_STACK_KB    64
+#define SV_ASYNC_STACK_SLOTS 64
+#define SV_ASYNC_FRAMES      4
 #define SV_BYTES_PER_SLOT    ((int)sizeof(uint64_t))
 
 int sv_user_stack_size_kb = 0;
@@ -47,8 +48,14 @@ size_t os_thread_stack_size(void) {
 
 void sv_vm_limits(sv_vm_kind_t kind, int *out_stack_size, int *out_max_frames) {
   if (kind == SV_VM_ASYNC) {
-    *out_stack_size = (SV_ASYNC_STACK_KB * 1024) / SV_BYTES_PER_SLOT;
-    *out_max_frames = 256;
+    /*
+     * Async activations are per-await and can be live in the tens of
+     * thousands, so they start at roughly one frame's worth and grow on
+     * demand. sv_stage_frame_args reserves each callee's real need up front,
+     * so growth is bounded and never silently overruns.
+     */
+    *out_stack_size = SV_ASYNC_STACK_SLOTS;
+    *out_max_frames = SV_ASYNC_FRAMES;
     return;
   }
 

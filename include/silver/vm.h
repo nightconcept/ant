@@ -14,9 +14,18 @@ typedef enum {
 
 extern int sv_user_stack_size_kb;
 sv_vm_t *sv_vm_create(ant_t *js, sv_vm_kind_t kind);
+sv_vm_t *sv_vm_create_sized(ant_t *js, int stack_size, int max_frames);
 
 void sv_vm_destroy(sv_vm_t *vm);
 void sv_vm_limits(sv_vm_kind_t kind, int *out_stack_size, int *out_max_frames);
+
+/* Ensure the VM can hold `slots` operands / `count` frames; grows if needed. */
+bool sv_vm_reserve_stack(sv_vm_t *vm, int slots);
+bool sv_vm_reserve_frames(sv_vm_t *vm, int count);
+bool sv_vm_reserve_handlers(sv_vm_t *vm, int count);
+
+/* Upper bound on the operand slots one activation of a function can hold. */
+int sv_func_max_stack_bound(const uint8_t *code, int code_len, int max_locals);
 
 void sv_vm_visit_frame_funcs(sv_vm_t *vm, void (*visitor)(void *, sv_func_t *), void *ctx);
 void sv_disasm(ant_t *js, sv_func_t *func, const char *label);

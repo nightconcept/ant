@@ -52,6 +52,16 @@ static const uint8_t sv_op_size[OP__COUNT] = {
 #include "silver/opcode.h"
 };
 
+static const uint8_t sv_op_npop[OP__COUNT] = {
+#define OP_DEF(name, size, n_pop, n_push, f) [OP_##name] = (n_pop),
+#include "silver/opcode.h"
+};
+
+static const uint8_t sv_op_npush[OP__COUNT] = {
+#define OP_DEF(name, size, n_pop, n_push, f) [OP_##name] = (n_push),
+#include "silver/opcode.h"
+};
+
 static const uint16_t sv_op_flags[OP__COUNT] = {
 #define OP_FLAG(name, flags) [OP_##name] = (flags),
 #include "silver/opcode.h"
@@ -500,9 +510,23 @@ struct sv_vm {
   int fp;
   int max_frames;
 
-  sv_handler_t handler_stack[SV_HANDLER_MAX];
+  /*
+   * Allocated on first try/finally rather than inline: an async activation
+   * carries one VM each and most never enter a try block, so a fixed
+   * SV_HANDLER_MAX array was pure overhead per suspended await.
+   */
+  sv_handler_t *handler_stack;
+  int handler_cap;
+
   sv_upvalue_t *open_upvalues;
   int handler_depth;
+
+  /*
+   * Bumped whenever `stack` or `frames` is reallocated. The dispatch loop
+   * caches frame/bp/lp in locals; comparing this against its cached copy is
+   * how it learns those pointers moved.
+   */
+  uint32_t realloc_epoch;
   
   // TODO: move to nested struct
   bool suspended;
