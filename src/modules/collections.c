@@ -7,7 +7,6 @@
 #include "ptr.h"
 #include "gc.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "silver/engine.h"
 #include "descriptors.h"
@@ -1634,9 +1633,7 @@ static ant_value_t builtin_WeakSet(ant_t *js, ant_value_t *args, int nargs) {
   return ws_obj;
 }
 
-void init_collections_module(void) {
-  ant_t *js = rt->js;
-  
+void init_collections_module(ant_t *js) {
   ant_value_t glob = js->global;
   ant_value_t object_proto = js->sym.object_proto;
   
@@ -1678,7 +1675,7 @@ void init_collections_module(void) {
   js_set_descriptor(js, map_ctor, "name", 4, 0);
   js_set(js, map_ctor, "groupBy", js_mkfun(map_groupBy));
   js_define_species_getter(js, map_ctor);
-  js_set(js, glob, "Map", js_obj_to_func(map_ctor));
+  js_set(js, glob, "Map", js_obj_to_func(js, map_ctor));
   
   ant_value_t set_proto = js_mkobj(js);
   js_set_proto_init(set_proto, object_proto);
@@ -1707,7 +1704,7 @@ void init_collections_module(void) {
   js_mkprop_fast(js, set_ctor, "name", 4, ANT_STRING("Set"));
   js_set_descriptor(js, set_ctor, "name", 4, 0);
   js_define_species_getter(js, set_ctor);
-  js_set(js, glob, "Set", js_obj_to_func(set_ctor));
+  js_set(js, glob, "Set", js_obj_to_func(js, set_ctor));
   
   ant_value_t weakmap_proto = js_mkobj(js);
   js_set_proto_init(weakmap_proto, object_proto);
@@ -1723,7 +1720,7 @@ void init_collections_module(void) {
   js_mkprop_fast(js, weakmap_ctor, "prototype", 9, weakmap_proto);
   js_mkprop_fast(js, weakmap_ctor, "name", 4, ANT_STRING("WeakMap"));
   js_set_descriptor(js, weakmap_ctor, "name", 4, 0);
-  js_set(js, glob, "WeakMap", js_obj_to_func(weakmap_ctor));
+  js_set(js, glob, "WeakMap", js_obj_to_func(js, weakmap_ctor));
   
   ant_value_t weakset_proto = js_mkobj(js);
   js_set_proto_init(weakset_proto, object_proto);
@@ -1737,7 +1734,7 @@ void init_collections_module(void) {
   js_mkprop_fast(js, weakset_ctor, "prototype", 9, weakset_proto);
   js_mkprop_fast(js, weakset_ctor, "name", 4, ANT_STRING("WeakSet"));
   js_set_descriptor(js, weakset_ctor, "name", 4, 0);
-  js_set(js, glob, "WeakSet", js_obj_to_func(weakset_ctor));
+  js_set(js, glob, "WeakSet", js_obj_to_func(js, weakset_ctor));
   
   ant_value_t weakref_proto = js_mkobj(js);
   js_set_proto_init(weakref_proto, object_proto);
@@ -1749,7 +1746,7 @@ void init_collections_module(void) {
   js_mkprop_fast(js, weakref_ctor, "prototype", 9, weakref_proto);
   js_mkprop_fast(js, weakref_ctor, "name", 4, ANT_STRING("WeakRef"));
   js_set_descriptor(js, weakref_ctor, "name", 4, 0);
-  js_set(js, glob, "WeakRef", js_obj_to_func(weakref_ctor));
+  js_set(js, glob, "WeakRef", js_obj_to_func(js, weakref_ctor));
   
   ant_value_t finreg_proto = js_mkobj(js);
   js_set_proto_init(finreg_proto, object_proto);
@@ -1762,5 +1759,5 @@ void init_collections_module(void) {
   js_mkprop_fast(js, finreg_ctor, "prototype", 9, finreg_proto);
   js_mkprop_fast(js, finreg_ctor, "name", 4, ANT_STRING("FinalizationRegistry"));
   js_set_descriptor(js, finreg_ctor, "name", 4, 0);
-  js_set(js, glob, "FinalizationRegistry", js_obj_to_func(finreg_ctor));
+  js_set(js, glob, "FinalizationRegistry", js_obj_to_func(js, finreg_ctor));
 }

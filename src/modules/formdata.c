@@ -7,7 +7,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 
@@ -467,8 +466,7 @@ static ant_value_t js_formdata_ctor(ant_t *js, ant_value_t *args, int nargs) {
   return obj;
 }
 
-void init_formdata_module(void) {
-  ant_t *js = rt->js;
+void init_formdata_module(ant_t *js) {
   ant_value_t g = js_glob(js);
   g_formdata_proto = js_mkobj(js);
 
@@ -492,7 +490,7 @@ void init_formdata_module(void) {
   js_mkprop_fast(js, ctor_obj, "name", 4, js_mkstr(js, "FormData", 8));
   js_set_descriptor(js, ctor_obj, "name", 4, 0);
 
-  ant_value_t ctor = js_obj_to_func(ctor_obj);
+  ant_value_t ctor = js_obj_to_func(js, ctor_obj);
   js_set(js, g_formdata_proto, "constructor", ctor);
   js_set_descriptor(js, g_formdata_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 

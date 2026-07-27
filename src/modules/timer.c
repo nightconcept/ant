@@ -7,7 +7,6 @@
 #include <uv.h>
 
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 
 #include "silver/engine.h"
@@ -895,8 +894,7 @@ static void timers_define_common(ant_t *js, ant_value_t obj) {
   js_set(js, obj, "queueMicrotask", js_mkfun(js_queue_microtask));
 }
 
-void init_timer_module() {  
-  ant_t *js = rt->js;
+void init_timer_module(ant_t *js) {
   timer_state.js = js;
 
   g_timeout_proto = js_mkobj(js);

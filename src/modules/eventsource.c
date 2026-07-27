@@ -12,7 +12,6 @@
 #include "ptr.h"
 #include "common.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "inspector.h"
 #include "silver/engine.h"
@@ -449,8 +448,7 @@ static ant_value_t js_eventsource_close(ant_t *js, ant_value_t *args, int nargs)
   return js_mkundef();
 }
 
-void init_eventsource_module(void) {
-  ant_t *js = rt->js;
+void init_eventsource_module(ant_t *js) {
   ant_value_t global = js_glob(js);
   ant_value_t eventtarget_proto = js_get_ctor_proto(js, "EventTarget", 11);
 

@@ -1,7 +1,6 @@
 #include "ptr.h"
 #include "sugar.h"
 #include "shapes.h"
-#include "runtime.h"
 #include "internal.h"
 
 #include "silver/engine.h"
@@ -580,6 +579,7 @@ static void gc_mark_roots(ant_t *js) {
   for (coroutine_t *c = js->active_async_coro; c; c = c->active_parent) gc_mark_coroutine(js, c);
 
   gc_mark_value(js, js->global);
+  gc_mark_value(js, js->Ant);
   gc_mark_value(js, js->sym.object_proto);
   gc_mark_value(js, js->sym.array_proto);
   gc_mark_value(js, js->this_val);
@@ -588,9 +588,6 @@ static void gc_mark_roots(ant_t *js) {
   gc_mark_value(js, js->thrown_value);
   gc_mark_value(js, js->thrown_stack);
   gc_mark_value(js, js->length_str);
-
-  if (rt && rt->js == js)
-    gc_mark_value(js, rt->ant_obj);
 
   for (ant_module_t *ctx = js->module; ctx; ctx = ctx->prev) {
     gc_mark_value(js, ctx->module_ns);

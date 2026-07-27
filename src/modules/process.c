@@ -34,7 +34,6 @@
 #include "tty_ctrl.h"
 #include "internal.h"
 #include "descriptors.h"
-#include "runtime.h"
 #include "silver/engine.h"
 #include "gc/modules.h"
 
@@ -100,6 +99,7 @@ typedef struct {
 
 static stdin_state_t stdin_state = {0};
 static uint64_t process_start_time = 0;
+static ant_t *process_js = NULL;
 
 static stdin_byte_consumer_fn stdin_byte_consumer = NULL;
 static stdin_eof_fn stdin_byte_eof = NULL;
@@ -296,7 +296,7 @@ static void check_listener_warning(const char *event) {
 static void uv_signal_handler(uv_signal_t *handle, int signum) {
   const char *name = get_signal_name(signum);
   if (name) {
-    ant_value_t sig_arg = js_mkstr(rt->js, name, strlen(name));
+    ant_value_t sig_arg = js_mkstr(process_js, name, strlen(name));
     emit_process_event(name, &sig_arg, 1);
   }
 }
@@ -331,7 +331,7 @@ static void stop_signal_watch(int signum) {
 
 
 void emit_process_event(const char *event_type, ant_value_t *args, int nargs) {
-  if (!rt->js) return;
+  if (!process_js) return;
   
   ProcessEventType *evt = NULL;
   HASH_FIND_STR(process_events, event_type, evt);
@@ -341,7 +341,7 @@ void emit_process_event(const char *event_type, ant_value_t *args, int nargs) {
   
   while (i < evt->listener_count) {
     ProcessEventListener *listener = &evt->listeners[i];
-    sv_vm_call(rt->js->vm, rt->js, listener->listener, js_mkundef(), args, nargs, NULL, false);
+    sv_vm_call(process_js->vm, process_js, listener->listener, js_mkundef(), args, nargs, NULL, false);
     
     if (listener->once) {
       for (int j = i; j < evt->listener_count - 1; j++) {
@@ -372,7 +372,7 @@ static bool stdio_has_event_listener(ProcessEventType *events, const char *event
 }
 
 static void emit_stdio_event(ProcessEventType **events, const char *event_type, ant_value_t *args, int nargs) {
-  if (!rt->js) return;
+  if (!process_js) return;
   ProcessEventType *evt = NULL;
   
   HASH_FIND_STR(*events, event_type, evt);
@@ -382,7 +382,7 @@ static void emit_stdio_event(ProcessEventType **events, const char *event_type, 
   int i = 0;
   while (i < evt->listener_count) {
     ProcessEventListener *listener = &evt->listeners[i];
-    sv_vm_call(rt->js->vm, rt->js, listener->listener, js_mkundef(), args, nargs, NULL, false);
+    sv_vm_call(process_js->vm, process_js, listener->listener, js_mkundef(), args, nargs, NULL, false);
     if (listener->once) {
       for (int j = i; j < evt->listener_count - 1; j++) 
         evt->listeners[j] = evt->listeners[j + 1];
@@ -688,20 +688,19 @@ static void process_update_sandbox_env(ant_t *js, ant_value_t process_obj) {
 }
 
 void process_refresh_sandbox_argv(void) {
-  ant_t *js = rt ? rt->js : NULL;
+  ant_t *js = process_js;
   if (!js) return;
 
   ant_value_t process_obj = js_get(js, js_glob(js), "process");
   if (!is_special_object(process_obj)) return;
 
   ant_value_t argv_arr = js_mkarr(js);
-  for (int i = 0; i < rt->argc; i++) {
-    js_arr_push(js, argv_arr, js_mkstr(js, rt->argv[i], strlen(rt->argv[i])));
-  }
+  for (int i = 0; i < js->runtime.argc; i++)
+    js_arr_push(js, argv_arr, js_mkstr(js, js->runtime.argv[i], strlen(js->runtime.argv[i])));
 
   js_set(js, process_obj, "argv", argv_arr);
-  js_set(js, process_obj, "argv0", rt->argc > 0 ? js_mkstr(js, rt->argv[0], strlen(rt->argv[0])) : js_mkstr(js, "ant", 3));
-  js_set(js, process_obj, "execPath", rt->argc > 0 ? js_mkstr(js, rt->argv[0], strlen(rt->argv[0])) : js_mkundef());
+  js_set(js, process_obj, "argv0", js->runtime.argc > 0 ? js_mkstr(js, js->runtime.argv[0], strlen(js->runtime.argv[0])) : js_mkstr(js, "ant", 3));
+  js_set(js, process_obj, "execPath", js->runtime.argc > 0 ? js_mkstr(js, js->runtime.argv[0], strlen(js->runtime.argv[0])) : js_mkundef());
 }
 
 void process_set_sandbox_terminal(uint32_t capabilities, uint16_t rows, uint16_t cols) {
@@ -711,7 +710,7 @@ void process_set_sandbox_terminal(uint32_t capabilities, uint16_t rows, uint16_t
   sandbox_tty_rows = rows ? rows : 24;
   sandbox_tty_cols = cols ? cols : 80;
 
-  ant_t *js = rt ? rt->js : NULL;
+  ant_t *js = process_js;
   if (!js) return;
 
   ant_value_t process_obj = js_get(js, js_glob(js), "process");
@@ -744,11 +743,11 @@ static inline void emit_stdin_data_event(const uv_buf_t *buf, ssize_t nread) {
   if (ab) memcpy(ab->data, buf->base, (size_t)nread);
 
   ant_value_t raw_val = ab
-    ? create_typed_array(rt->js, TYPED_ARRAY_UINT8, ab, 0, (size_t)nread, "Buffer")
-    : js_mkstr(rt->js, buf->base, (size_t)nread);
+    ? create_typed_array(process_js, TYPED_ARRAY_UINT8, ab, 0, (size_t)nread, "Buffer")
+    : js_mkstr(process_js, buf->base, (size_t)nread);
   
   ant_value_t data_val = is_object_type(stdin_state.decoder)
-    ? string_decoder_decode_value(rt->js, stdin_state.decoder, raw_val, false)
+    ? string_decoder_decode_value(process_js, stdin_state.decoder, raw_val, false)
     : raw_val;
 
   if (is_err(data_val)) data_val = raw_val;
@@ -756,7 +755,7 @@ static inline void emit_stdin_data_event(const uv_buf_t *buf, ssize_t nread) {
 }
 
 static void on_stdin_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
-  if (!rt->js) goto cleanup;
+  if (!process_js) goto cleanup;
   if (nread < 0) {
     if (nread == UV_EOF && stdin_byte_eof) stdin_byte_eof();
     goto cleanup;
@@ -771,11 +770,11 @@ static void on_stdin_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *bu
     if (stdin_state.paused) break;
     if (stdin_byte_consumer) stdin_byte_consumer(buf->base + i, 1);
     if (stdin_state.keypress_enabled && stdio_has_event_listener(stdin_events, "keypress")) {
-      process_keypress_data(rt->js, buf->base + i, 1);
+      process_keypress_data(process_js, buf->base + i, 1);
       fed_keypress = true;
     }
   }
-  if (fed_keypress && !stdin_state.paused) process_keypress_flush(rt->js);
+  if (fed_keypress && !stdin_state.paused) process_keypress_flush(process_js);
 
 cleanup:
   if (buf->base) free(buf->base);
@@ -823,12 +822,12 @@ void process_stdin_detach_reader(void) {
 
 #ifndef _WIN32
 static void on_sigwinch(uv_signal_t *handle, int signum) {
-  if (!rt->js) return;
+  if (!process_js) return;
   
-  ant_value_t process_obj = js_get(rt->js, js_glob(rt->js), "process");
+  ant_value_t process_obj = js_get(process_js, js_glob(process_js), "process");
   if (!is_special_object(process_obj)) return;
   
-  ant_value_t stdout_obj = js_get(rt->js, process_obj, "stdout");
+  ant_value_t stdout_obj = js_get(process_js, process_obj, "stdout");
   if (!is_special_object(stdout_obj)) return;
   
   emit_stdio_event(&stdout_events, "resize", NULL, 0);
@@ -2028,8 +2027,8 @@ static void process_set_string(ant_t *js, ant_value_t obj, const char *key, cons
   js_set(js, obj, key, js_mkstr(js, value, strlen(value)));
 }
 
-void init_process_module() {
-  ant_t *js = rt->js;
+void init_process_module(ant_t *js) {
+  process_js = js;
   ant_value_t global = js_glob(js);
 
   stdin_state.decoder = js_mkundef();
@@ -2060,14 +2059,15 @@ void init_process_module() {
   process_update_sandbox_env(js, process_obj);
   
   ant_value_t argv_arr = js_mkarr(js);
-  for (int i = 0; i < rt->argc; i++) {
-    js_arr_push(js, argv_arr, js_mkstr(js, rt->argv[i], strlen(rt->argv[i])));
-  }
-  
+  for (int i = 0; i < js->runtime.argc; i++) js_arr_push(
+    js, argv_arr, 
+    js_mkstr(js, js->runtime.argv[i], strlen(js->runtime.argv[i]))
+  );
+
   js_set(js, process_obj, "argv", argv_arr);
   js_set(js, process_obj, "execArgv", js_mkarr(js));
-  js_set(js, process_obj, "argv0", rt->argc > 0 ? js_mkstr(js, rt->argv[0], strlen(rt->argv[0])) : js_mkstr(js, "ant", 3));
-  js_set(js, process_obj, "execPath", rt->argc > 0 ? js_mkstr(js, rt->argv[0], strlen(rt->argv[0])) : js_mkundef());
+  js_set(js, process_obj, "argv0", js->runtime.argc > 0 ? js_mkstr(js, js->runtime.argv[0], strlen(js->runtime.argv[0])) : js_mkstr(js, "ant", 3));
+  js_set(js, process_obj, "execPath", js->runtime.argc > 0 ? js_mkstr(js, js->runtime.argv[0], strlen(js->runtime.argv[0])) : js_mkundef());
   
   js_set(js, process_obj, "pid", js_mknum((double)getpid()));
   js_set(js, process_obj, "ppid", js_mknum((double)getppid()));

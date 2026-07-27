@@ -16,7 +16,6 @@
 #include "inspector.h"
 #include "internal.h"
 #include "ptr.h"
-#include "runtime.h"
 #include "silver/engine.h"
 
 #include "http/websocket.h"
@@ -795,8 +794,7 @@ void ant_websocket_server_on_close(ant_t *js, ant_value_t socket_obj) {
   websocket_emit_close(ws, 1000, "", true);
 }
 
-void init_websocket_module(void) {
-  ant_t *js = rt->js;
+void init_websocket_module(ant_t *js) {
   ant_value_t global = js_glob(js);
   ant_value_t event_proto = js_get_ctor_proto(js, "Event", 5);
   ant_value_t eventtarget_proto = js_get_ctor_proto(js, "EventTarget", 11);

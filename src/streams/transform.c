@@ -4,7 +4,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 
@@ -1048,8 +1047,7 @@ static ant_value_t js_ts_ctrl_ctor(ant_t *js, ant_value_t *args, int nargs) {
   return js_mkerr_typed(js, JS_ERR_TYPE, "TransformStreamDefaultController cannot be constructed directly");
 }
 
-void init_transform_stream_module(void) {
-  ant_t *js = rt->js;
+void init_transform_stream_module(ant_t *js) {
   ant_value_t g = js_glob(js);
 
   g_ts_ctrl_proto = js_mkobj(js);

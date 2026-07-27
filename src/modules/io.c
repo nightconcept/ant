@@ -23,7 +23,6 @@
 #include "errors.h"
 #include "output.h"
 #include "internal.h"
-#include "runtime.h"
 #include "utils.h"
 #include "inspector.h"
 #include "gc/roots.h"
@@ -1306,9 +1305,7 @@ ant_value_t console_library(ant_t *js) {
   return console_obj;
 }
 
-void init_console_module() {
-  ant_t *js = rt->js;
-  
+void init_console_module(ant_t *js) {
   ant_value_t console_obj = console_create_default(js);
   console_apply_methods(js, console_obj);
   

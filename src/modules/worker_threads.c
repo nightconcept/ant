@@ -25,7 +25,6 @@ extern char **environ;
 #include "ant.h"
 #include "ptr.h"
 #include "internal.h"
-#include "runtime.h"
 #include "descriptors.h"
 #include "silver/engine.h"
 #include "modules/json.h"
@@ -509,7 +508,7 @@ static int wt_spawn_worker(
   const char *worker_data_json,
   const char *env_store_json
 ) {
-  if (!wt || !wt->js || !script_path || !rt || !rt->argv || rt->argc <= 0) return UV_EINVAL;
+  if (!wt || !wt->js || !script_path || !wt->js->runtime.argv || wt->js->runtime.argc <= 0) return UV_EINVAL;
 
   uv_loop_t *loop = uv_default_loop();
   uv_pipe_init(loop, &wt->stdout_pipe, 0);
@@ -521,7 +520,7 @@ static int wt_spawn_worker(
   stdio[2].flags = UV_INHERIT_FD;
   stdio[2].data.fd = 2;
 
-  char *argv0 = strdup(rt->argv[0]);
+  char *argv0 = strdup(wt->js->runtime.argv[0]);
   char *argv1 = strdup(script_path);
   if (!argv0 || !argv1) {
     free(argv0);
@@ -977,7 +976,7 @@ ant_value_t worker_threads_library(ant_t *js) {
   wt_init_env_store(js, is_worker);
 
   js_set(js, lib, "isMainThread", js_bool(!is_worker));
-  js_set(js, lib, "threadId", js_mknum((double)(is_worker ? rt->pid : 0)));
+  js_set(js, lib, "threadId", js_mknum((double)(is_worker ? js->runtime.pid : 0)));
   js_set(js, lib, "SHARE_ENV", js_mksym(js, "SHARE_ENV"));
 
   ant_value_t message_port_ctor_obj = js_mkobj(js);
@@ -995,7 +994,7 @@ ant_value_t worker_threads_library(ant_t *js) {
   js_mkprop_fast(js, message_port_ctor_obj, "prototype", 9, message_port_proto);
   js_mkprop_fast(js, message_port_ctor_obj, "name", 4, js_mkstr(js, "MessagePort", 11));
   js_set_descriptor(js, message_port_ctor_obj, "name", 4, 0);
-  js_set(js, lib, "MessagePort", js_obj_to_func(message_port_ctor_obj));
+  js_set(js, lib, "MessagePort", js_obj_to_func(js, message_port_ctor_obj));
   js_set_slot(js->global, SLOT_WT_PORT_PROTO, message_port_proto);
 
   ant_value_t message_channel_ctor_obj = js_mkobj(js);
@@ -1005,7 +1004,7 @@ ant_value_t worker_threads_library(ant_t *js) {
   js_mkprop_fast(js, message_channel_ctor_obj, "prototype", 9, message_channel_proto);
   js_mkprop_fast(js, message_channel_ctor_obj, "name", 4, js_mkstr(js, "MessageChannel", 14));
   js_set_descriptor(js, message_channel_ctor_obj, "name", 4, 0);
-  js_set(js, lib, "MessageChannel", js_obj_to_func(message_channel_ctor_obj));
+  js_set(js, lib, "MessageChannel", js_obj_to_func(js, message_channel_ctor_obj));
 
   if (is_worker) {
     ant_value_t parent_port = js_mkobj(js);
@@ -1040,7 +1039,7 @@ ant_value_t worker_threads_library(ant_t *js) {
   js_mkprop_fast(js, worker_ctor_obj, "prototype", 9, worker_proto);
   js_mkprop_fast(js, worker_ctor_obj, "name", 4, js_mkstr(js, "Worker", 6));
   js_set_descriptor(js, worker_ctor_obj, "name", 4, 0);
-  js_set(js, lib, "Worker", js_obj_to_func(worker_ctor_obj));
+  js_set(js, lib, "Worker", js_obj_to_func(js, worker_ctor_obj));
 
   js_set(js, lib, "markAsUntransferable", js_mkfun(worker_threads_mark_as_untransferable));
   js_set(js, lib, "receiveMessageOnPort", js_mkfun(worker_threads_receive_message_on_port));

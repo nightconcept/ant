@@ -7,7 +7,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "common.h"
 #include "descriptors.h"
@@ -1475,8 +1474,7 @@ ant_value_t request_create_server(
   return request_create_object(js, req, headers_obj, false);
 }
 
-void init_request_module(void) {
-  ant_t *js = rt->js;
+void init_request_module(ant_t *js) {
   ant_value_t g = js_glob(js);
   g_request_proto = js_mkobj(js);
 

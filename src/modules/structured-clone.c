@@ -1,12 +1,10 @@
 #include <string.h>
 #include <stdlib.h>
-
 #include <uthash.h>
 
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 
@@ -341,8 +339,7 @@ clone:;
   return result;
 }
 
-void init_structured_clone_module(void) {
-  ant_t *js = rt->js;
+void init_structured_clone_module(ant_t *js) {
   ant_value_t global = js_glob(js);
 
   js_set(js, global, "structuredClone", js_mkfun(js_structured_clone));

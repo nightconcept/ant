@@ -537,8 +537,7 @@ static ant_value_t server_make_chunk(ant_t *js, const char *data, size_t len) {
   return create_typed_array(js, TYPED_ARRAY_UINT8, ab, 0, len, "Uint8Array");
 }
 
-static ant_value_t server_sse_enqueue(server_sse_state_t *state, char *data, size_t len) {
-  ant_t *js = rt->js;
+static ant_value_t server_sse_enqueue(ant_t *js, server_sse_state_t *state, char *data, size_t len) {
   if (!state || state->closed) {
     free(data);
     return js_mkundef();
@@ -603,7 +602,7 @@ static ant_value_t server_sse_send(ant_t *js, ant_value_t *args, int nargs) {
 
   out = ant_sse_format_event(data, event, id, retry, &out_len);
   if (!out) return js_mkerr_typed(js, JS_ERR_TYPE, "Out of memory");
-  return server_sse_enqueue(state, out, out_len);
+  return server_sse_enqueue(js, state, out, out_len);
 }
 
 static ant_value_t server_sse_comment(ant_t *js, ant_value_t *args, int nargs) {
@@ -618,7 +617,7 @@ static ant_value_t server_sse_comment(ant_t *js, ant_value_t *args, int nargs) {
   text = js_getstr(js, text_v, NULL);
   out = ant_sse_format_comment(text, &out_len);
   if (!out) return js_mkerr_typed(js, JS_ERR_TYPE, "Out of memory");
-  return server_sse_enqueue(state, out, out_len);
+  return server_sse_enqueue(js, state, out, out_len);
 }
 
 static ant_value_t server_sse_close(ant_t *js, ant_value_t *args, int nargs) {

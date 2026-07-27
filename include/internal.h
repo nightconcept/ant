@@ -62,6 +62,7 @@
 
 #define JS_ERR_NO_STACK  (1 << 8)
 #define JS_TPFLG(t)      (1u << (t))
+#define ANT_RUNTIME_WEB  (1u << 0)
 
 #define ROPE_MAX_DEPTH        4096
 #define MAX_STRINGIFY_DEPTH   64
@@ -170,6 +171,7 @@ struct ant_isolate_t {
   void *jit_ctx;
   #endif
   
+  ant_value_t Ant;
   ant_value_t global;
   ant_value_t this_val;
   ant_value_t new_target;
@@ -302,6 +304,14 @@ struct ant_isolate_t {
     uint32_t with_no_unscopables_epoch;
     uint32_t function_proto_epoch;
   } runtime_cache;
+
+  struct {
+    char **argv;
+    const char *ls_fp;
+    int argc;
+    int pid;
+    unsigned int flags;
+  } runtime;
 
   bool owns_mem;
   bool fatal_error;
@@ -802,7 +812,7 @@ static inline ant_value_t js_make_ctor(ant_t *js, ant_cfunc_t fn, ant_value_t pr
   js_mkprop_fast(js, obj, "name", 4, js_mkstr(js, name, nlen));
   js_set_descriptor(js, obj, "name", 4, 0);
 
-  ant_value_t fn_val = js_obj_to_func(obj);
+  ant_value_t fn_val = js_obj_to_func(js, obj);
   js_set(js, proto, "constructor", fn_val);
   js_set_descriptor(js, proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 
