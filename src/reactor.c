@@ -10,7 +10,7 @@
 #include "modules/readline.h"
 #include "modules/process.h"
 
-static inline work_flags_t get_pending_work(void) {
+static inline work_flags_t get_pending_work(ant_t *js) {
   work_flags_t flags = 0;
   if (has_pending_microtasks())         flags |= WORK_MICROTASKS;
   if (has_pending_timers())             flags |= WORK_TIMERS;
@@ -19,12 +19,12 @@ static inline work_flags_t get_pending_work(void) {
   if (has_pending_fs_ops())             flags |= WORK_FS_OPS;
   if (has_pending_child_processes())    flags |= WORK_CHILD_PROCS;
   if (has_active_readline_interfaces()) flags |= WORK_READLINE;
-  if (has_active_stdin())               flags |= WORK_STDIN;
+  if (has_active_stdin(js))             flags |= WORK_STDIN;
   return flags;
 }
 
-static inline bool event_loop_alive(void) {
-  if (get_pending_work() & WORK_PENDING) return true;
+static inline bool event_loop_alive(ant_t *js) {
+  if (get_pending_work(js) & WORK_PENDING) return true;
   return uv_loop_alive(uv_default_loop());
 }
 
@@ -37,24 +37,25 @@ void js_poll_events(ant_t *js) {
 
 void js_run_event_loop(ant_t *js) {
 drain:
-  while (event_loop_alive()) {
+  while (event_loop_alive(js)) {
     js_poll_events(js);
     reap_retired_coroutines(js);
-    work_flags_t work = get_pending_work();
+    work_flags_t work = get_pending_work(js);
     
     if (work & WORK_BLOCKING) 
       uv_run(uv_default_loop(), UV_RUN_NOWAIT);
     else if ((work & WORK_ASYNC) || uv_loop_alive(uv_default_loop()))
       uv_run(uv_default_loop(), UV_RUN_ONCE);
     else break;
-  } 
+  }
   
   js_poll_events(js);
   reap_retired_coroutines(js);
-  ant_value_t code = js_mknum(0);
-  emit_process_event("beforeExit", &code, 1);
   
-  if (event_loop_alive()) goto drain;
+  ant_value_t code = js_mknum(0);
+  emit_process_event(js, "beforeExit", &code, 1);
+  
+  if (event_loop_alive(js)) goto drain;
 }
 
 void js_reactor_pump_repl_nowait(ant_t *js) {
