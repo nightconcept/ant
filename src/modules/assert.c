@@ -6,6 +6,7 @@
 #include "internal.h"
 
 #include "modules/assert.h"
+#include "modules/bigint.h"
 #include "silver/engine.h"
 
 static ant_value_t assertion_error(ant_t *js, const char *msg, ant_value_t msg_val) {
@@ -56,6 +57,9 @@ static bool values_strict_equal(ant_t *js, ant_value_t a, ant_value_t b) {
     char *sb = js_getstr(js, b, NULL);
     return sa && sb && strcmp(sa, sb) == 0;
   }
+  // BigInts are heap values, so the pointer fallback below would compare
+  // identity rather than the number.
+  if (ta == T_BIGINT) return bigint_compare(js, a, b) == 0;
   return vdata(a) == vdata(b);
 }
 
