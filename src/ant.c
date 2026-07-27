@@ -2506,7 +2506,8 @@ static size_t tostr(ant_t *js, ant_value_t value, char *buf, size_t len) {
       return ANT_COPY(buf, len, "Symbol()");
     }
     
-    default:        return (size_t) snprintf(buf, len, "VTYPE%d", vtype(value));
+    case T_GENERATOR: return strobj(js, mkval(T_OBJ, vdata(value)), buf, len);
+    default: return (size_t) snprintf(buf, len, "VTYPE%d", vtype(value));
   }
 }
 
@@ -7067,7 +7068,14 @@ static bool own_key_is_enumerable(ant_t *js, ant_value_t obj, ant_object_t *ptr,
   return enumerable;
 }
 
+static inline ant_value_t js_object_view(ant_value_t v) {
+  uint8_t t = vtype(v);
+  if (t == T_GENERATOR || t == T_PROMISE) return mkval(T_OBJ, vdata(v));
+  return v;
+}
+
 ant_value_t js_own_property_keys(ant_t *js, ant_value_t obj, bool include_symbols, bool enumerable_only) {
+  obj = js_object_view(obj);
   GC_ROOT_SAVE(root_mark, js);
   GC_ROOT_PIN(js, obj);
 
@@ -7599,18 +7607,18 @@ static ant_value_t proxy_enum(ant_t *js, ant_value_t obj, enum obj_enum_mode mod
 static ant_value_t builtin_object_keys(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs == 0) return mkarr(js);
   
-  ant_value_t obj = args[0];
+  ant_value_t obj = js_object_view(args[0]);
   if (vtype(obj) == T_STR) return js_for_in_keys(js, obj);
-  
+
   if (vtype(obj) == T_CFUNC) {
     ant_value_t promoted = js_cfunc_lookup_promoted(js, obj);
     if (vtype(promoted) != T_FUNC) return mkarr(js);
     obj = promoted;
   }
-  
+
   if (vtype(obj) != T_OBJ && vtype(obj) != T_ARR && vtype(obj) != T_FUNC) return mkarr(js);
   if (is_proxy(obj)) return proxy_enum(js, obj, OBJ_ENUM_KEYS);
-  
+
   return js_own_property_keys(js, obj, false, true);
 }
 
@@ -7919,7 +7927,7 @@ done:
 
 static ant_value_t builtin_object_values(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs == 0) return mkarr(js);
-  ant_value_t obj = args[0];
+  ant_value_t obj = js_object_view(args[0]);
   if (vtype(obj) == T_CFUNC) {
     ant_value_t promoted = js_cfunc_lookup_promoted(js, obj);
     if (vtype(promoted) != T_FUNC) return mkarr(js);
@@ -7932,7 +7940,7 @@ static ant_value_t builtin_object_values(ant_t *js, ant_value_t *args, int nargs
 
 static ant_value_t builtin_object_entries(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs == 0) return mkarr(js);
-  ant_value_t obj = args[0];
+  ant_value_t obj = js_object_view(args[0]);
   if (vtype(obj) == T_CFUNC) {
     ant_value_t promoted = js_cfunc_lookup_promoted(js, obj);
     if (vtype(promoted) != T_FUNC) return mkarr(js);
@@ -8292,8 +8300,8 @@ static ant_value_t builtin_object_create(ant_t *js, ant_value_t *args, int nargs
 
 static ant_value_t builtin_object_hasOwn(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 2) return mkval(T_BOOL, 0);
-  
-  ant_value_t obj = args[0];
+
+  ant_value_t obj = js_object_view(args[0]);
   ant_value_t key = args[1];
   uint8_t t = vtype(obj);
   
@@ -9478,8 +9486,8 @@ static ant_value_t builtin_object_fromEntries(ant_t *js, ant_value_t *args, int 
 
 static ant_value_t builtin_object_getOwnPropertyDescriptor(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1) return js_mkundef();
-  
-  ant_value_t obj = args[0];
+
+  ant_value_t obj = js_object_view(args[0]);
   ant_value_t key = args[1];
   uint8_t t = vtype(obj);
 
@@ -9671,7 +9679,7 @@ static inline bool own_prop_names_is_dense_shadow(
 
 static ant_value_t builtin_object_getOwnPropertyNames(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs == 0) return mkarr(js);
-  ant_value_t obj = args[0];
+  ant_value_t obj = js_object_view(args[0]);
 
   if (vtype(obj) == T_STR) {
     ant_value_t arr = mkarr(js);
@@ -9869,8 +9877,8 @@ static ant_value_t builtin_object_preventExtensions(ant_t *js, ant_value_t *args
 
 static ant_value_t builtin_object_hasOwnProperty(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1) return mkval(T_BOOL, 0);
-  
-  ant_value_t obj = js->this_val;
+
+  ant_value_t obj = js_object_view(js->this_val);
   ant_value_t key = args[0];
   
   uint8_t t = vtype(obj);
@@ -14521,8 +14529,7 @@ void js_resolve_promise(ant_t *js, ant_value_t p, ant_value_t val) {
     GC_ROOT_PIN(js, then_prop);
     
     if (vtype(then_prop) == T_FUNC || vtype(then_prop) == T_CFUNC) {
-      ant_value_t call_args[] = { res_fn, rej_fn };
-      sv_vm_call(js->vm, js, then_prop, val, call_args, 2, NULL, false);
+      queue_promise_thenable_job(js, then_prop, val, res_fn, rej_fn);
       GC_ROOT_RESTORE(js, root_mark);
       return;
     }
@@ -18536,7 +18543,7 @@ static bool js_try_get(ant_t *js, ant_value_t obj, const char *key, ant_value_t 
     obj = boxed; t = T_OBJ;
   }
   
-  if (is_promise) obj = js_as_obj(obj);
+  if (is_promise || t == T_GENERATOR) obj = js_as_obj(obj);
   else if (t != T_OBJ) return false;
 
   // A String wrapper's indices and `length` are own properties of the exotic
