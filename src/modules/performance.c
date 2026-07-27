@@ -9,7 +9,6 @@
 #endif
 
 #include "ant.h"
-#include "runtime.h"
 #include "modules/symbol.h"
 #include "modules/performance.h"
 
@@ -48,9 +47,7 @@ ant_value_t perf_hooks_library(ant_t *js) {
   return lib;
 }
 
-void init_performance_module() {
-  ant_t *js = rt->js;
-  
+void init_performance_module(ant_t *js) {
   ant_value_t glob = js_glob(js);
   ant_value_t perf_obj = js_mkobj(js);
 

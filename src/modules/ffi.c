@@ -772,7 +772,7 @@ static ant_value_t ffi_make_function(ant_t *js, ffi_library_handle_t *library, c
   js_set_slot_wb(js, obj, SLOT_ENTRIES, library ? library->obj : js_mkundef());
   js_set_finalizer(obj, ffi_function_finalize);
 
-  fn = js_obj_to_func(obj);
+  fn = js_obj_to_func(js, obj);
   return fn;
 }
 

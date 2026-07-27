@@ -4,7 +4,6 @@
 #include "common.h"
 #include "errors.h"
 #include "internal.h"
-#include "runtime.h"
 #include "descriptors.h"
 
 #include "gc/modules.h"
@@ -136,8 +135,7 @@ ant_value_t make_dom_exception(ant_t *js, const char *message, const char *name)
   return obj;
 }
 
-void init_domexception_module(void) {
-  ant_t *js = rt->js;
+void init_domexception_module(ant_t *js) {
   ant_value_t global = js_glob(js);
 
   ant_value_t proto = js_mkobj(js);
@@ -163,7 +161,7 @@ void init_domexception_module(void) {
   js_set_descriptor(js, ctor, "name", 4, 0);
   set_constants(js, ctor);
 
-  ant_value_t fn = js_obj_to_func(ctor);
+  ant_value_t fn = js_obj_to_func(js, ctor);
   js_set(js, proto, "constructor", fn);
   js_set_descriptor(js, proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 

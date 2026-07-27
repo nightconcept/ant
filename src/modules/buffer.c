@@ -11,7 +11,6 @@
 #include "errors.h"
 #include "base64.h"
 #include "internal.h"
-#include "runtime.h"
 #include "gc/roots.h"
 #include "descriptors.h"
 
@@ -3656,9 +3655,7 @@ ant_value_t buffer_library(ant_t *js) {
   return lib;
 }
 
-void init_buffer_module() {
-  ant_t *js = rt->js;
-  
+void init_buffer_module(ant_t *js) {
   ant_value_t glob = js->global;
   ant_value_t object_proto = js->sym.object_proto;
   ant_value_t function_proto = js_get_slot(glob, SLOT_FUNC_PROTO);
@@ -3681,7 +3678,7 @@ void init_buffer_module() {
   js_set_descriptor(js, arraybuffer_ctor_obj, "name", 4, 0);
   js_set(js, arraybuffer_ctor_obj, "isView", js_mkfun(js_arraybuffer_isView));
   js_define_species_getter(js, arraybuffer_ctor_obj);
-  ant_value_t arraybuffer_ctor = js_obj_to_func(arraybuffer_ctor_obj);
+  ant_value_t arraybuffer_ctor = js_obj_to_func(js, arraybuffer_ctor_obj);
   js_set(js, arraybuffer_proto, "constructor", arraybuffer_ctor);
   js_set_descriptor(js, arraybuffer_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
   js_set(js, glob, "ArrayBuffer", arraybuffer_ctor);
@@ -3723,7 +3720,7 @@ void init_buffer_module() {
   js_mkprop_fast(js, typedarray_ctor_obj, "name", 4, ANT_STRING("TypedArray"));
   js_set_descriptor(js, typedarray_ctor_obj, "name", 4, 0);
   
-  ant_value_t typedarray_ctor = js_obj_to_func(typedarray_ctor_obj);
+  ant_value_t typedarray_ctor = js_obj_to_func(js, typedarray_ctor_obj);
   js_set(js, typedarray_proto, "constructor", typedarray_ctor);
   js_set_descriptor(js, typedarray_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 
@@ -3755,7 +3752,7 @@ void init_buffer_module() {
       js_define_species_getter(js, name##_ctor_obj); \
       js_set(js, name##_ctor_obj, "from", js_mkfun(js_##name##_from)); \
       js_set(js, name##_ctor_obj, "of", js_mkfun(js_##name##_of)); \
-      ant_value_t name##_ctor = js_obj_to_func(name##_ctor_obj); \
+      ant_value_t name##_ctor = js_obj_to_func(js, name##_ctor_obj); \
       js_setprop(js, name##_proto, ANT_STRING("constructor"), name##_ctor); \
       js_set_descriptor(js, name##_proto, "constructor", 11, JS_DESC_W | JS_DESC_C); \
       js_set(js, glob, #name, name##_ctor); \
@@ -3817,7 +3814,7 @@ void init_buffer_module() {
   js_mkprop_fast(js, dataview_ctor_obj, "name", 4, ANT_STRING("DataView"));
   js_set_descriptor(js, dataview_ctor_obj, "name", 4, 0);
   
-  ant_value_t dataview_ctor = js_obj_to_func(dataview_ctor_obj);
+  ant_value_t dataview_ctor = js_obj_to_func(js, dataview_ctor_obj);
   js_set(js, dataview_proto, "constructor", dataview_ctor);
   js_set_descriptor(js, dataview_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
   js_set(js, glob, "DataView", dataview_ctor);
@@ -3836,7 +3833,7 @@ void init_buffer_module() {
   js_set_descriptor(js, sharedarraybuffer_ctor_obj, "name", 4, 0);
   js_define_species_getter(js, sharedarraybuffer_ctor_obj);
   
-  ant_value_t sharedarraybuffer_ctor = js_obj_to_func(sharedarraybuffer_ctor_obj);
+  ant_value_t sharedarraybuffer_ctor = js_obj_to_func(js, sharedarraybuffer_ctor_obj);
   js_set(js, sharedarraybuffer_proto, "constructor", sharedarraybuffer_ctor);
   js_set_descriptor(js, sharedarraybuffer_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
   js_set(js, glob, "SharedArrayBuffer", sharedarraybuffer_ctor);
@@ -3889,7 +3886,7 @@ void init_buffer_module() {
   js_mkprop_fast(js, buffer_ctor_obj, "name", 4, ANT_STRING("Buffer"));
   js_set_descriptor(js, buffer_ctor_obj, "name", 4, 0);
   
-  ant_value_t buffer_ctor = js_obj_to_func(buffer_ctor_obj);
+  ant_value_t buffer_ctor = js_obj_to_func(js, buffer_ctor_obj);
   js_set(js, buffer_proto, "constructor", buffer_ctor);
   js_set_descriptor(js, buffer_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
   js_set(js, glob, "Buffer", buffer_ctor);

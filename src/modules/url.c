@@ -10,7 +10,6 @@
 #include "ptr.h"
 #include "errors.h"
 #include "internal.h"
-#include "runtime.h"
 #include "descriptors.h"
 
 #include "modules/blob.h"
@@ -1243,8 +1242,7 @@ static ant_value_t js_URLSearchParams(ant_t *js, ant_value_t *args, int nargs) {
   return obj;
 }
 
-void init_url_module(void) {
-  ant_t *js = rt->js;
+void init_url_module(ant_t *js) {
   ant_value_t glob = js->global;
 
   g_usp_iter_proto = js_mkobj(js);

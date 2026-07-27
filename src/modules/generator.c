@@ -5,7 +5,6 @@
 #include "ptr.h"
 #include "errors.h"
 #include "internal.h"
-#include "runtime.h"
 #include "sugar.h"
 
 #include "gc/roots.h"
@@ -491,8 +490,7 @@ static ant_value_t generator_async_dispose(ant_t *js, ant_value_t *args, int nar
   return generator_return(js, NULL, 0);
 }
 
-void init_generator_module(void) {
-  ant_t *js = rt->js;
+void init_generator_module(ant_t *js) {
   ant_value_t proto = js_mkobj(js);
   
   js->sym.generator_proto = proto;
@@ -520,7 +518,7 @@ void init_generator_module(void) {
     js_set_descriptor(js, async_proto, "constructor", 11, JS_DESC_C);
   }
   
-  init_async_iterator_helpers();
+  init_async_iterator_helpers(js);
 }
 
 ant_value_t sv_call_generator_closure_dispatch(

@@ -6,7 +6,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 #include "silver/engine.h"
@@ -953,8 +952,7 @@ ant_value_t headers_get_value(ant_t *js, ant_value_t hdrs, const char *name) {
   return ret;
 }
 
-void init_headers_module(void) {
-  ant_t *js     = rt->js;
+void init_headers_module(ant_t *js) {
   ant_value_t g = js_glob(js);
 
   g_headers_iter_proto = js_mkobj(js);
@@ -987,7 +985,7 @@ void init_headers_module(void) {
   js_mkprop_fast(js, ctor_obj, "name", 4, js_mkstr(js, "Headers", 7));
   js_set_descriptor(js, ctor_obj, "name", 4, 0);
   
-  ant_value_t ctor = js_obj_to_func(ctor_obj);
+  ant_value_t ctor = js_obj_to_func(js, ctor_obj);
   js_set(js, g_headers_proto, "constructor", ctor);
   js_set_descriptor(js, g_headers_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 

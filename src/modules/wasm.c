@@ -17,7 +17,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 
@@ -1913,8 +1912,7 @@ void gc_mark_wasm(ant_t *js, gc_mark_fn mark) {
     mark(js, g_wasm_pending_import_throw);
 }
 
-void init_wasm_module(void) {
-  ant_t *js = rt->js;
+void init_wasm_module(ant_t *js) {
   ant_value_t global = js_glob(js);
   
   ant_value_t error_proto = js_get_ctor_proto(js, "Error", 5);

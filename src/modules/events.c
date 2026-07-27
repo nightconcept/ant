@@ -9,7 +9,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 #include "silver/engine.h"
@@ -1411,15 +1410,14 @@ ant_value_t eventemitter_prototype(ant_t *js) {
   js_set_descriptor(js, eventemitter_ctor, "name", 4, 0);
 
   g_eventemitter_proto = eventemitter_proto;
-  g_eventemitter_ctor = js_obj_to_func(eventemitter_ctor);
+  g_eventemitter_ctor = js_obj_to_func(js, eventemitter_ctor);
   js_set(js, eventemitter_proto, "constructor", g_eventemitter_ctor);
   js_set_descriptor(js, eventemitter_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
   
   return g_eventemitter_proto;
 }
 
-void init_events_module(void) {
-  ant_t *js = rt->js;
+void init_events_module(ant_t *js) {
   ant_value_t global = js_glob(js);
   g_isTrusted_getter = js_mkfun(js_event_get_isTrusted);
 
@@ -1481,7 +1479,7 @@ void init_events_module(void) {
   js_mkprop_fast(js, eventtarget_ctor, "prototype", 9, eventtarget_proto);
   js_mkprop_fast(js, eventtarget_ctor, "name", 4, ANT_STRING("EventTarget"));
   js_set_descriptor(js, eventtarget_ctor, "name", 4, 0);
-  ant_value_t eventtarget_fn = js_obj_to_func(eventtarget_ctor);
+  ant_value_t eventtarget_fn = js_obj_to_func(js, eventtarget_ctor);
   js_set(js, eventtarget_proto, "constructor", eventtarget_fn);
   js_set_descriptor(js, eventtarget_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 

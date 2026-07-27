@@ -3,7 +3,6 @@
 
 #include "ant.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "ptr.h"
 #include "silver/engine.h"
@@ -1232,8 +1231,7 @@ static ant_value_t async_iter_toArray(ant_t *js, ant_value_t *args, int nargs) {
   return async_iter_terminal(js, args, nargs, ASYNC_TERM_TOARRAY);
 }
 
-void init_iterator_module(void) {
-  ant_t *js = rt->js;
+void init_iterator_module(ant_t *js) {
   ant_value_t g = js_glob(js);
   ant_value_t iter_proto = js->sym.iterator_proto;
 
@@ -1260,7 +1258,7 @@ void init_iterator_module(void) {
   js_mkprop_fast(js, ctor_obj, "name", 4, js_mkstr(js, "Iterator", 8));
   js_set_descriptor(js, ctor_obj, "name", 4, 0);
   
-  ant_value_t ctor = js_obj_to_func(ctor_obj);
+  ant_value_t ctor = js_obj_to_func(js, ctor_obj);
   js_set(js, ctor, "from", js_mkfun(iter_from));
   js_set(js, iter_proto, "constructor", ctor);
   js_set(js, g, "Iterator", ctor);
@@ -1277,7 +1275,7 @@ void init_iterator_module(void) {
   js_mkprop_fast(js, async_ctor_obj, "name", 4, js_mkstr(js, "AsyncIterator", 13));
   js_set_descriptor(js, async_ctor_obj, "name", 4, 0);
   
-  ant_value_t async_ctor = js_obj_to_func(async_ctor_obj);
+  ant_value_t async_ctor = js_obj_to_func(js, async_ctor_obj);
   js_set(js, async_iter_proto, "constructor", async_ctor);
   js_set(js, g, "AsyncIterator", async_ctor);
 
@@ -1288,8 +1286,7 @@ void init_iterator_module(void) {
   js_set(js, g_async_wrap_iter_proto, "throw", js_mkfun(async_wrap_throw));
 }
 
-void init_async_iterator_helpers(void) {
-  ant_t *js = rt->js;
+void init_async_iterator_helpers(ant_t *js) {
   ant_value_t g = js_glob(js);
   
   ant_value_t ctor = js_get(js, g, "AsyncIterator");

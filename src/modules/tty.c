@@ -32,7 +32,6 @@
 #include "errors.h"
 #include "output.h"
 #include "internal.h"
-#include "runtime.h"
 #include "sandbox/sandbox.h"
 #include "tty_ctrl.h"
 #include "silver/engine.h"
@@ -879,8 +878,7 @@ static void tty_init_stream_constructors(ant_t *js) {
   gc_register_root(&g_tty_writestream_ctor);
 }
 
-void init_tty_module(void) {
-  ant_t *js = rt->js;
+void init_tty_module(ant_t *js) {
   if (!js) return;
   tty_init_stream_constructors(js);
 

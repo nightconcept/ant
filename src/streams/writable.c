@@ -4,7 +4,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 
@@ -1236,8 +1235,7 @@ void gc_mark_writable_streams(ant_t *js, void (*mark)(ant_t *, ant_value_t)) {
   mark(js, g_close_sentinel);
 }
 
-void init_writable_stream_module(void) {
-  ant_t *js = rt->js;
+void init_writable_stream_module(ant_t *js) {
   ant_value_t g = js_glob(js);
 
   g_close_sentinel = js_mkobj(js);
