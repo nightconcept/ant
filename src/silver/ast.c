@@ -60,6 +60,7 @@ typedef struct {
   ant_t *js;
   sv_lexer_t lx;
   bool no_in;
+  bool in_generator;
 } sv_parser_t;
 
 #define P            sv_parser_t *p
@@ -98,7 +99,7 @@ static sv_ast_t *parse_postfix(P);
 static sv_ast_t *parse_call(P);
 static sv_ast_t *parse_primary(P);
 static sv_ast_t *parse_block(P, bool directive_ctx);
-static sv_ast_t *parse_func(P);
+static sv_ast_t *parse_func(P, uint8_t preset_flags);
 static sv_ast_t *parse_class(P);
 static sv_ast_t *parse_object(P);
 static sv_ast_t *parse_array(P);
@@ -647,7 +648,7 @@ static sv_ast_t *parse_primary(P) {
 
   l_array:  return parse_array(p);
   l_object: return parse_object(p);
-  l_func:   { CONSUME(); return parse_func(p); }
+  l_func:   { CONSUME(); return parse_func(p, 0); }
 
   l_class: {
     uint32_t class_off = (uint32_t)TOFF;
@@ -663,7 +664,7 @@ static sv_ast_t *parse_primary(P) {
     bool has_line_term = lookahead_crosses_line_terminator(p);
     if (!has_line_term && LA() == TOK_FUNC) {
       NEXT(); CONSUME();
-      sv_ast_t *fn = parse_func(p);
+      sv_ast_t *fn = parse_func(p, 0);
       fn->flags |= FN_ASYNC;
       fn->src_off = async_off;
       return fn;
@@ -797,6 +798,9 @@ static sv_ast_t *parse_primary(P) {
   }
 
   l_yield: {
+    /* outside a generator's [Yield] context `yield` is a plain
+       IdentifierReference; it stays reserved in strict mode. */
+    if (!p->in_generator && !p->lx.strict) goto l_ident;
     CONSUME();
     sv_ast_t *n = mk(N_YIELD);
     if (NEXT() == TOK_MUL) {
@@ -981,7 +985,7 @@ static sv_ast_t *parse_object(P) {
         CONSUME();
       }
 
-      prop->right = parse_func(p);
+      prop->right = parse_func(p, FN_GENERATOR);
       prop->right->flags |= FN_GENERATOR | FN_METHOD;
       prop->right->src_off = prop->src_off;
       sv_ast_list_push(&n->args, prop);
@@ -1016,7 +1020,7 @@ static sv_ast_t *parse_object(P) {
           CONSUME();
         }
 
-        prop->right = parse_func(p);
+        prop->right = parse_func(p, 0);
         if (!validate_accessor_params(p, prop->right, prop->flags)) return n;
         prop->right->flags |= FN_METHOD;
         prop->right->src_off = prop->src_off;
@@ -1057,7 +1061,7 @@ static sv_ast_t *parse_object(P) {
           CONSUME();
         }
 
-        prop->right = parse_func(p);
+        prop->right = parse_func(p, prop->flags & FN_GENERATOR);
         prop->right->flags |= FN_ASYNC | FN_METHOD;
         if (prop->flags & FN_GENERATOR)
           prop->right->flags |= FN_GENERATOR;
@@ -1093,7 +1097,7 @@ static sv_ast_t *parse_object(P) {
       }
       prop->right = parse_assign(p);
     } else if (TOK == TOK_LPAREN) {
-      prop->right = parse_func(p);
+      prop->right = parse_func(p, 0);
       prop->right->flags |= FN_METHOD;
       prop->right->src_off = prop->src_off;
     } else {
@@ -1470,13 +1474,17 @@ static bool ast_references_new_target(const sv_ast_t *node) {
   return false;
 }
 
-static sv_ast_t *parse_func(P) {
+static sv_ast_t *parse_func(P, uint8_t preset_flags) {
   sv_ast_t *fn = mk(N_FUNC);
+  fn->flags |= preset_flags;
 
   if (NEXT() == TOK_MUL) {
     CONSUME();
     fn->flags |= FN_GENERATOR;
   }
+
+  bool saved_in_generator = p->in_generator;
+  p->in_generator = (fn->flags & FN_GENERATOR) != 0;
 
   if (is_ident_like_tok(NEXT())) {
     fn->str = tok_ident_str(p, &fn->len);
@@ -1510,6 +1518,7 @@ static sv_ast_t *parse_func(P) {
   expect(p, TOK_RPAREN);
 
   fn->body = parse_block(p, true);
+  p->in_generator = saved_in_generator;
   fn->src_end = (uint32_t)(TOFF + TLEN);
   if (!(fn->flags & FN_ARROW) && ast_references_arguments(fn->body))
     fn->flags |= FN_USES_ARGS;
@@ -1618,7 +1627,7 @@ static sv_ast_t *parse_class(P) {
     if (NEXT() == TOK_LPAREN) {
       bool saved_strict = p->lx.strict;
       p->lx.strict = true;
-      method->right = parse_func(p);
+      method->right = parse_func(p, flags & FN_GENERATOR);
       p->lx.strict = saved_strict;
       if (!validate_accessor_params(p, method->right, method->flags)) return cls;
       method->right->flags |= (flags & (FN_ASYNC | FN_GENERATOR)) | FN_METHOD | FN_CLASS_BODY;
@@ -1837,7 +1846,7 @@ static sv_ast_t *parse_export_stmt(P) {
       uint32_t async_off = (uint32_t)TOFF;
       CONSUME();
       NEXT(); CONSUME();
-      decl->left = parse_func(p);
+      decl->left = parse_func(p, 0);
       decl->left->flags |= FN_ASYNC;
       decl->left->src_off = async_off;
       if (NEXT() == TOK_SEMICOLON) CONSUME();
@@ -1845,7 +1854,7 @@ static sv_ast_t *parse_export_stmt(P) {
     }
     if (TOK == TOK_FUNC) {
       CONSUME();
-      decl->left = parse_func(p);
+      decl->left = parse_func(p, 0);
       if (NEXT() == TOK_SEMICOLON) CONSUME();
       return decl;
     }
@@ -1868,7 +1877,7 @@ static sv_ast_t *parse_export_stmt(P) {
     uint32_t async_off = (uint32_t)TOFF;
     CONSUME();
     NEXT(); CONSUME();
-    decl->left = parse_func(p);
+    decl->left = parse_func(p, 0);
     decl->left->flags |= FN_ASYNC;
     decl->left->src_off = async_off;
     if (!decl->left->str || decl->left->len == 0)
@@ -1879,7 +1888,7 @@ static sv_ast_t *parse_export_stmt(P) {
   if (TOK == TOK_FUNC) {
     decl->flags |= EX_DECL;
     CONSUME();
-    decl->left = parse_func(p);
+    decl->left = parse_func(p, 0);
     if (!decl->left->str || decl->left->len == 0)
       SV_MKERR_TYPED(JS, JS_ERR_SYNTAX, "exported function declarations require a name");
     return decl;
@@ -2312,7 +2321,7 @@ static sv_ast_t *parse_stmt(P) {
 
   l_func: {
     CONSUME();
-    return parse_func(p);
+    return parse_func(p, 0);
   }
 
   l_class: {
@@ -2329,7 +2338,7 @@ static sv_ast_t *parse_stmt(P) {
     if (la == TOK_FUNC && !lookahead_crosses_line_terminator(p)) {
       CONSUME();
       NEXT(); CONSUME();
-      sv_ast_t *fn = parse_func(p);
+      sv_ast_t *fn = parse_func(p, 0);
       fn->flags |= FN_ASYNC;
       fn->src_off = async_off;
       return fn;
