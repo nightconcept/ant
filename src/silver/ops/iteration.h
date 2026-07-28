@@ -131,10 +131,15 @@ static inline ant_value_t sv_op_for_of(sv_vm_t *vm, ant_t *js) {
   return tov(0);
 }
 
+static inline bool sv_array_iter_pristine(ant_t *js, ant_value_t arr) {
+  if (is_callable(js_get_sym(js, arr, get_asyncIterator_sym()))) return false;
+  return js_get_sym(js, arr, get_iterator_sym()) == js->sym.array_values_fn;
+}
+
 static inline ant_value_t sv_op_for_await_of(sv_vm_t *vm, ant_t *js) {
   ant_value_t iterable = vm->stack[--vm->sp];
 
-  if (vtype(iterable) == T_ARR) {
+  if (vtype(iterable) == T_ARR && sv_array_iter_pristine(js, iterable)) {
     vm->stack[vm->sp++] = iterable;
     vm->stack[vm->sp++] = tov(0);
     vm->stack[vm->sp++] = SV_AITER_ARRAY_TAG;
@@ -426,7 +431,7 @@ static inline sv_await_result_t sv_op_await_iter_next(sv_vm_t *vm, ant_t *js) {
     ant_value_t value = js_arr_get(js, arr, (ant_offset_t)idx);
     vm->stack[vm->sp - 2] = tov(idx + 1);
 
-    if (vtype(value) != T_PROMISE) {
+    if (!is_object_type(value)) {
       vm->stack[vm->sp++] = value;
       vm->stack[vm->sp++] = mkval(T_BOOL, 0);
       return out;

@@ -366,7 +366,8 @@ void init_symbol_module(ant_t *js) {
   js_iter_register_advance(js->sym.string_iterator_proto, advance_string);
   
   js_set_sym(js, js->Ant, g_toStringTag, js_mkstr(js, "Ant", 3));
-  js_set_sym(js, array_proto, g_iterator, js_get(js, array_proto, "values"));
+  js->sym.array_values_fn = js_get(js, array_proto, "values");
+  js_set_sym(js, array_proto, g_iterator, js->sym.array_values_fn);
 
   ant_value_t array_unscopables = js_mkobj(js);
   js_set(js, array_unscopables, "find", js_true);

@@ -178,7 +178,6 @@ typedef struct {
 struct ant_isolate_t {
   sv_vm_t *vm;
 
-  ant_module_t *module;
   ant_object_t *objects;
   ant_object_t *permanent_objects;
   ant_process_state_t *process_state;
@@ -209,6 +208,13 @@ struct ant_isolate_t {
   ant_value_t new_target;
   ant_value_t current_func;
   ant_value_t length_str;
+  
+  struct {
+    ant_value_t hooks;
+    ant_value_t import_meta;
+    ant_esm_state_t *state;
+    ant_module_t *module_stack;
+  } esm;
   
   struct {
     const char *length;
@@ -242,6 +248,7 @@ struct ant_isolate_t {
 
     ant_value_t object_proto;
     ant_value_t array_proto;
+    ant_value_t array_values_fn;
     ant_value_t iterator_proto;
     ant_value_t array_iterator_proto;
     ant_value_t string_iterator_proto;
@@ -660,7 +667,7 @@ static inline ant_value_t js_current_func_module_ns(ant_t *js) {
 }
 
 static inline ant_value_t js_module_eval_active_ns(ant_t *js) {
-  ant_module_t *ctx = js->module;
+  ant_module_t *ctx = js->esm.module_stack;
   if (ctx) return ctx->module_ns;
   ctx = js->active_async_coro ? js_active_tla_module_ctx(js) : NULL;
   if (ctx) return ctx->module_ns;
@@ -668,7 +675,7 @@ static inline ant_value_t js_module_eval_active_ns(ant_t *js) {
 }
 
 static inline ant_value_t js_module_eval_active_ctx(ant_t *js) {
-  ant_module_t *ctx = js->module;
+  ant_module_t *ctx = js->esm.module_stack;
   if (ctx) return ctx->module_ctx;
   ctx = js->active_async_coro ? js_active_tla_module_ctx(js) : NULL;
   return ctx ? ctx->module_ctx : js_mkundef();
@@ -689,7 +696,7 @@ static inline const char *js_module_eval_active_filename(ant_t *js) {
 }
 
 static inline ant_module_format_t js_module_eval_active_format(ant_t *js) {
-  ant_module_t *ctx = js->module;
+  ant_module_t *ctx = js->esm.module_stack;
   if (ctx) return ctx->format;
   ctx = js->active_async_coro ? js_active_tla_module_ctx(js) : NULL;
   return ctx ? ctx->format : MODULE_EVAL_FORMAT_UNKNOWN;
