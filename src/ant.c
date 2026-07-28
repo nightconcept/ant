@@ -3198,6 +3198,25 @@ ant_value_t js_arr_get(ant_t *js, ant_value_t arr, ant_offset_t idx) {
   return arr_get(js, arr, idx);
 }
 
+// Direct dense-element store for the VM element ops, so an `a[i] = v` on a
+// plain array does not have to build a string key first. Only the in-bounds
+// dense case is claimed here; anything the generic path treats specially
+// (proxies, exotic arrays such as `arguments`, frozen or non-extensible
+// arrays, sparse storage, appends that extend `length`) returns false so the
+// caller falls back to js_setprop.
+bool js_arr_try_fast_set(ant_t *js, ant_value_t arr, ant_offset_t idx, ant_value_t val) {
+  if (vtype(arr) != T_ARR || is_proxy(arr)) return false;
+
+  ant_object_t *ptr = js_obj_ptr(js_as_obj(arr));
+  if (!ptr || ptr->flags.is_exotic || ptr->flags.frozen || !ptr->flags.extensible) return false;
+
+  ant_offset_t doff = get_dense_buf(arr);
+  if (!doff || idx >= dense_iterable_length(js, arr)) return false;
+
+  dense_set(js, doff, idx, val);
+  return true;
+}
+
 static inline bool is_const_prop(ant_t *js, ant_offset_t propoff) {
   ant_prop_ref_t *ref = propref_get(js, propoff);
   if (!ref) return false;
