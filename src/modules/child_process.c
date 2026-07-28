@@ -411,9 +411,19 @@ static void on_process_exit(uv_process_t *proc, int64_t exit_status, int term_si
   
   close_child_handle(cp, (uv_handle_t *)proc);
   close_child_pipe(cp, CHILD_STREAM_STDIN, false);
-  close_child_pipe(cp, CHILD_STREAM_STDOUT, true);
-  close_child_pipe(cp, CHILD_STREAM_STDERR, true);
-  
+
+  /*
+   * The readable pipes are deliberately left open here. Output the child wrote
+   * immediately before exiting can still be in the pipe buffer, undelivered:
+   * whether libuv runs the read callback or this exit callback first is a race,
+   * and closing the pipes here loses whatever had not been read yet, so "close"
+   * fires with a truncated - often empty - stdout or stderr.
+   *
+   * on_stdout_read / on_stderr_read close their own pipe on UV_EOF and call
+   * check_completion, so "close" waits for the exit *and* the drain, which is
+   * the ordering Node guarantees. Stdio that is not a pipe is marked closed at
+   * spawn, so this still completes for those.
+   */
   check_completion(cp);
 }
 
