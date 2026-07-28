@@ -839,7 +839,13 @@ def save_bench_json_and_baseline(bin_map: dict, versions: dict, summary_results:
             r["id"]: {
                 "name": r["name"],
                 "version": versions.get(r["id"], "unknown"),
-                "binary_path": str(bin_map.get(r["id"], ""))
+                "binary_path": str(bin_map.get(r["id"], "")),
+                # Recorded so a later run can gate on binary growth, not just
+                # on speed.
+                "binary_size": (
+                    bin_map[r["id"]].stat().st_size
+                    if bin_map.get(r["id"]) and bin_map[r["id"]].exists() else 0
+                ),
             } for r in RUNTIMES
         },
         "benchmarks": summary_results
@@ -867,9 +873,61 @@ def save_bench_json_and_baseline(bin_map: dict, versions: dict, summary_results:
 
     return manifest_path, baseline_written
 
+def flag_value(name: str, default: float) -> float:
+    """Read `--flag N` or `--flag=N` from argv."""
+    for i, a in enumerate(sys.argv):
+        if a == name and i + 1 < len(sys.argv):
+            try:
+                return float(sys.argv[i + 1])
+            except ValueError:
+                return default
+        if a.startswith(name + "="):
+            try:
+                return float(a.split("=", 1)[1])
+            except ValueError:
+                return default
+    return default
+
+
+def check_thresholds(manifest_path: Path, speed_lag: float, size_growth: float) -> int:
+    """Gate this run against the checked-in baseline.
+
+    Lives in scripts/bench_baseline.py so that the same comparison backs both
+    `just bench-diff` and CI. Returns the exit code to propagate.
+    """
+    script = ROOT_DIR.parent / "scripts" / "bench_baseline.py"
+    if not script.exists():
+        print(f"{RED}--check-thresholds: {script} is missing.{RESET}", flush=True)
+        return 1
+
+    baseline = ROOT_DIR.parent / "docs" / "repo" / "bench-baseline.json"
+    if not baseline.exists():
+        # Nothing to compare against yet. Say so loudly rather than exiting 0
+        # and looking like a gate that passed.
+        print(
+            f"{YELLOW}--check-thresholds: no baseline at {baseline}; "
+            f"nothing to gate against. Seed one with "
+            f"`just bench-update-baseline`.{RESET}",
+            flush=True,
+        )
+        return 1
+
+    print(flush=True)
+    return subprocess.run([
+        sys.executable, str(script), "diff", str(manifest_path),
+        "--threshold", str(speed_lag),
+        "--size-threshold", str(size_growth),
+    ]).returncode
+
+
 def main():
     force_update = "--update-binaries" in sys.argv
     update_baseline = "--update-baseline" in sys.argv
+    # CI on `main` and `upstream` passes these; before this they were parsed by
+    # nothing and the job could not fail.
+    do_check = "--check-thresholds" in sys.argv
+    speed_lag = flag_value("--max-speed-lag", 10.0)
+    size_growth = flag_value("--max-size-growth", 25.0)
 
     bin_map, asset_info = ensure_binaries(force_update=force_update)
     ensure_js_bundles(bin_map.get("tjs", resolve_binary("tjs")))
@@ -906,14 +964,25 @@ def main():
         print(draw_benchmark_box(b, bench_results, rss_map), flush=True)
         print(flush=True)
 
+        # stddev and median ride along with the mean: scripts/bench_baseline.py
+        # needs the run-to-run spread to tell a real regression from noise, and
+        # the median to sanity-check a mean skewed by one slow outlier. Nothing
+        # in the tables below reads them.
         means = {}
+        stddev = {}
+        median = {}
         for r in RUNTIMES:
             r_id = r["id"]
-            means[r_id] = bench_results.get(r_id, {}).get("mean", 0.0) * 1000.0
+            res = bench_results.get(r_id, {})
+            means[r_id] = res.get("mean", 0.0) * 1000.0
+            stddev[r_id] = res.get("stddev", 0.0) * 1000.0
+            median[r_id] = res.get("median", 0.0) * 1000.0
 
         summary_results.append({
             "name": b["name"],
             "means": means,
+            "stddev": stddev,
+            "median": median,
             "rss": rss_map
         })
 
@@ -926,6 +995,9 @@ def main():
     print(f"  {CYAN}Benchmark Manifest JSON : {manifest_path}{RESET}", flush=True)
     if baseline_path:
         print(f"  {GREEN}Benchmark Baseline Updated: {baseline_path}{RESET}", flush=True)
+
+    if do_check:
+        sys.exit(check_thresholds(manifest_path, speed_lag, size_growth))
 
 if __name__ == "__main__":
     main()

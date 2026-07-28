@@ -82,6 +82,31 @@ bench +args="":
 bench-compliance +args="":
     python3 bench/compliance.py --allow-failures {{args}}
 
+# Run the benchmarks and record them in the history, leaving the baseline alone
+bench-record +args="":
+    python3 bench/bench.py {{args}}
+    python3 scripts/bench_baseline.py record .deps/compliance/logs/bench-latest.json
+
+# Run the benchmarks and diff them against the checked-in baseline
+bench-diff +args="":
+    -python3 bench/bench.py {{args}}
+    python3 scripts/bench_baseline.py diff .deps/compliance/logs/bench-latest.json
+
+# Full clean benchmark run, then promote it to the checked-in baseline
+bench-update-baseline +args="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "error: working tree is dirty - refusing to update the bench baseline from an unreproducible run." >&2
+        exit 1
+    fi
+    python3 bench/bench.py {{args}}
+    python3 scripts/bench_baseline.py update .deps/compliance/logs/bench-latest.json
+
+# Print the recorded benchmark series (no run)
+bench-history +args="":
+    python3 scripts/bench_baseline.py history {{args}}
+
 # Run compliance test suite (generic escape hatch; prefer compliance-t1/t2/t3 below)
 compliance +args="":
     meson compile -C build

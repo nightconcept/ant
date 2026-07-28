@@ -54,10 +54,11 @@ runs), so a single push fires exactly one of them.
   `dev-ci.yml`, plus `compliance-benchmarking` — Tier 2/3 metric collection
   (`--allow-failures --log`) with a regression check against
   `docs/repo/compliance-baseline.json` (fails if passed-test counts drop),
-  and the cold-start bench threshold assertion (`python3 bench/bench.py
-  --check-thresholds --max-speed-lag 10.0 --max-size-growth 25.0`, never
-  slower by >10% or larger by >25% vs Upstream Ant). All jobs gate merges to
-  `main`.
+  and the bench threshold assertion (`python3 bench/bench.py
+  --check-thresholds --max-speed-lag 10.0 --max-size-growth 25.0`), which
+  diffs the run against `docs/repo/bench-baseline.json` and fails if Ant got
+  >10% slower or >25% larger. See [benchmarking.md](benchmarking.md). All jobs
+  gate merges to `main`.
 - **`.github/workflows/upstream-ci.yml`** (branch `upstream`): identical job
   set and bar to `main-ci.yml`, kept as its own file so it can be retired
   independently once a change actually ships upstream.
