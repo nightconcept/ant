@@ -51,7 +51,7 @@ static inline ant_value_t sv_op_throw_error(
 
 static inline void sv_op_try_push(sv_vm_t *vm, uint8_t *ip, sv_handler_kind_t kind) {
   sv_frame_t *frame = &vm->frames[vm->fp];
-  if (sv_vm_reserve_handlers(vm, vm->handler_depth + 1)) {
+  if (vm->handler_depth < SV_HANDLER_MAX) {
     int32_t off = sv_get_i32(ip + 1);
     sv_handler_t *h = &vm->handler_stack[vm->handler_depth++];
     h->kind = (uint8_t)kind;
@@ -85,7 +85,7 @@ static inline void sv_op_catch(sv_vm_t *vm, ant_value_t caught, uint8_t *ip) {
 
 static inline ant_value_t sv_op_finally(sv_vm_t *vm, ant_t *js, uint8_t *ip) {
   sv_frame_t *frame = &vm->frames[vm->fp];
-  if (!sv_vm_reserve_handlers(vm, vm->handler_depth + 1))
+  if (vm->handler_depth >= SV_HANDLER_MAX)
     return js_mkerr(js, "handler stack overflow");
 
   int32_t off = sv_get_i32(ip + 1);

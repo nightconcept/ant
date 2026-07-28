@@ -1,6 +1,5 @@
 #include "gc.h"
 #include "errors.h"
-#include <assert.h>
 #include <stdlib.h>
 
 #include "silver/engine.h"
@@ -31,26 +30,13 @@
 #include "ops/objects.h"
 #include "ops/coercion.h"
 
-/*
- * Slack allocated past `stack_size` but never counted as usable.
- *
- * Operand pushes are unchecked in the dispatch loop; the reservation made by
- * sv_stage_frame_args covers them from the function's computed max_stack. The
- * guard band absorbs any shortfall in that bound rather than letting it turn
- * into an out-of-bounds write, and the assert below surfaces it in debug
- * builds.
- */
-#define SV_STACK_GUARD_SLOTS 64
-
-sv_vm_t *sv_vm_create_sized(ant_t *js, int stack_size, int max_frames) {
-  if (stack_size < 1) stack_size = 1;
-  if (max_frames < 1) max_frames = 1;
-  if (stack_size > SV_STACK_HARD_MAX) stack_size = SV_STACK_HARD_MAX;
-  if (max_frames > SV_FRAMES_HARD_MAX) max_frames = SV_FRAMES_HARD_MAX;
+sv_vm_t *sv_vm_create(ant_t *js, sv_vm_kind_t kind) {
+  int stack_size, max_frames;
+  sv_vm_limits(kind, &stack_size, &max_frames);
 
   sv_vm_t *vm = calloc(1, sizeof(*vm));
   if (!vm) return NULL;
-
+  
   vm->js = js;
   vm->fp = -1;
   
@@ -60,96 +46,49 @@ sv_vm_t *sv_vm_create_sized(ant_t *js, int stack_size, int max_frames) {
   vm->suspended_entry_fp = -1;
   vm->suspended_saved_fp = -1;
   
-  vm->stack = calloc((size_t)stack_size + SV_STACK_GUARD_SLOTS, sizeof(ant_value_t));
+  vm->stack = calloc((size_t)stack_size, sizeof(ant_value_t));
   vm->frames = calloc((size_t)max_frames, sizeof(sv_frame_t));
-
-  if (!vm->stack || !vm->frames) {
+  
+  if (!vm->stack || !vm->frames) { 
     sv_vm_destroy(vm);
     return NULL;
   }
-
+  
   return vm;
-}
-
-sv_vm_t *sv_vm_create(ant_t *js, sv_vm_kind_t kind) {
-  int stack_size, max_frames;
-  sv_vm_limits(kind, &stack_size, &max_frames);
-  return sv_vm_create_sized(js, stack_size, max_frames);
 }
 
 void sv_vm_destroy(sv_vm_t *vm) {
   if (!vm) return;
   free(vm->stack);
   free(vm->frames);
-  free(vm->handler_stack);
   free(vm);
 }
 
-/* Grows the handler stack on demand, up to the SV_HANDLER_MAX hard limit. */
-bool sv_vm_reserve_handlers(sv_vm_t *vm, int count) {
-  if (!vm || count > SV_HANDLER_MAX) return false;
-  if (count <= vm->handler_cap) return true;
-
-  int target = vm->handler_cap ? vm->handler_cap : 8;
-  while (target < count) target *= 2;
-  if (target > SV_HANDLER_MAX) target = SV_HANDLER_MAX;
-
-  sv_handler_t *nh = realloc(
-    vm->handler_stack, (size_t)target * sizeof(sv_handler_t));
-  if (!nh) return false;
-
-  vm->handler_stack = nh;
-  vm->handler_cap = target;
-  return true;
-}
-
-static bool sv_vm_grow_frames_to(sv_vm_t *vm, int new_max) {
+static bool sv_vm_grow_frames(sv_vm_t *vm) {
+  int new_max = vm->max_frames * 2;
   if (new_max > SV_FRAMES_HARD_MAX) new_max = SV_FRAMES_HARD_MAX;
   if (new_max <= vm->max_frames) return false;
-
+  
   sv_frame_t *nf = realloc(vm->frames, (size_t)new_max * sizeof(sv_frame_t));
   if (!nf) return false;
-  memset(nf + vm->max_frames, 0,
-    (size_t)(new_max - vm->max_frames) * sizeof(sv_frame_t));
-  if (nf != vm->frames) vm->realloc_epoch++;
   vm->frames = nf;
   vm->max_frames = new_max;
-
+  
   return true;
 }
 
-static bool sv_vm_grow_frames(sv_vm_t *vm) {
-  return sv_vm_grow_frames_to(vm, vm->max_frames * 2);
-}
-
-bool sv_vm_reserve_frames(sv_vm_t *vm, int count) {
-  if (!vm) return false;
-  if (count <= vm->max_frames) return true;
-
-  int target = vm->max_frames;
-  while (target < count) {
-    int next = target * 2;
-    if (next <= target) return false;
-    target = next;
-  }
-  return sv_vm_grow_frames_to(vm, target);
-}
-
-static bool sv_vm_grow_stack_to(sv_vm_t *vm, int new_size) {
+static bool sv_vm_grow_stack(sv_vm_t *vm) {
+  int new_size = vm->stack_size * 2;
   if (new_size > SV_STACK_HARD_MAX) new_size = SV_STACK_HARD_MAX;
   if (new_size <= vm->stack_size) return false;
-
+  
   ant_value_t *old = vm->stack;
   int old_size = vm->stack_size;
-
-  ant_value_t *ns = realloc(
-    vm->stack, ((size_t)new_size + SV_STACK_GUARD_SLOTS) * sizeof(ant_value_t));
+  
+  ant_value_t *ns = realloc(vm->stack, (size_t)new_size * sizeof(ant_value_t));
   if (!ns) return false;
-  memset(ns + old_size, 0,
-    ((size_t)(new_size - old_size) + SV_STACK_GUARD_SLOTS) * sizeof(ant_value_t));
-
+  
   ptrdiff_t delta = ns - old;
-  if (delta != 0) vm->realloc_epoch++;
   vm->stack = ns;
   vm->stack_size = new_size;
   
@@ -163,25 +102,8 @@ static bool sv_vm_grow_stack_to(sv_vm_t *vm, int new_size) {
       sv_slot_in_range(old, (size_t)old_size, uv->location)
     ) uv->location += delta;
   }
-
+  
   return true;
-}
-
-static bool sv_vm_grow_stack(sv_vm_t *vm) {
-  return sv_vm_grow_stack_to(vm, vm->stack_size * 2);
-}
-
-bool sv_vm_reserve_stack(sv_vm_t *vm, int slots) {
-  if (!vm) return false;
-  if (slots <= vm->stack_size) return true;
-
-  int target = vm->stack_size;
-  while (target < slots) {
-    int next = target * 2;
-    if (next <= target) return false;
-    target = next;
-  }
-  return sv_vm_grow_stack_to(vm, target);
 }
 
 #ifdef ANT_JIT
@@ -591,32 +513,15 @@ static inline ant_value_t sv_stage_frame_args(
   sv_vm_t *vm, ant_t *js, sv_func_t *func, ant_value_t *args, int argc,
   ant_value_t **out_bp, ant_value_t **out_lp
 ) {
-  /*
-   * If this trips, some function's computed max_stack under-reported its real
-   * operand depth and the caller has been writing into the guard band.
-   */
-  assert(vm->sp <= vm->stack_size + SV_STACK_GUARD_SLOTS);
-
   int arg_slots = (argc > func->param_count) ? argc : func->param_count;
   int need = arg_slots + func->max_locals;
-  /*
-   * Reserve the operands the frame can push as well, not just its slots:
-   * pushes in the dispatch loop are unchecked, so this is the only point that
-   * guarantees they stay in bounds.
-   */
-  int reserve = need + func->max_stack;
-  if (vm->sp + reserve > vm->stack_size) {
-    /*
-     * Must cover the guard band too: args living just past stack_size still
-     * move when the stack is reallocated, and missing them leaves the memmove
-     * below reading freed memory.
-     */
+  if (vm->sp + need > vm->stack_size) {
     int args_idx = (
-      args && args >= vm->stack &&
-      args < vm->stack + vm->stack_size + SV_STACK_GUARD_SLOTS)
+      args && args >= vm->stack && args < vm->stack + vm->stack_size)
       ? (int)(args - vm->stack) : -1;
-    if (!sv_vm_reserve_stack(vm, vm->sp + reserve))
-      return js_mkerr(js, "stack overflow");
+    while (vm->sp + need > vm->stack_size) {
+      if (!sv_vm_grow_stack(vm)) return js_mkerr(js, "stack overflow");
+    }
     if (args_idx >= 0) args = &vm->stack[args_idx];
   }
 
@@ -1023,7 +928,7 @@ ant_value_t sv_execute_frame(sv_vm_t *vm, sv_func_t *func, ant_value_t this, ant
     }
     
     for (int i = 0; i < enclosing_count; i++) {
-      if (sv_vm_reserve_handlers(vm, vm->handler_depth + 1)) {
+      if (vm->handler_depth < SV_HANDLER_MAX) {
         sv_handler_t *h = &vm->handler_stack[vm->handler_depth++];
         h->kind = SV_HANDLER_TRY;
         h->ip = h_stack[i].catch_ip;
@@ -1043,36 +948,14 @@ ant_value_t sv_execute_frame(sv_vm_t *vm, sv_func_t *func, ant_value_t this, ant
   
   ant_value_t sv_err;
   ant_value_t  tc_this = js_mkundef();
-
-  /*
-   * `frame`, `bp` and `lp` are cached into locals across the dispatch loop, but
-   * the stack and frame arrays are grown with realloc, which moves them. Any op
-   * that re-enters the VM (accessors, coercion, iterators, calls) can trigger
-   * that, leaving every cached pointer dangling.
-   *
-   * Rather than audit each consumer, reload them at dispatch whenever the VM's
-   * realloc epoch has moved: one load and a perfectly-predicted compare per
-   * instruction on the path where nothing was reallocated.
-   */
-  uint32_t vm_epoch = vm->realloc_epoch;
-
-  #define VM_REBASE() do {              \
-    if (vm->realloc_epoch != vm_epoch) { \
-      vm_epoch = vm->realloc_epoch;     \
-      frame = &vm->frames[vm->fp];      \
-      bp = frame->bp;                   \
-      lp = frame->lp;                   \
-    }                                   \
-  } while (0)
-
+  
   #define VM_CHECK(expr) ({            \
     frame->ip = ip;                    \
     sv_err = (expr);                   \
-    VM_REBASE();                       \
     if (is_err(sv_err)) goto sv_throw; \
   })
 
-  #define DISPATCH() do { VM_REBASE(); goto *dispatch[*ip]; } while (0)
+  #define DISPATCH() goto *dispatch[*ip]
   #define NEXT(n)    ({ ip += (n); DISPATCH(); })
 
   #ifdef ANT_JIT
@@ -1430,8 +1313,6 @@ ant_value_t sv_execute_frame(sv_vm_t *vm, sv_func_t *func, ant_value_t this, ant
             vm->sp -= call_argc + 1;
             if (is_err(jit_result)) { sv_err = jit_result; goto sv_throw; }
             vm->stack[vm->sp++] = jit_result;
-            /* The JIT-ed call may have reallocated the frame array. */
-            VM_REBASE();
             ip = frame->ip;
             DISPATCH();
           }
@@ -1523,8 +1404,6 @@ ant_value_t sv_execute_frame(sv_vm_t *vm, sv_func_t *func, ant_value_t this, ant
             vm->sp -= call_argc + 2;
             if (is_err(jit_result)) { sv_err = jit_result; goto sv_throw; }
             vm->stack[vm->sp++] = jit_result;
-            /* The JIT-ed call may have reallocated the frame array. */
-            VM_REBASE();
             ip = frame->ip;
             DISPATCH();
           }
@@ -1746,17 +1625,6 @@ ant_value_t sv_execute_frame(sv_vm_t *vm, sv_func_t *func, ant_value_t this, ant
       (int)call_argc > closure->func->param_count)
       ? (int)call_argc : closure->func->param_count;
     int need = arg_slots + closure->func->max_locals;
-    if (vm->sp + need + closure->func->max_stack > vm->stack_size) {
-      /* Growth may move the stack; call_args points into it. */
-      int args_idx = (int)(call_args - vm->stack);
-      if (!sv_vm_reserve_stack(vm, vm->sp + need + closure->func->max_stack)) {
-        sv_err = js_mkerr_typed(js, JS_ERR_RANGE | JS_ERR_NO_STACK,
-          "Maximum call stack size exceeded");
-        goto sv_throw;
-      }
-      call_args = &vm->stack[args_idx];
-      frame = &vm->frames[vm->fp];
-    }
     ant_value_t *base = &vm->stack[vm->sp];
     memmove(base, call_args, (size_t)call_argc * sizeof(ant_value_t));
     for (int i = (int)call_argc; i < arg_slots; i++) base[i] = js_mkundef();

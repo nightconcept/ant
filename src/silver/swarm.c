@@ -1785,12 +1785,7 @@ static bool jit_emit_inline_body(
   MIR_item_t gg_proto, MIR_item_t imp_gg,
   MIR_item_t special_obj_proto, MIR_item_t imp_special_obj
 ) {
-  /*
-   * The JIT models the operand stack independently of the interpreter's
-   * computed max_stack and pushes without a bound check, so size its shadow
-   * stack the way it always was rather than to the tighter bytecode bound.
-   */
-  int inl_max_stack = callee->max_locals + callee->max_stack + 64;
+  int inl_max_stack = callee->max_stack > 0 ? callee->max_stack : 4;
   MIR_reg_t inl_vs[inl_max_stack];
   for (int i = 0; i < inl_max_stack; i++) {
     char rn[32]; snprintf(rn, sizeof(rn), "inl%d_s%d", id, i);
@@ -3406,7 +3401,7 @@ sv_jit_func_t sv_jit_compile(ant_t *js, sv_func_t *func, sv_closure_t *hint_clos
   }
 
   jit_vstack_t vs = {0};
-  vs.max = func->max_locals + func->max_stack + 64;
+  vs.max = func->max_stack > 0 ? func->max_stack : 32;
   vs.regs = calloc((size_t)vs.max, sizeof(MIR_reg_t));
   vs.known_func = calloc((size_t)vs.max, sizeof(sv_func_t *));
   vs.d_regs = calloc((size_t)vs.max, sizeof(MIR_reg_t));
