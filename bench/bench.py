@@ -101,6 +101,62 @@ BENCHMARKS = [
         "desc": "50 iterations of UTF-8 encoding/decoding multi-MB Unicode strings",
         "ts": "text_codec.ts",
         "js": "text_codec.js"
+    },
+    {
+        "id": "nbody",
+        "name": "N-Body Simulation",
+        "desc": "3D celestial physics simulation (300k steps) - float math & loops",
+        "ts": "nbody.ts",
+        "js": "nbody.js"
+    },
+    {
+        "id": "fannkuch",
+        "name": "Fannkuch-Redux",
+        "desc": "Indexed array permutation & flip reversal (N=9)",
+        "ts": "fannkuch.ts",
+        "js": "fannkuch.js"
+    },
+    {
+        "id": "spectral_norm",
+        "name": "Spectral Norm",
+        "desc": "Eigenvalue spectral norm matrix calculation (N=350)",
+        "ts": "spectral_norm.ts",
+        "js": "spectral_norm.js"
+    },
+    {
+        "id": "richards",
+        "name": "Richards OS Simulation",
+        "desc": "OS task queue simulation - OOP method dispatch & state machine",
+        "ts": "richards.ts",
+        "js": "richards.js"
+    },
+    {
+        "id": "deltablue",
+        "name": "DeltaBlue Constraint Solver",
+        "desc": "Constraint graph solver - dynamic type checks & graph mutation",
+        "ts": "deltablue.ts",
+        "js": "deltablue.js"
+    },
+    {
+        "id": "heapsort",
+        "name": "HeapSort Array Sort",
+        "desc": "In-place HeapSort over 150k elements - non-sequential memory swaps",
+        "ts": "heapsort.ts",
+        "js": "heapsort.js"
+    },
+    {
+        "id": "generators",
+        "name": "Generators & Iterators",
+        "desc": "5k delegating generator invocations (yield*) & iteration protocol",
+        "ts": "generators.ts",
+        "js": "generators.js"
+    },
+    {
+        "id": "regex_dna",
+        "name": "Regex DNA Processing",
+        "desc": "DNA sequence pattern matching, capturing & IUPAC replacements",
+        "ts": "regex_dna.ts",
+        "js": "regex_dna.js"
     }
 ]
 

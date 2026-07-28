@@ -57,3 +57,6 @@ node_modules
 bun.lock
 pnpm-lock.yaml
 package-lock.json
+
+# bench.py writes this per hyperfine invocation and unlinks it
+/bench/temp_hyperfine.json
