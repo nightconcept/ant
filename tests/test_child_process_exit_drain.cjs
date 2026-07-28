@@ -33,8 +33,8 @@ for (let run = 0; run < RUNS; run++) {
 
   let out = '';
   let err = '';
-  child.on('stdout', (d) => { out += d; });
-  child.on('stderr', (d) => { err += d; });
+  child.stdout.on('data', (d) => { out += d; });
+  child.stderr.on('data', (d) => { err += d; });
 
   child.on('close', (code) => {
     check(`run ${run} exit code`, code, 0);

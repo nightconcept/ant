@@ -107,13 +107,18 @@ const shellChildDoneP = childClosedP.then(
     })
 );
 
-const stderrChild = spawn('sh', ['-c', 'echo err >&2']);
-let stderrData = '';
-stderrChild.stderr.on('data', data => {
-  stderrData += data;
-});
-stderrChild.on('close', () => {
-  test('spawn captures stderr', stderrData.trim(), 'err');
+// Awaited below: without it summary() can run before 'close' fires, and the
+// stderr assertion is silently never counted.
+const stderrChildDoneP = new Promise(resolve => {
+  const stderrChild = spawn('sh', ['-c', 'echo err >&2']);
+  let stderrData = '';
+  stderrChild.stderr.on('data', data => {
+    stderrData += data;
+  });
+  stderrChild.on('close', () => {
+    test('spawn captures stderr', stderrData.trim(), 'err');
+    resolve();
+  });
 });
 
 const longChild = spawn('sleep', ['10']);
@@ -138,7 +143,14 @@ const longChildDoneP = new Promise(resolve => {
 const killResult = longChild.kill('SIGTERM');
 test('spawn kill returns true', killResult, true);
 
-Promise.all([execDoneP, execFailDoneP, shellChildDoneP, stdinChildDoneP, longChildDoneP]).then(() => {
+Promise.all([
+  execDoneP,
+  execFailDoneP,
+  shellChildDoneP,
+  stdinChildDoneP,
+  stderrChildDoneP,
+  longChildDoneP,
+]).then(() => {
   test('exec async completed', execDone, true);
   test('exec fail async completed', execFailDone, true);
   summary();
