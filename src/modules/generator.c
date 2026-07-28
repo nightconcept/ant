@@ -440,7 +440,11 @@ static ant_value_t generator_next(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t gen = js->this_val;
   if (vtype(gen) != T_GENERATOR)
     return js_mkerr_typed(js, JS_ERR_TYPE, "Generator.prototype.next called on incompatible receiver");
-    
+
+  generator_state_t state = generator_state(gen);
+  if (state == GEN_EXECUTING && !generator_is_async(gen))
+    return js_mkerr_typed(js, JS_ERR_TYPE, "Generator is already executing");
+
   ant_value_t resume_value = nargs > 0 ? args[0] : js_mkundef();
   ant_value_t result = generator_resume(js, gen, resume_value);
   
