@@ -13,7 +13,7 @@ This guide keeps validation proportional to the change while still protecting ru
 - Run one runtime test: `./build/ant tests/test_<name>.cjs`
 - Run the spec suite: `./build/ant examples/spec/run.js --all`
 - Run compliance test suite: `just compliance --tier all --smoke`
-- Check performance while working: `just bench-fast-diff` (~85s)
+- Check performance while working: `just bench-fast-diff` (~75s)
 - Validate repo knowledge docs: `just knowledge`
 - Validate changed-file boundaries: `just structure`
 - Ask the harness what to run for the current diff: `just validate_changes`

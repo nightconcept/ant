@@ -306,6 +306,30 @@ RUNTIMES = [
 # every runtime at once - because hyperfine has no timeout of its own.
 HYPERFINE_TIMEOUT_S = 300
 
+# Sampling, shared by both tiers.
+#
+# Benchmark noise is one-sided: scheduling, interrupts, cache eviction and
+# thermal effects can only make a sample slower, never faster than the machine
+# is capable of. So the fastest sample is the cleanest estimate of the real
+# cost, and the mean is an estimate of "cost plus whatever else the machine was
+# doing". Measured over 8 independent invocations of 6 benchmarks, drift
+# between invocations of identical code:
+#
+#   estimator      runs   median   p90    max
+#   mean             10     1.8%   3.9%   6.9%
+#   mean              6     2.6%   5.7%   8.2%
+#   trim-2-slowest    6     2.2%   3.8%   7.1%
+#   min               5     1.5%   3.1%   3.9%
+#   min              10     0.8%   1.4%   3.7%
+#
+# min at 5 runs is more stable than the mean at 10 while taking half the
+# samples, which is what lets both tiers get faster and gate tighter at once.
+WARMUP_RUNS = 1
+TIMED_RUNS = 5
+
+# Field of the hyperfine result used for gating and for the work column.
+BEST_METRIC = "min"
+
 def strip_ansi(text: str) -> str:
     return re.sub(r'\x1b\[[0-9;]*m', '', text)
 
@@ -890,7 +914,7 @@ def draw_benchmark_box(bench_info: dict, bench_results: dict, rss_map: dict,
     lines = [
         f"{b_name} - {b_desc}",
         "─" * (width - 6),
-        f"{BOLD}Runtime          Mean Time (ms)        Work (ms)       Peak RSS{RESET}",
+        f"{BOLD}Runtime          Best Time (ms)        Work (ms)       Peak RSS{RESET}",
         "─" * (width - 6),
     ]
 
@@ -903,19 +927,21 @@ def draw_benchmark_box(bench_info: dict, bench_results: dict, rss_map: dict,
         if r_id not in rss_map:
             continue
         res = bench_results.get(r_id, {})
-        mean = res.get("mean", 0.0) * 1000.0
+        # Best sample, not the mean: that is what gets gated on, so it is what
+        # the table should show. stddev still rides along as the spread.
+        best = res.get(BEST_METRIC, 0.0) * 1000.0
         stddev = res.get("stddev", 0.0) * 1000.0
         rss = rss_map.get(r_id, 0.0)
-        r_means[r_id] = mean
+        r_means[r_id] = best
 
-        # Work time strips this runtime's process startup out of the mean, so a
-        # short benchmark is not reported as a startup comparison.
-        work = max(mean - floors.get(r_id, 0.0), 0.0) if mean else 0.0
-        pct = (work / mean * 100.0) if mean > 0 else 0.0
+        # Work time strips this runtime's process startup out, so a short
+        # benchmark is not reported as a startup comparison.
+        work = max(best - floors.get(r_id, 0.0), 0.0) if best else 0.0
+        pct = (work / best * 100.0) if best > 0 else 0.0
 
         name_colored = f"{r['color']}{pad_cell(r['name'], 12)}{RESET}"
         lines.append(
-            f"{name_colored}     {mean:>8.2f} ± {stddev:<5.2f}    "
+            f"{name_colored}     {best:>8.2f} ± {stddev:<5.2f}    "
             f"{work:>8.2f} ({pct:>3.0f}%)    {rss:>6.1f} MB"
         )
 
@@ -952,7 +978,7 @@ def draw_benchmark_box(bench_info: dict, bench_results: dict, rss_map: dict,
 
 def draw_summary_table(summary_data: list, width=96) -> str:
     lines = [
-        f"{BOLD}{MAGENTA}FINAL EXECUTION TIME SUMMARY (Mean Time in ms){RESET}",
+        f"{BOLD}{MAGENTA}FINAL EXECUTION TIME SUMMARY (Best Time in ms){RESET}",
         "─" * (width - 6),
     ]
 
@@ -967,7 +993,7 @@ def draw_summary_table(summary_data: list, width=96) -> str:
 
     wins = {r["id"]: 0 for r in RUNTIMES}
     for item in summary_data:
-        means = item["means"]
+        means = item.get("best") or item["means"]
         valid = [(r_id, m) for r_id, m in means.items() if m > 0]
         if valid:
             valid.sort(key=lambda x: x[1])
@@ -977,13 +1003,13 @@ def draw_summary_table(summary_data: list, width=96) -> str:
     for r in RUNTIMES:
         r_id = r["id"]
         # Skip runtimes that ran nothing at all - the fast tier excludes two.
-        if not any(item["means"].get(r_id, 0.0) > 0 for item in summary_data):
+        if not any((item.get("best") or item["means"]).get(r_id, 0.0) > 0 for item in summary_data):
             continue
         r_color = r.get("color", "")
         row = [pad_cell(f"{r_color}{r['name']}{RESET}", 14)]
 
         for item in summary_data:
-            m_val = item["means"].get(r_id, 0.0)
+            m_val = (item.get("best") or item["means"]).get(r_id, 0.0)
             # "-" distinguishes a benchmark this runtime did not run (the
             # Ant-only group) from one that measured zero.
             cell = f"{m_val:.2f}" if m_val > 0 else "-"
@@ -1226,11 +1252,16 @@ def main():
     if fast:
         benchmarks = [b for b in BENCHMARKS if b.get("tier") == "fast"]
         runtimes = [r for r in RUNTIMES if r.get("fast")]
-        warmup, runs = 1, 6
     else:
         benchmarks = list(BENCHMARKS)
         runtimes = list(RUNTIMES)
-        warmup, runs = 2, 10
+
+    # Identical sampling in both tiers. The gating metric is the fastest sample
+    # (see BEST_METRIC below), and min is biased by how many samples it picks
+    # from - min of 10 runs sits ~0.7% below min of 5 on the same workload. Since
+    # a fast manifest diffs against a full baseline, differing run counts would
+    # inject that bias as a phantom regression on every fast run.
+    warmup, runs = WARMUP_RUNS, TIMED_RUNS
 
     bin_map, asset_info = ensure_binaries(force_update=force_update)
     ensure_js_bundles(bin_map.get("tjs", resolve_binary("tjs")))
@@ -1292,6 +1323,7 @@ def main():
         means = {}
         stddev = {}
         median = {}
+        best = {}
         work = {}
         for r in RUNTIMES:
             r_id = r["id"]
@@ -1299,13 +1331,17 @@ def main():
             means[r_id] = res.get("mean", 0.0) * 1000.0
             stddev[r_id] = res.get("stddev", 0.0) * 1000.0
             median[r_id] = res.get("median", 0.0) * 1000.0
-            # Mean minus this runtime's startup floor: what the benchmark
+            # The gating metric: fastest sample, least contaminated by whatever
+            # else the machine was doing. means/stddev/median stay recorded for
+            # diagnostics and for reading old manifests.
+            best[r_id] = res.get(BEST_METRIC, 0.0) * 1000.0
+            # Best minus this runtime's startup floor: what the benchmark
             # actually spent, with process startup taken out. Clamped at zero
             # so a benchmark at or below the floor reads as 0 rather than
             # negative. coldstart deliberately measures the floor itself, so
             # its work time being ~0 is the correct answer, not a bug.
             floor = startup_floor.get(r_id, 0.0)
-            work[r_id] = max(means[r_id] - floor, 0.0) if means[r_id] else 0.0
+            work[r_id] = max(best[r_id] - floor, 0.0) if best[r_id] else 0.0
 
         summary_results.append({
             "name": b["name"],
@@ -1313,6 +1349,7 @@ def main():
             "means": means,
             "stddev": stddev,
             "median": median,
+            "best": best,
             "work": work,
             "rss": rss_map
         })

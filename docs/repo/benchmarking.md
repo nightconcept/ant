@@ -35,8 +35,8 @@ reported as not-run rather than missing.
 | --- | --- | --- |
 | benchmarks | 15 | 26 |
 | runtimes | ant, txiki.js, Node | all five |
-| hyperfine | 1 warmup, 6 runs | 2 warmup, 10 runs |
-| wall time | ~85s | ~5 min |
+| hyperfine | 1 warmup, 5 runs | 1 warmup, 5 runs |
+| wall time | ~75s | ~2m55s |
 | for | edit-test loops | nightly cron, pre-merge, CI |
 
 The fast tier keeps one benchmark per subsystem and drops the rest. Deno and
@@ -53,7 +53,7 @@ would read as "new" on the next full run.
 
 | Command | What it does |
 | ------- | ------------ |
-| `just bench-fast` | Fast tier, print the tables. ~85s. |
+| `just bench-fast` | Fast tier, print the tables. ~75s. |
 | `just bench-fast-diff` | Fast tier, then diff against the baseline. The everyday check. |
 | `just bench` | Full suite, print the tables. Changes nothing. |
 | `just bench-record` | Full run, then append to the history. |
@@ -89,7 +89,7 @@ unattended run can never move the thing it is being compared against.
 Every benchmark's wall time includes the cost of starting the runtime process,
 and those costs are not close: Ant starts in ~3.5ms, Node in ~18ms. Each run
 measures this floor per runtime (median of 12 executions of a trivial script)
-and reports it in its own box, then subtracts it from each mean to give a
+and reports it in its own box, then subtracts it from each time to give a
 **work** column with the percentage of wall time that was real work.
 
 This matters because it decides whether a number means anything. Before it
@@ -99,7 +99,42 @@ now sized so Ant spends 250–400ms, which keeps work time above ~60% on every
 runtime. `coldstart` is the deliberate exception: measuring startup is its job,
 so a near-zero work time there is the correct answer.
 
-The ratio-to-reference column is computed from work time, not raw means.
+The ratio-to-reference column is computed from work time, not raw times.
+
+## Why The Fastest Sample, Not The Mean
+
+Benchmark noise is one-sided. Scheduling, interrupts, cache eviction and
+thermal effects can only make a sample *slower* — nothing makes the machine
+faster than it is capable of. So the fastest sample is the cleanest estimate of
+the real cost, and the mean estimates "the cost plus whatever else the machine
+was doing".
+
+Measured over 8 independent invocations of 6 benchmarks, drift between
+invocations of **identical code** — which is exactly what a spurious regression
+looks like:
+
+| estimator | runs | median | p90 | max |
+| --- | --- | --- | --- | --- |
+| mean | 10 | 1.8% | 3.9% | 6.9% |
+| mean | 6 | 2.6% | 5.7% | 8.2% |
+| trimmed mean (drop 2 slowest) | 6 | 2.2% | 3.8% | 7.1% |
+| **min** | **5** | **1.5%** | **3.1%** | **3.9%** |
+| min | 10 | 0.8% | 1.4% | 3.7% |
+
+The minimum of 5 runs is more stable than the mean of 10 while taking half the
+samples. That is what pays for both tiers getting faster and the gate getting
+*tighter* at the same time: the threshold went from 5% to 6% while the actual
+noise it has to clear more than halved. The old 5% sat below the mean's own
+6.9% worst case — the gate was under its noise floor and fired on unchanged
+code.
+
+Both tiers use the same estimator **and the same run count**, deliberately. The
+minimum is biased by how many samples it picks from — min of 10 runs sits ~0.7%
+below min of 5 on the same workload — so differing run counts would inject that
+bias as a phantom regression on every fast run diffed against a full baseline.
+
+`mean`, `median` and `stddev` are still recorded in the manifest for
+diagnostics; only the gate changed.
 
 ## Reading A Diff
 
@@ -116,10 +151,14 @@ reference is itself noisy, so a moved ratio on its own means little.
 
 Gating is on Ant's absolute numbers:
 
-- **time** — default 5%. A delta must also exceed the two runs' combined
-  standard deviation before it counts, so ordinary jitter does not fail a
-  build. Manifests written before `stddev` was recorded fall back to the
-  percentage alone.
+- **time** — default 6%, on the fastest sample, and a delta must also be worth
+  at least **1.5ms** in absolute terms. The floor exists because a percentage
+  alone misjudges very short benchmarks: `coldstart` runs in ~5.4ms and drifts
+  up to 1.27ms run to run, which is 21% — it would fail constantly while
+  measuring nothing. Every other benchmark sits at 280–410ms, where 6% is
+  17–25ms, so the floor is inert for them. Manifests predating the `best` field
+  are gated on the mean, where the older combined-standard-deviation check
+  still applies.
 - **peak RSS** — default 10%.
 - **binary size** — default 25%. A runtime that gets faster by getting much
   larger is still a regression for an embeddable engine.
@@ -154,7 +193,7 @@ on exit.
    any timing from it.
 4. Add an entry to `BENCHMARKS` in `bench/bench.py` with a `tier`. Default to
    `"full"`; promote to `"fast"` only if it covers a subsystem the fast tier
-   would otherwise miss, and check `just bench-fast` still fits ~90s.
+   would otherwise miss, and check `just bench-fast` still fits its budget.
 
 ## The History
 

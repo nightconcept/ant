@@ -64,18 +64,29 @@ HISTORY_PATH = REPO_ROOT / "docs" / "repo" / "bench-history.jsonl"
 SUBJECT = "ant"
 REFERENCE = "node"
 
-DEFAULT_TIME_THRESHOLD = 5.0
+# Both tiers sample identically - min of 5 runs - so one threshold covers both.
+# Measured drift between invocations of identical code with that estimator:
+# median 1.5%, p90 3.1%, worst 3.9%. 6% clears the worst case with margin.
+#
+# This used to be 5% against the mean of 10 runs, whose measured worst case was
+# 6.9% - the gate sat below its own noise floor and fired on unchanged code.
+DEFAULT_TIME_THRESHOLD = 6.0
 DEFAULT_RSS_THRESHOLD = 10.0
 DEFAULT_SIZE_THRESHOLD = 25.0
 
-# The fast tier runs 6 iterations instead of 10, so its means are noisier.
-# Measured on two back-to-back fast runs of identical code: median drift 2.4%,
-# p90 6.1%, worst 11.7% (gc_pressure - collection timing is inherently spiky).
-# At 5% that check would flag two or three benchmarks every single run and stop
-# meaning anything, so the fast tier gets a threshold matched to its own
-# precision. It catches breakage while iterating; the 5% gate lives on the full
-# run, which is what actually guards a merge.
-FAST_TIME_THRESHOLD = 12.0
+# A delta must also be worth this many milliseconds in absolute terms.
+#
+# A percentage alone misjudges very short benchmarks. coldstart runs in ~5.4ms
+# and drifts up to 1.27ms run to run, which is 21% - it would fail the gate
+# constantly while measuring nothing. Over the same repetitions json drifts
+# 5.41ms, which is 1.7% of its 321ms and already under the threshold. So this
+# floor silences the short benchmarks and is inert for everything else: every
+# other benchmark sits at 280-410ms, where 6% is 17-25ms.
+MIN_ABSOLUTE_DELTA_MS = 1.5
+
+# Time field to gate on, newest first. "best" is the fastest sample; manifests
+# written before it existed fall back to the mean.
+TIME_FIELDS = ("best", "means")
 
 BOLD = "\033[1m"
 DIM = "\033[2m"
@@ -108,6 +119,15 @@ def metric(entry: dict, field: str, runtime: str):
     return value
 
 
+def time_metric(entry: dict, runtime: str):
+    """The gated time for a runtime: fastest sample, or the mean on old data."""
+    for field in TIME_FIELDS:
+        value = metric(entry, field, runtime)
+        if value is not None:
+            return value
+    return None
+
+
 def pct(new: float, old: float) -> float:
     if not old:
         return 0.0
@@ -117,13 +137,13 @@ def pct(new: float, old: float) -> float:
 def ratio_to_reference(entry: dict, reference: str):
     """Ant's time as a multiple of the reference runtime's.
 
-    Prefers `work` - the mean with that runtime's process startup subtracted -
-    because the runtimes' startup floors differ by 5x (Ant ~3.5ms, node ~18ms).
-    On a short benchmark the raw means make that gap look like a compute result.
-    Manifests written before `work` existed fall back to `means`.
+    Prefers `work` - the gated time with that runtime's process startup
+    subtracted - because the runtimes' startup floors differ by 5x (Ant ~3.5ms,
+    node ~18ms). On a short benchmark the raw times make that gap look like a
+    compute result. Manifests without `work` fall back to the gated time.
     """
-    subject = metric(entry, "work", SUBJECT) or metric(entry, "means", SUBJECT)
-    ref = metric(entry, "work", reference) or metric(entry, "means", reference)
+    subject = metric(entry, "work", SUBJECT) or time_metric(entry, SUBJECT)
+    ref = metric(entry, "work", reference) or time_metric(entry, reference)
     if subject is None or ref is None:
         return None
     return subject / ref
@@ -131,13 +151,28 @@ def ratio_to_reference(entry: dict, reference: str):
 
 def significant(new_entry: dict, old_entry: dict, runtime: str, delta_pct: float,
                 threshold: float) -> bool:
-    """A delta counts only if it clears the threshold and the run-to-run spread.
+    """Does this delta count as a real change?
 
-    `stddev` is absent from manifests written before it was recorded; those fall
-    back to the threshold alone.
+    When both sides carry `best`, the threshold alone decides. The gated metric
+    is then the fastest sample, which has already discarded the jitter the
+    stddev check existed to absorb - and stddev describes the spread of the
+    *mean*, so testing a min-based delta against it would suppress real
+    regressions. The threshold (6%) is set above the measured worst-case drift
+    of that estimator (3.9%), so it is doing that job on its own.
+
+    Older manifests only have means; those keep the original combined-spread
+    check, which is the right test for a mean.
     """
     if abs(delta_pct) < threshold:
         return False
+
+    new_best = metric(new_entry, "best", runtime)
+    old_best = metric(old_entry, "best", runtime)
+    if new_best is not None and old_best is not None:
+        # Percentage plus an absolute floor, so a few-millisecond benchmark
+        # cannot post a large-looking delta that is under the noise.
+        return abs(new_best - old_best) >= MIN_ABSOLUTE_DELTA_MS
+
     new_sd = metric(new_entry, "stddev", runtime)
     old_sd = metric(old_entry, "stddev", runtime)
     if new_sd is None or old_sd is None:
@@ -171,7 +206,7 @@ def history_row(manifest: dict, reference: str) -> dict:
     entries = {}
     for name, b in benchmarks_by_name(manifest).items():
         row = {}
-        ms = metric(b, "means", SUBJECT)
+        ms = time_metric(b, SUBJECT)
         rss = metric(b, "rss", SUBJECT)
         ratio = ratio_to_reference(b, reference)
         if ms is not None:
@@ -296,10 +331,11 @@ def cmd_diff(args) -> int:
 
     tier = manifest.get("tier", "full")
     if args.threshold is None:
-        args.threshold = FAST_TIME_THRESHOLD if tier == "fast" else DEFAULT_TIME_THRESHOLD
+        args.threshold = DEFAULT_TIME_THRESHOLD
     if tier == "fast":
-        print(f"  {YELLOW}tier{RESET}     : fast - a subset of the suite at "
-              f"{args.threshold:.0f}% (its own noise floor). "
+        # Same estimator and run count as a full run, so the threshold is the
+        # same too; only the coverage is narrower.
+        print(f"  {YELLOW}tier{RESET}     : fast - a subset of the suite. "
               f"Gate on a full run before merging.")
 
     if added:
@@ -321,7 +357,7 @@ def cmd_diff(args) -> int:
     improvements = []
     for name in shared:
         n, o = new[name], old[name]
-        n_ms, o_ms = metric(n, "means", SUBJECT), metric(o, "means", SUBJECT)
+        n_ms, o_ms = time_metric(n, SUBJECT), time_metric(o, SUBJECT)
         n_rss, o_rss = metric(n, "rss", SUBJECT), metric(o, "rss", SUBJECT)
 
         if n_ms is None or o_ms is None:
@@ -469,8 +505,7 @@ def main() -> int:
     # Default resolved in cmd_diff: it depends on the manifest's tier, which is
     # not known until the file is read.
     p.add_argument("--threshold", type=float, default=None,
-                   help=f"Time regression threshold in %% (default: "
-                        f"{DEFAULT_TIME_THRESHOLD} full, {FAST_TIME_THRESHOLD} fast)")
+                   help=f"Time regression threshold in %% (default: {DEFAULT_TIME_THRESHOLD})")
     p.add_argument("--rss-threshold", type=float, default=DEFAULT_RSS_THRESHOLD,
                    help=f"Peak RSS regression threshold in %% (default: {DEFAULT_RSS_THRESHOLD})")
     p.add_argument("--size-threshold", type=float, default=DEFAULT_SIZE_THRESHOLD,
