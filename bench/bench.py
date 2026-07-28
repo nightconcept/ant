@@ -812,11 +812,19 @@ def run_hyperfine(cmds_map: dict, warmup: int = 2, runs: int = 10) -> dict:
 
 def draw_header_box(versions: dict, width=96) -> str:
     r_names = ", ".join(f"{r['color']}{r['name']}{RESET}" for r in RUNTIMES)
-    v_strs = " | ".join(f"{r['color']}{r['name']}{RESET}: {versions.get(r['id'], 'unknown')}" for r in RUNTIMES)
+    # Five name:version pairs on one line ran to 115 characters inside a 90-wide
+    # box, so they are split across two.
+    half = (len(RUNTIMES) + 1) // 2
+    v_rows = [
+        " | ".join(f"{r['color']}{r['name']}{RESET}: {versions.get(r['id'], 'unknown')}"
+                   for r in group)
+        for group in (RUNTIMES[:half], RUNTIMES[half:])
+    ]
     lines = [
         f"{BOLD}{MAGENTA}JS RUNTIME BENCHMARK SUITE: 5-WAY COMPARISON{RESET}",
         f"{DIM}Target Runtimes: {r_names}{RESET}",
-        f"{DIM}Detected Versions: {v_strs}{RESET}",
+        f"{DIM}Versions: {v_rows[0]}{RESET}",
+        f"{DIM}{' ' * 10}{v_rows[1]}{RESET}",
         f"{DIM}Metrics: Execution Time (Hyperfine), Binary Size & Memory Usage (Peak RSS){RESET}"
     ]
     box = []
@@ -888,10 +896,10 @@ def draw_binary_size_box(bin_map: dict, width=96) -> str:
     if ant_sz > 0 and tjs_sz > 0:
         if ant_sz <= tjs_sz:
             ratio = tjs_sz / ant_sz
-            h2h_str = f"{BOLD}Head-to-Head (ant vs txiki.js):{RESET} {GREEN}ant{RESET} is {ant_sz:.2f} MB ({GREEN}{ratio:.2f}x smaller{RESET} than txiki.js {tjs_sz:.2f} MB)"
+            h2h_str = f"{BOLD}Binary size:{RESET} {GREEN}ant{RESET} {ant_sz:.2f} MB vs {YELLOW}txiki.js{RESET} {tjs_sz:.2f} MB ➔ {GREEN}ant {ratio:.2f}x smaller{RESET}"
         else:
             ratio = ant_sz / tjs_sz
-            h2h_str = f"{BOLD}Head-to-Head (ant vs txiki.js):{RESET} {YELLOW}txiki.js{RESET} is {tjs_sz:.2f} MB ({YELLOW}{ratio:.2f}x smaller{RESET} than ant {ant_sz:.2f} MB)"
+            h2h_str = f"{BOLD}Binary size:{RESET} {GREEN}ant{RESET} {ant_sz:.2f} MB vs {YELLOW}txiki.js{RESET} {tjs_sz:.2f} MB ➔ {YELLOW}txiki.js {ratio:.2f}x smaller{RESET}"
     else:
         smallest = sorted_r[0]
         h2h_str = f"{GREEN}⚡ {smallest['color']}{smallest['name']}{RESET} is smallest ({sizes[smallest['id']]:.2f} MB)"
@@ -907,8 +915,15 @@ def draw_binary_size_box(bin_map: dict, width=96) -> str:
 
 def draw_benchmark_box(bench_info: dict, bench_results: dict, rss_map: dict,
                        startup_floor: dict | None = None, width=96) -> str:
-    b_name = f"{BOLD}{CYAN}{bench_info['name']}{RESET}"
-    b_desc = f"{DIM}{bench_info['desc']}{RESET}"
+    # Clip the description to whatever the name leaves, so a long `desc` cannot
+    # push the row past the border. Several of the newer benchmarks did.
+    name = bench_info["name"]
+    budget = (width - 6) - len(name) - 3
+    desc = bench_info["desc"]
+    if len(desc) > budget:
+        desc = desc[:max(budget - 1, 0)].rstrip() + "…"
+    b_name = f"{BOLD}{CYAN}{name}{RESET}"
+    b_desc = f"{DIM}{desc}{RESET}"
     floors = startup_floor or {}
 
     lines = [
@@ -982,52 +997,59 @@ def draw_summary_table(summary_data: list, width=96) -> str:
         "─" * (width - 6),
     ]
 
-    bench_short_names = [item["name"].split()[0] for item in summary_data]
-    header_cols = [pad_cell("Runtime", 14)]
-    for b_short in bench_short_names:
-        header_cols.append(pad_cell(b_short, 10, "right"))
-    header_cols.append(pad_cell("Perf Wins", 12, "right"))
+    # Benchmarks are rows and runtimes are columns, not the other way round.
+    # One column per benchmark grew past the box the moment the suite did - at
+    # 26 benchmarks the rows ran to 341 characters inside a 96-wide border.
+    # There will only ever be five runtimes, so this orientation stays put.
+    active = [
+        r for r in RUNTIMES
+        if any((item.get("best") or item["means"]).get(r["id"], 0.0) > 0
+               for item in summary_data)
+    ]
 
+    # 30 + 5 columns of 11 + 5 separators = 90 = width - 6, so the row fits the
+    # box exactly with all five runtimes present.
+    header_cols = [pad_cell("Benchmark", 30)]
+    for r in active:
+        header_cols.append(pad_cell(r["name"], 11, "right"))
     lines.append(f"{BOLD}{' '.join(header_cols)}{RESET}")
     lines.append("─" * (width - 6))
 
     wins = {r["id"]: 0 for r in RUNTIMES}
     for item in summary_data:
-        means = item.get("best") or item["means"]
-        valid = [(r_id, m) for r_id, m in means.items() if m > 0]
-        if valid:
-            valid.sort(key=lambda x: x[1])
-            winner_id = valid[0][0]
+        best = item.get("best") or item["means"]
+        row = [pad_cell(item["name"][:29], 30)]
+        valid = [(r_id, m) for r_id, m in best.items() if m > 0]
+        winner_id = min(valid, key=lambda x: x[1])[0] if valid else None
+        if winner_id:
             wins[winner_id] += 1
 
-    for r in RUNTIMES:
-        r_id = r["id"]
-        # Skip runtimes that ran nothing at all - the fast tier excludes two.
-        if not any((item.get("best") or item["means"]).get(r_id, 0.0) > 0 for item in summary_data):
-            continue
-        r_color = r.get("color", "")
-        row = [pad_cell(f"{r_color}{r['name']}{RESET}", 14)]
-
-        for item in summary_data:
-            m_val = (item.get("best") or item["means"]).get(r_id, 0.0)
+        for r in active:
+            m_val = best.get(r["id"], 0.0)
             # "-" distinguishes a benchmark this runtime did not run (the
             # Ant-only group) from one that measured zero.
-            cell = f"{m_val:.2f}" if m_val > 0 else "-"
-            row.append(pad_cell(cell, 10, "right"))
-
-        w_cnt = wins[r_id]
-        row.append(pad_cell(f"{w_cnt}", 12, "right"))
+            cell = f"{m_val:.1f}" if m_val > 0 else "-"
+            # "*" as well as colour: the winner has to stay identifiable when
+            # the output is piped to a file or read without ANSI support.
+            if r["id"] == winner_id:
+                cell = f"{r['color']}{cell}*{RESET}"
+            row.append(pad_cell(cell, 11, "right"))
         lines.append(" ".join(row))
 
+    lines.append("─" * (width - 6))
+    win_cols = [pad_cell(f"{BOLD}wins *{RESET}", 30)]
+    for r in active:
+        win_cols.append(pad_cell(f"{r['color']}{wins[r['id']]}{RESET}", 11, "right"))
+    lines.append(" ".join(win_cols))
     lines.append("─" * (width - 6))
 
     ant_wins = 0
     tjs_wins = 0
     total_b = len(summary_data)
     for item in summary_data:
-        means = item["means"]
-        ant_m = means.get("ant", 0.0)
-        tjs_m = means.get("tjs", 0.0)
+        best = item.get("best") or item["means"]
+        ant_m = best.get("ant", 0.0)
+        tjs_m = best.get("tjs", 0.0)
         if ant_m > 0 and tjs_m > 0:
             if ant_m <= tjs_m:
                 ant_wins += 1
@@ -1050,46 +1072,50 @@ def draw_memory_summary_table(summary_data: list, width=96) -> str:
         "─" * (width - 6),
     ]
 
-    bench_short_names = [item["name"].split()[0] for item in summary_data]
-    header_cols = [pad_cell("Runtime", 14)]
-    for b_short in bench_short_names:
-        header_cols.append(pad_cell(b_short, 10, "right"))
-    header_cols.append(pad_cell("Avg RSS", 10, "right"))
-    header_cols.append(pad_cell("Mem Wins", 10, "right"))
+    # Benchmarks as rows, runtimes as columns - see draw_summary_table.
+    active = [
+        r for r in RUNTIMES
+        if any(item["rss"].get(r["id"], 0.0) > 0 for item in summary_data)
+    ]
 
+    header_cols = [pad_cell("Benchmark", 30)]
+    for r in active:
+        header_cols.append(pad_cell(r["name"], 11, "right"))
     lines.append(f"{BOLD}{' '.join(header_cols)}{RESET}")
     lines.append("─" * (width - 6))
 
     wins = {r["id"]: 0 for r in RUNTIMES}
+    totals = {r["id"]: [] for r in RUNTIMES}
     for item in summary_data:
         rss_map = item["rss"]
+        row = [pad_cell(item["name"][:29], 30)]
         valid = [(r_id, rss) for r_id, rss in rss_map.items() if rss > 0]
-        if valid:
-            valid.sort(key=lambda x: x[1])
-            winner_id = valid[0][0]
+        winner_id = min(valid, key=lambda x: x[1])[0] if valid else None
+        if winner_id:
             wins[winner_id] += 1
 
-    for r in RUNTIMES:
-        r_id = r["id"]
-        # Same as the time summary: skip runtimes this run never exercised, and
-        # mark per-benchmark gaps as "-" rather than 0.0 MB.
-        if not any(item["rss"].get(r_id, 0.0) > 0 for item in summary_data):
-            continue
-        r_color = r.get("color", "")
-        row = [pad_cell(f"{r_color}{r['name']}{RESET}", 14)]
-
-        rss_vals = []
-        for item in summary_data:
-            rss_val = item["rss"].get(r_id, 0.0)
+        for r in active:
+            rss_val = rss_map.get(r["id"], 0.0)
             if rss_val > 0:
-                rss_vals.append(rss_val)
-            row.append(pad_cell(f"{rss_val:.1f}" if rss_val > 0 else "-", 10, "right"))
-
-        avg_rss = (sum(rss_vals) / len(rss_vals)) if rss_vals else 0.0
-        row.append(pad_cell(f"{avg_rss:.1f}", 10, "right"))
-        row.append(pad_cell(f"{wins[r_id]}", 10, "right"))
+                totals[r["id"]].append(rss_val)
+            # "-" marks a benchmark this runtime did not run, not 0.0 MB.
+            cell = f"{rss_val:.1f}" if rss_val > 0 else "-"
+            if r["id"] == winner_id:
+                cell = f"{r['color']}{cell}*{RESET}"
+            row.append(pad_cell(cell, 11, "right"))
         lines.append(" ".join(row))
 
+    lines.append("─" * (width - 6))
+    avg_cols = [pad_cell(f"{BOLD}average{RESET}", 30)]
+    for r in active:
+        vals = totals[r["id"]]
+        avg = (sum(vals) / len(vals)) if vals else 0.0
+        avg_cols.append(pad_cell(f"{r['color']}{avg:.1f}{RESET}", 11, "right"))
+    lines.append(" ".join(avg_cols))
+    win_cols = [pad_cell(f"{BOLD}wins *{RESET}", 30)]
+    for r in active:
+        win_cols.append(pad_cell(f"{r['color']}{wins[r['id']]}{RESET}", 11, "right"))
+    lines.append(" ".join(win_cols))
     lines.append("─" * (width - 6))
 
     ant_rss = [item["rss"].get("ant", 0.0) for item in summary_data if item["rss"].get("ant", 0.0) > 0]
@@ -1100,10 +1126,10 @@ def draw_memory_summary_table(summary_data: list, width=96) -> str:
     if avg_ant > 0 and avg_tjs > 0:
         if avg_ant <= avg_tjs:
             ratio = avg_tjs / avg_ant
-            mem_h2h = f"{BOLD}Head-to-Head Memory (ant vs txiki.js):{RESET} {GREEN}ant{RESET} avg peak RSS {avg_ant:.1f} MB vs {YELLOW}txiki.js{RESET} {avg_tjs:.1f} MB ({GREEN}ant uses {ratio:.2f}x less memory{RESET})"
+            mem_h2h = f"{BOLD}Avg peak RSS:{RESET} {GREEN}ant{RESET} {avg_ant:.1f} MB vs {YELLOW}txiki.js{RESET} {avg_tjs:.1f} MB ➔ {GREEN}ant uses {ratio:.2f}x less{RESET}"
         else:
             ratio = avg_ant / avg_tjs
-            mem_h2h = f"{BOLD}Head-to-Head Memory (ant vs txiki.js):{RESET} {GREEN}ant{RESET} avg peak RSS {avg_ant:.1f} MB vs {YELLOW}txiki.js{RESET} {avg_tjs:.1f} MB ({YELLOW}txiki.js uses {ratio:.2f}x less memory{RESET})"
+            mem_h2h = f"{BOLD}Avg peak RSS:{RESET} {GREEN}ant{RESET} {avg_ant:.1f} MB vs {YELLOW}txiki.js{RESET} {avg_tjs:.1f} MB ➔ {YELLOW}txiki.js uses {ratio:.2f}x less{RESET}"
     else:
         mem_h2h = "N/A"
 
