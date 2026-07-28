@@ -3180,6 +3180,26 @@ ant_value_t js_arr_get(ant_t *js, ant_value_t arr, ant_offset_t idx) {
   return arr_get(js, arr, idx);
 }
 
+// Direct dense-element store for the VM element ops, so an `a[i] = v` on a
+// plain array does not have to build a string key first. Only the in-bounds
+// dense case is claimed here; anything the generic path treats specially
+// (proxies, exotic arrays such as `arguments`, frozen or non-extensible
+// arrays, sparse storage, appends that extend `length`) returns false so the
+// caller falls back to js_setprop.
+bool js_arr_try_fast_set(ant_t *js, ant_value_t arr, ant_offset_t idx, ant_value_t val) {
+  if (vtype(arr) != T_ARR || is_proxy(arr)) return false;
+
+  ant_object_t *ptr = js_obj_ptr(js_as_obj(arr));
+  if (!ptr || ptr->flags.is_exotic || ptr->flags.frozen || !ptr->flags.extensible) return false;
+
+  ant_offset_t doff = get_dense_buf(arr);
+  if (!doff || idx >= dense_iterable_length(js, arr)) return false;
+  if (is_empty_slot(dense_get(doff, idx))) return false;
+
+  dense_set(js, doff, idx, val);
+  return true;
+}
+
 static inline bool is_const_prop(ant_prop_loc_t loc) {
   if (!loc.obj || !loc.obj->shape) return false;
   uint8_t attrs = ant_shape_get_attrs(loc.obj->shape, loc.slot);
@@ -8712,6 +8732,39 @@ static ant_value_t object_define_property_coerced(
     }
   }
 
+  // Integer-indexed exotic elements live in the TypedArray backing store,
+  // not in the ordinary object shape (ES2026 10.4.5.1).
+  if (!sym_key && buffer_get_typedarray_data(as_obj)) {
+    TypedArrayData *ta_data = NULL;
+    size_t ta_index = 0;
+    bool is_index = buffer_typedarray_index_key(
+      as_obj, prop_str, prop_len, &ta_data, &ta_index
+    );
+
+    if (is_index || buffer_is_canonical_numeric_key(prop_str, prop_len)) {
+      if (!is_index || !buffer_typedarray_index_in_bounds(ta_data, ta_index))
+        return js_mkerr_typed(js, JS_ERR_TYPE,
+          "Cannot define property %.*s of an integer-indexed exotic object",
+          (int)prop_len, prop_str);
+
+      if (has_get || has_set ||
+          (has_configurable && !configurable) ||
+          (has_enumerable && !enumerable) ||
+          (has_writable && !writable))
+        return js_mkerr_typed(js, JS_ERR_TYPE,
+          "Cannot redefine property %.*s of an integer-indexed exotic object",
+          (int)prop_len, prop_str);
+
+      if (has_value) {
+        ant_value_t written = buffer_typedarray_data_write_index(
+          js, ta_data, ta_index, value
+        );
+        if (is_err(written)) return written;
+      }
+      return obj;
+    }
+  }
+
   if (!sym_key) array_materialize_dense_for_define(js, as_obj, prop_str, (size_t)prop_len);
 
   ant_prop_loc_t existing_off = sym_key
@@ -9665,6 +9718,27 @@ static ant_value_t builtin_object_getOwnPropertyDescriptor(ant_t *js, ant_value_
     key = js_mkstr(js, buf, n);
     ant_offset_t key_off = vstr(js, key, &key_len);
     key_str = (char *)(uintptr_t)(key_off);
+  }
+
+  // TypedArray elements are own properties stored outside the object shape.
+  if (!is_sym) {
+    TypedArrayData *ta_data = NULL;
+    size_t ta_index = 0;
+    if (buffer_typedarray_index_key(
+          obj, key_str, (size_t)key_len, &ta_data, &ta_index
+        )) {
+      ant_value_t element;
+      if (!buffer_typedarray_index_in_bounds(ta_data, ta_index) ||
+          !buffer_typedarray_data_read_index(js, ta_data, ta_index, &element))
+        return js_mkundef();
+
+      ant_value_t result = js_mkobj(js);
+      js_set_exact(js, result, "value", element);
+      js_setprop(js, result, js_mkstr(js, "writable", 8), js_true);
+      js_setprop(js, result, js_mkstr(js, "enumerable", 10), js_true);
+      js_setprop(js, result, js_mkstr(js, "configurable", 12), js_true);
+      return result;
+    }
   }
 
   ant_value_t string_exotic_value = js_mkundef();
@@ -16771,22 +16845,26 @@ static ant_value_t proxy_set_with_receiver(ant_t *js, ant_value_t proxy, const c
       if (is_err(result)) return result;
       if (js_truthy(js, result)) {
         ant_prop_loc_t prop_off = lkp(js, target, key, key_len);
-        if (prop_off.obj && proxy_target_prop_is_nonconfig(js, target, prop_off) &&
+
+        prop_meta_t meta;
+        bool has_meta = lookup_string_prop_meta(js, js_as_obj(target), key, key_len, &meta);
+        bool live_setter = has_meta && meta.has_setter && is_callable(meta.setter);
+
+        if (!live_setter && prop_off.obj &&
+            proxy_target_prop_is_nonconfig(js, target, prop_off) &&
             proxy_target_prop_is_const(js, target, prop_off)) {
           ant_value_t target_value = js_prop_load(prop_off);
           if (!strict_eq_values(js, value, target_value))
             return js_mkerr_typed(js, JS_ERR_TYPE, "'set' on proxy: trap returned truthy for non-configurable, non-writable property with different value");
         }
 
-        prop_meta_t meta;
-        bool has_meta = lookup_string_prop_meta(js, js_as_obj(target), key, key_len, &meta);
         if (has_meta && !meta.configurable) {
           if (!meta.has_getter && !meta.has_setter && !meta.writable && prop_off.obj) {
             ant_value_t target_value = js_prop_load(prop_off);
             if (!strict_eq_values(js, value, target_value))
               return js_mkerr_typed(js, JS_ERR_TYPE, "'set' on proxy: trap returned truthy for non-configurable, non-writable property with different value");
           }
-          if ((meta.has_getter || meta.has_setter) && !meta.has_setter)
+          if ((meta.has_getter || meta.has_setter) && !live_setter)
             return js_mkerr_typed(js, JS_ERR_TYPE, "'set' on proxy: trap returned truthy for property with undefined setter");
         }
       }

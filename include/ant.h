@@ -79,6 +79,7 @@ ant_value_t js_getprop_super(ant_t *js, ant_value_t super_obj, ant_value_t recei
 
 ant_offset_t js_arr_len(ant_t *js, ant_value_t arr);
 ant_value_t js_arr_get(ant_t *js, ant_value_t arr, ant_offset_t idx);
+bool js_arr_try_fast_set(ant_t *js, ant_value_t arr, ant_offset_t idx, ant_value_t val);
 
 bool js_iter(
   ant_t *js, 
