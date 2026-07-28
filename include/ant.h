@@ -37,8 +37,8 @@ if (!(cond)) {                                                              \
 #define js_false   (NANBOX_PREFIX | ((ant_value_t)T_BOOL << NANBOX_TYPE_SHIFT))
 #define js_bool(x) (js_false | (ant_value_t)!!(x))
 
-ant_t *js_create(void *buf, size_t len);
-ant_t *js_create_dynamic();
+// create a new ant isolate
+ant_t *ant_create();
 
 ant_value_t js_glob(ant_t *);
 void js_mark_constructor(ant_value_t value, bool is_constructor);
@@ -146,11 +146,11 @@ void js_set(ant_t *, ant_value_t, const char *, ant_value_t);
 void js_set_exact(ant_t *, ant_value_t, const char *, ant_value_t);
 void js_set_sym(ant_t *, ant_value_t obj, ant_value_t sym, ant_value_t val);
 void js_set_symbol(ant_t *, ant_value_t obj, const char *key, ant_value_t val);
-void js_saveval(ant_t *js, ant_offset_t off, ant_value_t v);
+void js_saveval(ant_t *, ant_offset_t off, ant_value_t v);
 void js_merge_obj(ant_t *, ant_value_t dst, ant_value_t src);
 void js_arr_push(ant_t *, ant_value_t arr, ant_value_t val);
-void js_set_proto(ant_value_t obj, ant_value_t proto);
-void js_set_proto_wb(ant_t *js, ant_value_t obj, ant_value_t proto);
+void js_set_proto(ant_t *, ant_value_t obj, ant_value_t proto);
+void js_set_proto_wb(ant_t *, ant_value_t obj, ant_value_t proto);
 void js_set_proto_init(ant_value_t obj, ant_value_t proto);
 
 ant_value_t js_propref_load(ant_t *js, ant_offset_t handle);
@@ -196,8 +196,8 @@ bool js_prop_iter_next_val(ant_iter_t *iter, ant_value_t *key_out, ant_value_t *
 bool js_is_own_enumerable_prop(ant_t *js, ant_value_t source, ant_object_t *source_ptr, const ant_iter_key_t *key);
 bool js_copy_exotic_own_props(ant_t *js, ant_value_t dst, ant_value_t src);
 
-ant_value_t js_obj_to_func(ant_value_t obj);
-ant_value_t js_obj_to_func_ex(ant_value_t obj, uint8_t flags);
+ant_value_t js_obj_to_func(ant_t *js, ant_value_t obj);
+ant_value_t js_obj_to_func_ex(ant_t *js, ant_value_t obj, uint8_t flags);
 
 ant_value_t js_mktypedarray(void *data);
 void *js_gettypedarray(ant_value_t val);

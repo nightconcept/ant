@@ -62,7 +62,7 @@ enum {
   SET_ITER_NATIVE_TAG = 0x53495452u  // SITR
 };
 
-void init_collections_module(void);
+void init_collections_module(ant_t *js);
 
 map_entry_t **get_map_from_obj(ant_value_t obj);
 set_entry_t **get_set_from_obj(ant_value_t obj);

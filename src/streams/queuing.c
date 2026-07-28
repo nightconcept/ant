@@ -2,7 +2,6 @@
 
 #include "ant.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 
@@ -82,11 +81,10 @@ static ant_value_t make_size_fn(ant_t *js, ant_cfunc_t cfunc, int length) {
   js_mkprop_fast(js, obj, "length", 6, js_mknum(length));
   js_set_descriptor(js, obj, "length", 6, 0);
   
-  return js_obj_to_func(obj);
+  return js_obj_to_func(js, obj);
 }
 
-void init_queuing_strategies_module(void) {
-  ant_t *js = rt->js;
+void init_queuing_strategies_module(ant_t *js) {
   ant_value_t g = js_glob(js);
 
   g_count_qs_proto = js_mkobj(js);

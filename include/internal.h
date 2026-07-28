@@ -54,23 +54,21 @@
 //   vdata(v)          = v & 0x7FFFFFFFFFFF
 //   is_tagged(v)      = v > PREFIX
 
-#define NANBOX_TYPE_MASK   0x1F
-#define NANBOX_TYPE_SHIFT  0x2F
-#define NANBOX_HEAP_OFFSET 0x8
-#define NANBOX_PREFIX      0xFFF0000000000000ULL
-#define NANBOX_DATA_MASK   0x00007FFFFFFFFFFFULL
+static constexpr uint64_t NANBOX_TYPE_MASK  = 0x1F;
+static constexpr uint64_t NANBOX_TYPE_SHIFT = 0x2F;
+static constexpr uint64_t NANBOX_PREFIX     = 0xFFF0000000000000;
+static constexpr uint64_t NANBOX_DATA_MASK  = 0x00007FFFFFFFFFFF;
 
-#define JS_ERR_NO_STACK  (1 << 8)
-#define JS_TPFLG(t)      (1u << (t))
+static constexpr uint32_t ANT_RUNTIME_WEB = 1u << 0;
+static constexpr uint32_t PROTO_WALK_F_OBJECT_ONLY = 1u << 0;
+static constexpr uint32_t PROTO_WALK_F_LOOKUP      = 1u << 1;
 
-#define ROPE_MAX_DEPTH        4096
-#define MAX_STRINGIFY_DEPTH   64
-#define MAX_PROTO_CHAIN_DEPTH 256
-#define MAX_MULTIREF_OBJS     128
-#define MAX_DENSE_INITIAL_CAP 8
-
-#define PROTO_WALK_F_OBJECT_ONLY (1u << 0)
-#define PROTO_WALK_F_LOOKUP      (1u << 1)
+static constexpr int JS_ERR_NO_STACK       = 1 << 8;
+static constexpr int ROPE_MAX_DEPTH        = 4096;
+static constexpr int MAX_STRINGIFY_DEPTH   = 64;
+static constexpr int MAX_PROTO_CHAIN_DEPTH = 256;
+static constexpr int MAX_MULTIREF_OBJS     = 128;
+static constexpr int MAX_DENSE_INITIAL_CAP = 8;
 
 enum: uint64_t {
   STR_META_ASCII_SHIFT = 56,
@@ -90,11 +88,18 @@ enum: uint64_t {
   STR_UTF16_LEN_UNKNOWN = STR_META_UTF16_MASK,
 };
 
-#define T_EMPTY                (NANBOX_PREFIX | ((ant_value_t)T_SENTINEL << NANBOX_TYPE_SHIFT) | 0xDEADULL)
-#define T_SPECIAL_OBJECT_MASK  (JS_TPFLG(T_OBJ)  | JS_TPFLG(T_ARR))
-#define T_NEEDS_PROTO_FALLBACK (JS_TPFLG(T_FUNC) | JS_TPFLG(T_ARR) | JS_TPFLG(T_PROMISE) | JS_TPFLG(T_GENERATOR))
-#define T_OBJECT_MASK          (JS_TPFLG(T_OBJ)  | JS_TPFLG(T_ARR) | JS_TPFLG(T_FUNC) | JS_TPFLG(T_PROMISE) | JS_TPFLG(T_GENERATOR))
-#define T_NON_NUMERIC_MASK     (JS_TPFLG(T_STR)  | JS_TPFLG(T_ARR) | JS_TPFLG(T_FUNC) | JS_TPFLG(T_CFUNC) | JS_TPFLG(T_OBJ) | JS_TPFLG(T_GENERATOR))
+#define T_FLAG_FIND(t) (1u << (t))
+#define T_MASK_HOLD ()
+#define T_MASK_EXPAND(...) T_MASK_E1(T_MASK_E1(T_MASK_E1(T_MASK_E1(__VA_ARGS__))))
+#define T_MASK_E1(...)     T_MASK_E2(T_MASK_E2(T_MASK_E2(T_MASK_E2(__VA_ARGS__))))
+#define T_MASK_E2(...)     __VA_ARGS__
+#define T_MASK_STEP(a, ...) \
+  T_FLAG_FIND(a) __VA_OPT__(| T_MASK_AGAIN T_MASK_HOLD (__VA_ARGS__))
+#define T_MASK_AGAIN() T_MASK_STEP
+#define T_MASK(...) (T_MASK_EXPAND(T_MASK_STEP(__VA_ARGS__)))
+
+#define ANT_SENTINEL(payload) \
+  (NANBOX_PREFIX | ((ant_value_t)T_SENTINEL << NANBOX_TYPE_SHIFT) | (payload))
 
 #define is_non_numeric(v)    ((1u << vtype(v)) & T_NON_NUMERIC_MASK)
 #define is_object_type(v)    ((1u << vtype(v)) & T_OBJECT_MASK)
@@ -134,6 +139,33 @@ enum {
   T_SENTINEL = NANBOX_TYPE_MASK
 };
 
+enum: uint32_t {
+  T_SPECIAL_OBJECT_MASK  = T_MASK(T_OBJ, T_ARR),
+  T_NEEDS_PROTO_FALLBACK = T_MASK(T_FUNC, T_ARR, T_PROMISE, T_GENERATOR),
+  T_OBJECT_MASK          = T_MASK(T_OBJ, T_ARR, T_FUNC, T_PROMISE, T_GENERATOR),
+  T_NON_NUMERIC_MASK     = T_MASK(T_STR, T_ARR, T_FUNC, T_CFUNC, T_OBJ, T_GENERATOR),
+};
+
+static_assert(T_MASK(T_OBJ) == T_FLAG_FIND(T_OBJ), "T_MASK single");
+
+static_assert(
+  T_NON_NUMERIC_MASK == (
+    T_FLAG_FIND(T_STR)   | 
+    T_FLAG_FIND(T_ARR)   | 
+    T_FLAG_FIND(T_FUNC)  | 
+    T_FLAG_FIND(T_CFUNC) |
+    T_FLAG_FIND(T_OBJ)   |
+    T_FLAG_FIND(T_GENERATOR)),
+  "T_MASK variadic expansion"
+);
+
+enum: ant_value_t {
+  T_EMPTY             = ANT_SENTINEL(0xDEADULL),  // empty slot / array hole / TDZ
+  SV_JIT_BAILOUT      = ANT_SENTINEL(0xBA110ULL), // JIT -> interpreter bailout
+  SV_AITER_ARRAY_TAG  = ANT_SENTINEL(0xFA1ULL),   // for-await plain-array mode
+  SV_AITER_AWAIT_MARK = ANT_SENTINEL(0xFA2ULL),   // for-await element await resume
+};
+
 typedef struct {
   const char *src;
   const char *filename;
@@ -145,11 +177,12 @@ typedef struct {
 
 struct ant_isolate_t {
   sv_vm_t *vm;
-  
+
   ant_module_t *module;
   ant_object_t *objects;
   ant_object_t *permanent_objects;
-  
+  ant_process_state_t *process_state;
+
   ant_fixed_arena_t obj_arena;
   ant_prop_ref_t *prop_refs;
 
@@ -159,7 +192,9 @@ struct ant_isolate_t {
   ant_value_t **c_roots;
   size_t c_root_count;
   size_t c_root_cap;
+  
   struct gc_temp_root_scope *temp_roots;
+  struct coroutine *retired_coroutines;
 
   const char *code;
   const char *filename;
@@ -168,6 +203,7 @@ struct ant_isolate_t {
   void *jit_ctx;
   #endif
   
+  ant_value_t Ant;
   ant_value_t global;
   ant_value_t this_val;
   ant_value_t new_target;
@@ -301,6 +337,14 @@ struct ant_isolate_t {
     uint32_t function_proto_epoch;
   } runtime_cache;
 
+  struct {
+    char **argv;
+    const char *ls_fp;
+    int argc;
+    int pid;
+    unsigned int flags;
+  } runtime;
+
   bool owns_mem;
   bool fatal_error;
   bool thrown_exists;
@@ -318,23 +362,23 @@ typedef struct {
   char bytes[];
 } ant_flat_string_t;
 
-_Static_assert(
+static_assert(
   sizeof(ant_flat_string_t) == 16,
   "flat string header must remain 16 bytes"
 );
 
-_Static_assert(
+static_assert(
   offsetof(ant_flat_string_t, bytes) == sizeof(ant_flat_string_t),
   "flat string bytes must follow packed metadata"
 );
 
-_Static_assert(
+static_assert(
   offsetof(ant_large_string_alloc_t, meta) - offsetof(ant_large_string_alloc_t, len) ==
     offsetof(ant_flat_string_t, meta),
   "large and pooled string metadata layouts must match"
 );
 
-_Static_assert(
+static_assert(
   offsetof(ant_large_string_alloc_t, bytes) - offsetof(ant_large_string_alloc_t, len) ==
     offsetof(ant_flat_string_t, bytes),
   "large and pooled string byte layouts must match"
@@ -483,7 +527,8 @@ ant_value_t js_create_arguments_object(ant_t *js, sv_vm_t *vm, ant_value_t calle
 
 void js_arguments_detach(ant_t *js, ant_value_t obj);
 void js_arguments_sync_slot(ant_t *js, ant_value_t obj, uint32_t idx, ant_value_t value);
-void js_arguments_rebind_frame(ant_t *js, ant_value_t obj, sv_vm_t *vm, int frame_index);
+void js_arguments_rebind_frame(ant_t *js, ant_value_t obj, int frame_index);
+void js_arguments_bind_direct(ant_t *js, ant_value_t obj, struct sv_frame *frame);
 
 ant_value_t coerce_to_str(ant_t *js, ant_value_t v);
 ant_value_t coerce_to_str_concat(ant_t *js, ant_value_t v);
@@ -807,7 +852,7 @@ static inline ant_value_t js_make_ctor(ant_t *js, ant_cfunc_t fn, ant_value_t pr
   js_mkprop_fast(js, obj, "name", 4, js_mkstr(js, name, nlen));
   js_set_descriptor(js, obj, "name", 4, 0);
 
-  ant_value_t fn_val = js_obj_to_func(obj);
+  ant_value_t fn_val = js_obj_to_func(js, obj);
   js_set(js, proto, "constructor", fn_val);
   js_set_descriptor(js, proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 

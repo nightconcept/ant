@@ -27,7 +27,6 @@
 
 #include "ant.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 #include "tty_ctrl.h"
@@ -53,6 +52,7 @@ typedef struct {
 } rl_history_t;
 
 typedef struct rl_interface {
+  ant_t *js;
   uint64_t id;
   ant_value_t input_stream;
   ant_value_t output_stream;
@@ -474,7 +474,7 @@ static void stop_reading(rl_interface_t *iface) {
     iface->sigint_watcher_active = false;
   }
 #endif
-  if (!has_active_readline_interfaces()) process_stdin_detach_reader();
+  if (!has_active_readline_interfaces()) process_stdin_detach_reader(iface->js);
 }
 
 static bool rl_has_event_listener(ant_t *js, rl_interface_t *iface, const char *event_type) {
@@ -579,8 +579,7 @@ static void process_byte(ant_t *js, rl_interface_t *iface, char c) {
   }
 }
 
-static void rl_feed_stdin_bytes(const char *buf, size_t len) {
-  ant_t *js = rt->js;
+static void rl_feed_stdin_bytes(ant_t *js, const char *buf, size_t len) {
   rl_interface_t *iface, *tmp;
 
   HASH_ITER(hh, interfaces, iface, tmp) {
@@ -592,8 +591,7 @@ static void rl_feed_stdin_bytes(const char *buf, size_t len) {
   }
 }
 
-static void rl_handle_stdin_eof(void) {
-  ant_t *js = rt->js;
+static void rl_handle_stdin_eof(ant_t *js) {
   rl_interface_t *iface, *tmp;
 
   HASH_ITER(hh, interfaces, iface, tmp) {
@@ -604,13 +602,13 @@ static void rl_handle_stdin_eof(void) {
 #ifndef _WIN32
 static void on_sigint(uv_signal_t *handle, int signum) {
   rl_interface_t *iface = (rl_interface_t *)handle->data;
-  ant_t *js = rt->js;
+  ant_t *js = iface->js;
 
   if (rl_has_event_listener(js, iface, "SIGINT")) {
     emit_event(js, iface, "SIGINT", NULL, 0);
-  } else if (process_has_event_listeners("SIGINT")) {
+  } else if (process_has_event_listeners(js, "SIGINT")) {
     ant_value_t sig_arg = js_mkstr(js, "SIGINT", 6);
-    emit_process_event("SIGINT", &sig_arg, 1);
+    emit_process_event(js, "SIGINT", &sig_arg, 1);
   } else {
     uv_signal_stop(handle);
     raise(SIGINT);
@@ -637,9 +635,9 @@ static void start_reading(rl_interface_t *iface) {
   }
 #endif
 
-  if (is_tty && iface->terminal) process_enable_keypress_events();
+  if (is_tty && iface->terminal) process_enable_keypress_events(iface->js);
   iface->reading = true;
-  process_stdin_attach_reader(rl_feed_stdin_bytes, rl_handle_stdin_eof);
+  process_stdin_attach_reader(iface->js, rl_feed_stdin_bytes, rl_handle_stdin_eof);
 }
 
 static rl_interface_t *get_interface(ant_t *js, ant_value_t this_obj) {
@@ -1071,7 +1069,7 @@ static ant_value_t rl_emit_keypress_events(ant_t *js, ant_value_t *args, int nar
       return js_mkerr(js, "emitKeypressEvents only supports process.stdin");
     }
   }
-  process_enable_keypress_events();
+  process_enable_keypress_events(js);
   return js_mkundef();
 }
 
@@ -1302,7 +1300,8 @@ static ant_value_t rl_create_interface(ant_t *js, ant_value_t *args, int nargs) 
   
   rl_interface_t *iface = calloc(1, sizeof(rl_interface_t));
   if (!iface) return js_mkerr(js, "out of memory");
-  
+
+  iface->js = js;
   iface->id = next_interface_id++;
   iface->prompt = strdup(DEFAULT_PROMPT);
   iface->active_prompt = NULL;

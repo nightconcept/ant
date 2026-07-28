@@ -1,7 +1,6 @@
 #include "ptr.h"
 #include "sugar.h"
 #include "shapes.h"
-#include "runtime.h"
 #include "internal.h"
 
 #include "silver/engine.h"
@@ -20,9 +19,6 @@
 #include <setjmp.h>
 #include <sys/time.h>
 #include <utarray.h>
-
-#define MCO_API extern
-#include <minicoro.h>
 
 #if defined(__has_feature)
 #if __has_feature(address_sanitizer)
@@ -426,14 +422,15 @@ while (gc_mark_sp > 0) {
   gc_scan_obj(js, obj);
 }}
 
-static void gc_scan_vm_stack(ant_t *js, sv_vm_t *vm) {
-  if (!vm) return;
+static void gc_scan_frame_span(
+  ant_t *js, ant_value_t *slots, int slot_count,
+  sv_frame_t *frames, int frame_count, sv_upvalue_t *open_upvalues
+) {
+  for (int i = 0; i < slot_count; i++)
+    gc_mark_value(js, slots[i]);
 
-  for (int i = 0; i < vm->sp; i++)
-    gc_mark_value(js, vm->stack[i]);
-
-  for (int f = 0; f <= vm->fp; f++) {
-    sv_frame_t *frame = &vm->frames[f];
+  for (int f = 0; f < frame_count; f++) {
+    sv_frame_t *frame = &frames[f];
     gc_mark_func(js, frame->func);
     gc_mark_value(js, frame->callee);
     gc_mark_value(js, frame->this);
@@ -445,13 +442,13 @@ static void gc_scan_vm_stack(ant_t *js, sv_vm_t *vm) {
     gc_mark_value(js, frame->eval_env);
   }
 
-  for (sv_upvalue_t *uv = vm->open_upvalues; uv; uv = uv->next) {
+  for (sv_upvalue_t *uv = open_upvalues; uv; uv = uv->next) {
     uv->gc_epoch = gc_epoch;
     if (uv->location == &uv->closed) gc_mark_value(js, uv->closed);
   }
 
-  for (int f = 0; f <= vm->fp; f++) {
-  sv_frame_t *frame = &vm->frames[f];
+  for (int f = 0; f < frame_count; f++) {
+  sv_frame_t *frame = &frames[f];
   if (!frame->upvalues) continue;
   for (int j = 0; j < frame->upvalue_count; j++) {
     sv_upvalue_t *uv = frame->upvalues[j];
@@ -459,6 +456,16 @@ static void gc_scan_vm_stack(ant_t *js, sv_vm_t *vm) {
     uv->gc_epoch = gc_epoch;
     if (uv->location == &uv->closed) gc_mark_value(js, uv->closed);
   }}
+}
+
+static void gc_scan_vm_stack(ant_t *js, sv_vm_t *vm) {
+  if (!vm) return;
+  gc_scan_frame_span(js, vm->stack, vm->sp, vm->frames, vm->fp + 1, vm->open_upvalues);
+}
+
+static void gc_scan_activation(ant_t *js, sv_activation_t *act) {
+  if (!act || act->frame_count <= 0) return;
+  gc_scan_frame_span(js, act->slots, act->stack_count, act->frames, act->frame_count, act->open_upvalues);
 }
 
 static void gc_scan_range(ant_t *js, uintptr_t lo, uintptr_t hi) {
@@ -496,57 +503,39 @@ __attribute__((noinline))
 static void gc_scan_current_stack(ant_t *js) {
   jmp_buf jb;
   if (setjmp(jb) != 0) return;
-  volatile uint8_t sp_marker = 0;
-
-  mco_coro *running = mco_running();
-  uintptr_t base;
   
-  if (running && running->stack_base && running->stack_size > 0) {
-    base = (uintptr_t)running->stack_base + running->stack_size;
-  } else base = (uintptr_t)js->cstk.base;
-
+  volatile uint8_t sp_marker = 0;
   uintptr_t lo, hi;
-  if (!gc_get_stack_bounds(base, (uintptr_t)&sp_marker, &lo, &hi)) return;
-  gc_scan_range(js, lo, hi);
-}
-
-static void gc_scan_mco_stack(ant_t *js, mco_coro *mco, mco_coro *skip) {
-  if (!mco || mco == skip) return;
-  if (!mco->stack_base || mco->stack_size == 0) return;
-  uintptr_t lo = (uintptr_t)mco->stack_base;
-  uintptr_t hi = lo + mco->stack_size;
+  
+  if (
+    !gc_get_stack_bounds((uintptr_t)js->cstk.base, 
+    (uintptr_t)&sp_marker, &lo, &hi)
+  ) return;
+  
   gc_scan_range(js, lo, hi);
 }
 
 static void gc_scan_other_stacks(ant_t *js) {
-  mco_coro *running = mco_running();
-
-  if (running) {
-    for (mco_coro *a = running->prev_co; a; a = a->prev_co)
-      gc_scan_mco_stack(js, a, running);
-  }
-
-  for (coroutine_t *c = pending_coroutines.head; c; c = c->next)
-    gc_scan_mco_stack(js, c->mco, running);
-
   if (js->cstk.main_base && js->cstk.main_lo) {
     uintptr_t lo, hi;
     if (gc_get_stack_bounds(
       (uintptr_t)js->cstk.main_base,
-      (uintptr_t)js->cstk.main_lo, &lo, &hi))
-      gc_scan_range(js, lo, hi);
+      (uintptr_t)js->cstk.main_lo, &lo, &hi)
+    ) gc_scan_range(js, lo, hi);
   }
 }
 
 static void gc_mark_coroutine(ant_t *js, coroutine_t *c) {
-  if (!c) return;
-  gc_scan_vm_stack(js, c->sv_vm ? c->sv_vm : c->owner_vm);
+  if (!c || c->gc_epoch == gc_epoch) return;
+  c->gc_epoch = gc_epoch;
+  
+  gc_scan_activation(js, c->act);
   gc_mark_value(js, c->this_val);
   gc_mark_value(js, c->async_func);
   gc_mark_value(js, c->async_promise);
   gc_mark_value(js, c->awaited_promise);
   gc_mark_value(js, c->result);
-  gc_mark_value(js, c->yield_value);
+  gc_mark_value(js, c->owner_gen);
   gc_mark_value(js, c->super_val);
   gc_mark_value(js, c->new_target);
   
@@ -587,10 +576,10 @@ static inline void gc_mark_promise_handlers(ant_t *js, ant_promise_state_t *pd) 
 static void gc_mark_roots(ant_t *js) {
   gc_scan_vm_stack(js, js->vm);
 
-  for (coroutine_t *c = pending_coroutines.head; c; c = c->next) gc_mark_coroutine(js, c);
   for (coroutine_t *c = js->active_async_coro; c; c = c->active_parent) gc_mark_coroutine(js, c);
 
   gc_mark_value(js, js->global);
+  gc_mark_value(js, js->Ant);
   gc_mark_value(js, js->sym.object_proto);
   gc_mark_value(js, js->sym.array_proto);
   gc_mark_value(js, js->this_val);
@@ -599,9 +588,6 @@ static void gc_mark_roots(ant_t *js) {
   gc_mark_value(js, js->thrown_value);
   gc_mark_value(js, js->thrown_stack);
   gc_mark_value(js, js->length_str);
-
-  if (rt && rt->js == js)
-    gc_mark_value(js, rt->ant_obj);
 
   for (ant_module_t *ctx = js->module; ctx; ctx = ctx->prev) {
     gc_mark_value(js, ctx->module_ns);

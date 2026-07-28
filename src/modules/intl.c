@@ -8,7 +8,6 @@
 
 #include "ant.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 
@@ -526,9 +525,7 @@ static ant_value_t intl_segmenter_constructor(ant_t *js, ant_value_t *args, int 
   return obj;
 }
 
-void init_intl_module(void) {
-  ant_t *js = rt->js;
-  
+void init_intl_module(ant_t *js) {
   ant_value_t global = js_glob(js);
   ant_value_t intl = js_mkobj(js);
   ant_value_t object_proto = js->sym.object_proto;

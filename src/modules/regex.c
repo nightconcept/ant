@@ -7,7 +7,6 @@
 #include "ant.h"
 #include "utf8.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "utils.h"
 #include "escape.h"
@@ -2833,8 +2832,7 @@ match_string_pattern:;
   return result;
 }
 
-void init_regex_module(void) {
-  ant_t *js = rt->js;
+void init_regex_module(ant_t *js) {
   regexp_register_static_roots();
   ant_value_t glob = js->global;
   ant_value_t object_proto = js->sym.object_proto;
@@ -2876,7 +2874,7 @@ void init_regex_module(void) {
   js_set_descriptor(js, regexp_ctor, "name", 4, 0);
   js_define_species_getter(js, regexp_ctor);
 
-  ant_value_t regexp_func = js_obj_to_func(regexp_ctor);
+  ant_value_t regexp_func = js_obj_to_func(js, regexp_ctor);
   regexp_ctor_value = regexp_func;
   js_setprop(js, regexp_proto, js_mkstr(js, "constructor", 11), regexp_func);
   js_set_descriptor(js, regexp_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);

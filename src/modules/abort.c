@@ -7,7 +7,6 @@
 #include "ptr.h"
 #include "errors.h"
 #include "internal.h"
-#include "runtime.h"
 #include "descriptors.h"
 
 #include "gc/modules.h"
@@ -428,8 +427,7 @@ static ant_value_t abort_controller_abort(ant_t *js, ant_value_t *args, int narg
   return js_mkundef();
 }
 
-void init_abort_module(void) {
-  ant_t *js = rt->js;
+void init_abort_module(ant_t *js) {
   ant_value_t global = js_glob(js);
 
   ant_value_t signal_proto = js_mkobj(js);
@@ -447,7 +445,7 @@ void init_abort_module(void) {
   js_mkprop_fast(js, signal_ctor, "name", 4, ANT_STRING("AbortSignal"));
   js_set_descriptor(js, signal_ctor, "name", 4, 0);
 
-  ant_value_t signal_fn = js_obj_to_func_ex(signal_ctor, SV_CALL_IS_DEFAULT_CTOR);
+  ant_value_t signal_fn = js_obj_to_func_ex(js, signal_ctor, SV_CALL_IS_DEFAULT_CTOR);
   js_set(js, signal_fn, "abort",   js_mkfun(abort_signal_static_abort));
   js_set(js, signal_fn, "timeout", js_mkfun(abort_signal_static_timeout));
   js_set(js, signal_fn, "any",     js_mkfun(abort_signal_static_any));
@@ -465,7 +463,7 @@ void init_abort_module(void) {
   js_mkprop_fast(js, ctrl_ctor, "name", 4, ANT_STRING("AbortController"));
   js_set_descriptor(js, ctrl_ctor, "name", 4, 0);
 
-  ant_value_t ctrl_fn = js_obj_to_func(ctrl_ctor);
+  ant_value_t ctrl_fn = js_obj_to_func(js, ctrl_ctor);
   js_set(js, ctrl_proto, "constructor", ctrl_fn);
   js_set_descriptor(js, ctrl_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 

@@ -5,7 +5,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "descriptors.h"
 #include "utf8.h"
@@ -433,8 +432,7 @@ static ant_value_t js_textdecoder_ctor(ant_t *js, ant_value_t *args, int nargs) 
   return obj;
 }
 
-void init_textcodec_module(void) {
-  ant_t *js = rt->js;
+void init_textcodec_module(ant_t *js) {
   ant_value_t g = js_glob(js);
 
   g_textencoder_proto = js_mkobj(js);

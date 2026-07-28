@@ -7,7 +7,6 @@
 #include "ant.h"
 #include "ptr.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 #include "common.h"
 #include "descriptors.h"
@@ -746,8 +745,7 @@ static ant_value_t response_init_common(
   return response_apply_body(js, resp_obj, headers, resp, body_val);
 }
 
-static ant_value_t response_new(bool immutable_headers) {
-  ant_t *js = rt->js;
+static ant_value_t response_new(ant_t *js, bool immutable_headers) {
   response_data_t *resp = data_new();
   
   ant_value_t obj = 0;
@@ -786,7 +784,7 @@ static ant_value_t js_response_ctor(ant_t *js, ant_value_t *args, int nargs) {
     return js_mkerr_typed(js, JS_ERR_TYPE, "Response constructor requires 'new'");
   }
 
-  obj = response_new(false);
+  obj = response_new(js, false);
   if (is_err(obj)) return obj;
 
   proto = js_instance_proto_from_new_target(js, g_response_proto);
@@ -804,7 +802,7 @@ static ant_value_t js_response_ctor(ant_t *js, ant_value_t *args, int nargs) {
 static ant_value_t response_create_static(
   ant_t *js, const char *type, int status, const char *status_text, bool immutable_headers
 ) {
-  ant_value_t obj = response_new(immutable_headers);
+  ant_value_t obj = response_new(js, immutable_headers);
   response_data_t *resp = NULL;
 
   if (is_err(obj)) return obj;
@@ -902,7 +900,7 @@ static ant_value_t js_response_json_static(ant_t *js, ant_value_t *args, int nar
     vtype(init) != T_UNDEF &&
     headers_init_has_name(js, js_get(js, init, "headers"), "content-type");
 
-  obj = response_new(false);
+  obj = response_new(js, false);
   if (is_err(obj)) return obj;
 
   step = response_init_common(js, obj, init, stringify, false);
@@ -1115,7 +1113,7 @@ ant_value_t response_create(
   const char *body_type,
   bool immutable_headers
 ) {
-  ant_value_t obj = response_new(immutable_headers);
+  ant_value_t obj = response_new(js, immutable_headers);
   ant_value_t headers = 0;
   response_data_t *resp = NULL;
 
@@ -1176,7 +1174,7 @@ ant_value_t response_create_fetched(
   ant_value_t body_stream,
   const char *body_type
 ) {
-  ant_value_t obj = response_new(true);
+  ant_value_t obj = response_new(js, true);
   ant_value_t headers = 0;
   response_data_t *resp = NULL;
   url_state_t parsed = {0};
@@ -1235,8 +1233,7 @@ ant_value_t response_create_fetched(
   return obj;
 }
 
-void init_response_module(void) {
-  ant_t *js = rt->js;
+void init_response_module(ant_t *js) {
   ant_value_t g = js_glob(js);
   ant_value_t ctor = 0;
 

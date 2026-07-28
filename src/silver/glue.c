@@ -690,8 +690,8 @@ ant_value_t jit_helper_export(
   return sv_module_export_to_ns(js, ns, str, (size_t)len, value);
 }
 
-static inline sv_upvalue_t *jit_make_undef_upvalue(void) {
-  sv_upvalue_t *uv = js_upvalue_alloc();
+static inline sv_upvalue_t *jit_make_undef_upvalue(ant_t *js) {
+  sv_upvalue_t *uv = js_upvalue_alloc(js);
   uv->closed = js_mkundef();
   uv->location = &uv->closed;
   return uv;
@@ -706,7 +706,7 @@ static sv_upvalue_t *jit_capture_upvalue(
   while (*pp && (*pp)->location > slot) pp = &(*pp)->next;
   if (*pp && (*pp)->location == slot) return *pp;
 
-  sv_upvalue_t *uv = js_upvalue_alloc();
+  sv_upvalue_t *uv = js_upvalue_alloc(vm->js);
   uv->location = slot;
   uv->next = *pp;
   *pp = uv;
@@ -798,7 +798,7 @@ ant_value_t jit_helper_closure(
     
     int idx = (int)desc->index - slot_base;
     if (!slots || idx < 0 || idx >= slot_count) {
-      closure->upvalues[i] = jit_make_undef_upvalue();
+      closure->upvalues[i] = jit_make_undef_upvalue(js);
       continue;
     }
     

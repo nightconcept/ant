@@ -9,7 +9,6 @@
 #include "numbers.h"
 #include "utf8.h"
 #include "errors.h"
-#include "runtime.h"
 #include "internal.h"
 
 #include "silver/engine.h"
@@ -1017,8 +1016,7 @@ ant_value_t json_stringify_value(ant_t *js, ant_value_t value) {
   return js_json_stringify(js, args, 1);
 }
 
-void init_json_module() {
-  ant_t *js = rt->js;
+void init_json_module(ant_t *js) {
   ant_value_t json_obj = js_mkobj(js);
   
   js_set(js, json_obj, "parse", js_mkfun(js_json_parse));
