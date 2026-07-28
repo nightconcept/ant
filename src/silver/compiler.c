@@ -2462,13 +2462,19 @@ void compile_expr(sv_compiler_t *c, sv_ast_t *node) {
     }
 
     case N_IMPORT:
-      compile_expr(c, node->right);
       if (has_module_import_binding(c)) {
         emit_get_module_import_binding(c);
-        emit_op(c, OP_SWAP);
+        compile_expr(c, node->right);
+        if (node->left) compile_expr(c, node->left);
+        else emit_op(c, OP_UNDEF);
         emit_op(c, OP_CALL);
-        emit_u16(c, 1);
-      } else emit_op(c, OP_IMPORT);
+        emit_u16(c, 2);
+      } else {
+        compile_expr(c, node->right);
+        if (node->left) compile_expr(c, node->left);
+        else emit_op(c, OP_UNDEF);
+        emit_op(c, OP_IMPORT);
+      }
       break;
 
     case N_REGEXP:
@@ -2949,7 +2955,7 @@ void compile_typeof(sv_compiler_t *c, sv_ast_t *node) {
     if (local != -1) {
       uint8_t inferred = get_local_inferred_type(c, local);
       const char *known = typeof_name_for_type(inferred);
-      if (known && c->with_depth == 0) {
+      if (known && c->with_depth == 0 && c->locals[local].is_const) {
         emit_constant(c, js_mkstr_permanent(c->js, known, strlen(known)));
         return;
       }
@@ -4919,6 +4925,7 @@ static bool fold_static_typeof_compare(
   sv_ast_t *ident = typeof_node->right;
   int local = resolve_local(c, ident->str, ident->len);
   if (local < 0) return false;
+  if (c->with_depth > 0 || !c->locals[local].is_const) return false;
   const char *known = typeof_name_for_type(get_local_inferred_type(c, local));
   if (!known) return false;
 
