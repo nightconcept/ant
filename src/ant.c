@@ -73,9 +73,9 @@
 
 #define D(x) ((double)(x))
 
-_Static_assert(sizeof(double) == 8, "NaN-boxing requires 64-bit IEEE 754 doubles");
-_Static_assert(sizeof(uint64_t) == 8, "NaN-boxing requires 64-bit integers");
-_Static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t must have same size");
+static_assert(sizeof(double) == 8, "NaN-boxing requires 64-bit IEEE 754 doubles");
+static_assert(sizeof(uint64_t) == 8, "NaN-boxing requires 64-bit integers");
+static_assert(sizeof(double) == sizeof(uint64_t), "double and uint64_t must have same size");
 
 #if defined(__STDC_IEC_559__) || defined(__GCC_IEC_559)
 #elif defined(__FAST_MATH__)
@@ -3544,7 +3544,7 @@ static inline bool proto_walk_next(ant_t *js, ant_value_t *cur, uint8_t *t, uint
     return true;
   }
 
-  if (JS_TPFLG(ct) & T_OBJECT_MASK) {
+  if (T_FLAG_FIND(ct) & T_OBJECT_MASK) {
     ant_value_t as_obj = js_as_obj(*cur);
     ant_value_t proto = get_slot(as_obj, SLOT_PROTO);
     
@@ -3555,7 +3555,7 @@ static inline bool proto_walk_next(ant_t *js, ant_value_t *cur, uint8_t *t, uint
       return true;
     }
     
-    if (JS_TPFLG(ct) & T_NEEDS_PROTO_FALLBACK) {
+    if (T_FLAG_FIND(ct) & T_NEEDS_PROTO_FALLBACK) {
       ant_value_t fallback = get_prototype_for_type(js, ct);
       uint8_t ft = vtype(fallback);
       if (ft == T_NULL || ft == T_UNDEF) return false;
