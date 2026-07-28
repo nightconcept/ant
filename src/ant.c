@@ -8693,8 +8693,43 @@ static ant_value_t object_define_property_coerced(
     return obj;
   }
   
-  ant_offset_t existing_off = sym_key 
-    ? lkp_sym(js, as_obj, sym_off) 
+  // An integer-indexed exotic object has no ordinary properties for its
+  // elements: a numeric index is written straight to the backing store, and a
+  // descriptor that could not describe an element is rejected outright
+  // (ES2026 10.4.5.1).
+  if (!sym_key && buffer_get_typedarray_data(as_obj)) {
+    TypedArrayData *ta_data = NULL;
+    size_t ta_index = 0;
+    bool is_index = buffer_typedarray_index_key(as_obj, prop_str, prop_len, &ta_data, &ta_index);
+
+    // A canonical numeric key that is not a valid index (`-0`, `-1`, `1.5`,
+    // an index past the end) names no element and cannot become an ordinary
+    // property either, so the define fails.
+    if (is_index || buffer_is_canonical_numeric_key(prop_str, prop_len)) {
+      if (!is_index || !buffer_typedarray_index_in_bounds(ta_data, ta_index))
+        return js_mkerr_typed(js, JS_ERR_TYPE,
+          "Cannot define property %.*s of an integer-indexed exotic object",
+          (int)prop_len, prop_str);
+
+      if (has_get || has_set ||
+          (has_configurable && !configurable) ||
+          (has_enumerable && !enumerable) ||
+          (has_writable && !writable))
+        return js_mkerr_typed(js, JS_ERR_TYPE,
+          "Cannot redefine property %.*s of an integer-indexed exotic object",
+          (int)prop_len, prop_str);
+
+      if (has_value) {
+        ant_value_t written = buffer_typedarray_data_write_index(js, ta_data, ta_index, value);
+        if (is_err(written)) return written;
+      }
+
+      return obj;
+    }
+  }
+
+  ant_offset_t existing_off = sym_key
+    ? lkp_sym(js, as_obj, sym_off)
     : lkp(js, as_obj, prop_str, prop_len);
   
   prop_meta_t existing_meta;
@@ -9610,6 +9645,29 @@ static ant_value_t builtin_object_getOwnPropertyDescriptor(ant_t *js, ant_value_
     key = js_mkstr(js, buf, n);
     ant_offset_t key_off = vstr(js, key, &key_len);
     key_str = (char *)(uintptr_t)(key_off);
+  }
+
+  // Elements of an integer-indexed exotic object are own properties even
+  // though they never appear in the shape, so their descriptors have to be
+  // reported from the backing store (ES2026 10.4.5.2).
+  if (!is_sym) {
+    TypedArrayData *ta_data = NULL;
+    size_t ta_index = 0;
+
+    if (buffer_typedarray_index_key(obj, key_str, (size_t)key_len, &ta_data, &ta_index)) {
+      ant_value_t element;
+      if (!buffer_typedarray_index_in_bounds(ta_data, ta_index) ||
+          !buffer_typedarray_data_read_index(js, ta_data, ta_index, &element))
+        return js_mkundef();
+
+      ant_value_t result = js_mkobj(js);
+      js_setprop(js, result, js_mkstr(js, "value", 5), element);
+      js_setprop(js, result, js_mkstr(js, "writable", 8), js_true);
+      js_setprop(js, result, js_mkstr(js, "enumerable", 10), js_true);
+      js_setprop(js, result, js_mkstr(js, "configurable", 12), js_true);
+
+      return result;
+    }
   }
 
   ant_value_t string_exotic_value = js_mkundef();
@@ -16653,22 +16711,33 @@ static ant_value_t proxy_set_with_receiver(ant_t *js, ant_value_t proxy, const c
       if (is_err(result)) return result;
       if (js_truthy(js, result)) {
         ant_offset_t prop_off = lkp(js, target, key, key_len);
-        if (prop_off != 0 && proxy_target_prop_is_nonconfig(js, target, prop_off) &&
+
+        prop_meta_t meta;
+        bool has_meta = lookup_string_prop_meta(js, js_as_obj(target), key, key_len, &meta);
+
+        // `has_setter` only records that the property is an accessor; the slot
+        // itself may still be undefined. A target property that can absorb the
+        // write imposes no constraint on the trap's result, so an actual
+        // callable setter has to be ruled out before the non-configurable,
+        // non-writable value check applies.
+        bool live_setter = has_meta && meta.has_setter &&
+          (vtype(meta.setter) == T_FUNC || vtype(meta.setter) == T_CFUNC);
+
+        if (!live_setter && prop_off != 0 &&
+            proxy_target_prop_is_nonconfig(js, target, prop_off) &&
             proxy_target_prop_is_const(js, target, prop_off)) {
           ant_value_t target_value = propref_load(js, prop_off);
           if (!strict_eq_values(js, value, target_value))
             return js_mkerr_typed(js, JS_ERR_TYPE, "'set' on proxy: trap returned truthy for non-configurable, non-writable property with different value");
         }
 
-        prop_meta_t meta;
-        bool has_meta = lookup_string_prop_meta(js, js_as_obj(target), key, key_len, &meta);
         if (has_meta && !meta.configurable) {
           if (!meta.has_getter && !meta.has_setter && !meta.writable && prop_off != 0) {
             ant_value_t target_value = propref_load(js, prop_off);
             if (!strict_eq_values(js, value, target_value))
               return js_mkerr_typed(js, JS_ERR_TYPE, "'set' on proxy: trap returned truthy for non-configurable, non-writable property with different value");
           }
-          if ((meta.has_getter || meta.has_setter) && !meta.has_setter)
+          if ((meta.has_getter || meta.has_setter) && !live_setter)
             return js_mkerr_typed(js, JS_ERR_TYPE, "'set' on proxy: trap returned truthy for property with undefined setter");
         }
       }

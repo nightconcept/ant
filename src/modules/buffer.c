@@ -11,6 +11,7 @@
 #include "errors.h"
 #include "base64.h"
 #include "internal.h"
+#include "numbers.h"
 #include "gc/roots.h"
 #include "descriptors.h"
 
@@ -588,19 +589,72 @@ static ant_value_t typedarray_write_value(ant_t *js, TypedArrayData *ta_data, si
   }
 }
 
-static ant_value_t typedarray_index_getter(ant_t *js, ant_value_t obj, const char *key, size_t key_len) {
-  if (key_len == 0 || key_len > 10) return js_mkundef();
-  
+ant_value_t buffer_typedarray_data_write_index(
+  ant_t *js, TypedArrayData *ta_data, size_t index, ant_value_t value
+) {
+  return typedarray_write_value(js, ta_data, index, value);
+}
+
+// Recognises the array-index form of a canonical numeric string: digits only,
+// no leading zero unless the key is exactly "0", and inside the uint32 range.
+// Other canonical numeric strings ("-1", "1.5") are not array indices and are
+// left to the caller.
+static bool typedarray_parse_index_key(const char *key, size_t key_len, size_t *out) {
+  if (!key || key_len == 0 || key_len > 10) return false;
+  if (key[0] == '0' && key_len > 1) return false;
+
   size_t index = 0;
   for (size_t i = 0; i < key_len; i++) {
     char c = key[i];
-    if (c < '0' || c > '9') return js_mkundef();
-    index = index * 10 + (c - '0');
+    if (c < '0' || c > '9') return false;
+    index = index * 10 + (size_t)(c - '0');
   }
-  
+
+  if (index > UINT32_MAX) return false;
+  *out = index;
+  return true;
+}
+
+bool buffer_typedarray_index_key(
+  ant_value_t obj, const char *key, size_t key_len,
+  TypedArrayData **ta_out, size_t *index_out
+) {
   TypedArrayData *ta_data = buffer_get_typedarray_data(obj);
-  if (!ta_data || index >= ta_data->length) return js_mkundef();
-  if (!ta_data->buffer || ta_data->buffer->is_detached) return js_mkundef();
+  if (!ta_data) return false;
+  if (!typedarray_parse_index_key(key, key_len, index_out)) return false;
+
+  if (ta_out) *ta_out = ta_data;
+  return true;
+}
+
+// CanonicalNumericIndexString (ES2026 7.1.21): a key that round-trips through
+// ToNumber/ToString names an element slot even when no such element exists,
+// so it must never be treated as an ordinary property key.
+bool buffer_is_canonical_numeric_key(const char *key, size_t key_len) {
+  if (!key || key_len == 0) return false;
+  if (key_len == 2 && key[0] == '-' && key[1] == '0') return true;
+
+  double parsed = 0;
+  size_t consumed = 0;
+  if (!ant_number_parse(key, key_len, ANT_NUMBER_PARSE_JS_NUMBER, &parsed, &consumed)) return false;
+  if (consumed != key_len) return false;
+
+  char round_trip[64];
+  size_t written = ant_number_to_shortest(parsed, round_trip, sizeof(round_trip));
+
+  return written == key_len && memcmp(round_trip, key, key_len) == 0;
+}
+
+bool buffer_typedarray_index_in_bounds(const TypedArrayData *ta_data, size_t index) {
+  return ta_data && ta_data->buffer && !ta_data->buffer->is_detached && index < ta_data->length;
+}
+
+static ant_value_t typedarray_index_getter(ant_t *js, ant_value_t obj, const char *key, size_t key_len) {
+  TypedArrayData *ta_data = NULL;
+  size_t index = 0;
+
+  if (!buffer_typedarray_index_key(obj, key, key_len, &ta_data, &index)) return js_mkundef();
+  if (!buffer_typedarray_index_in_bounds(ta_data, index)) return js_mkundef();
 
   ant_value_t value;
   if (!buffer_typedarray_data_read_index(js, ta_data, index, &value)) return js_mkundef();
@@ -608,18 +662,11 @@ static ant_value_t typedarray_index_getter(ant_t *js, ant_value_t obj, const cha
 }
 
 static bool typedarray_index_setter(ant_t *js, ant_value_t obj, const char *key, size_t key_len, ant_value_t value) {
-  if (key_len == 0 || key_len > 10) return false;
-  
+  TypedArrayData *ta_data = NULL;
   size_t index = 0;
-  for (size_t i = 0; i < key_len; i++) {
-    char c = key[i];
-    if (c < '0' || c > '9') return false;
-    index = index * 10 + (c - '0');
-  }
-  
-  TypedArrayData *ta_data = buffer_get_typedarray_data(obj);
-  if (!ta_data || index >= ta_data->length) return true;
-  if (!ta_data->buffer || ta_data->buffer->is_detached) return true;
+
+  if (!buffer_typedarray_index_key(obj, key, key_len, &ta_data, &index)) return false;
+  if (!buffer_typedarray_index_in_bounds(ta_data, index)) return true;
 
   return !is_err(typedarray_write_value(js, ta_data, index, value));
 }

@@ -87,6 +87,13 @@ bool buffer_is_binary_source(ant_value_t value);
 
 bool buffer_source_get_bytes(ant_t *js, ant_value_t value, const uint8_t **out, size_t *len);
 bool buffer_typedarray_data_read_index(ant_t *js, const TypedArrayData *ta_data, size_t index, ant_value_t *out);
+ant_value_t buffer_typedarray_data_write_index(ant_t *js, TypedArrayData *ta_data, size_t index, ant_value_t value);
+bool buffer_typedarray_index_key(
+  ant_value_t obj, const char *key, size_t key_len,
+  TypedArrayData **ta_out, size_t *index_out
+);
+bool buffer_typedarray_index_in_bounds(const TypedArrayData *ta_data, size_t index);
+bool buffer_is_canonical_numeric_key(const char *key, size_t key_len);
 bool buffer_typedarray_read_index(ant_t *js, ant_value_t value, size_t index, ant_value_t *out);
 
 #endif
