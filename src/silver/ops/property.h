@@ -5,6 +5,7 @@
 #include "gc.h"
 #include "utf8.h"
 
+#include "modules/buffer.h"
 #include "modules/regex.h"
 #include "silver/engine.h"
 
@@ -641,6 +642,72 @@ static inline ant_value_t sv_op_put_field(
   return out;
 }
 
+// A numeric element key only reaches the property machinery as the canonical
+// numeric string, so the ops below resolve it as an integer index first and
+// leave the string round-trip to the fallback path.
+static inline bool sv_elem_index_from_key(ant_value_t key, ant_offset_t *out) {
+  if (vtype(key) != T_NUM) return false;
+
+  double d = tod(key);
+  if (!(d >= 0) || d != (double)(uint32_t)d) return false;
+
+  *out = (ant_offset_t)(uint32_t)d;
+  return true;
+}
+
+// Integer-indexed exotic objects answer canonical numeric keys entirely from
+// the backing store: an index outside the bounds reads as undefined and is
+// never looked up on the prototype chain (ES2026 10.4.5.5).
+static inline bool sv_try_typedarray_elem_get(
+  ant_t *js, ant_value_t obj, ant_value_t key, ant_value_t *out
+) {
+  if (vtype(key) != T_NUM || !is_object_type(obj)) return false;
+
+  TypedArrayData *ta = buffer_get_typedarray_data(obj);
+  if (!ta) return false;
+
+  ant_offset_t idx;
+  if (!sv_elem_index_from_key(key, &idx) ||
+      !ta->buffer || ta->buffer->is_detached || (size_t)idx >= ta->length) {
+    *out = js_mkundef();
+    return true;
+  }
+
+  return buffer_typedarray_data_read_index(js, ta, (size_t)idx, out);
+}
+
+// The [[Set]] counterpart: a write to an out-of-bounds or non-canonical index
+// is discarded rather than defining an own property (ES2026 10.4.5.3).
+static inline bool sv_try_typedarray_elem_set(
+  ant_t *js, ant_value_t obj, ant_value_t key, ant_value_t val, ant_value_t *out
+) {
+  if (vtype(key) != T_NUM || !is_object_type(obj)) return false;
+
+  TypedArrayData *ta = buffer_get_typedarray_data(obj);
+  if (!ta) return false;
+
+  ant_offset_t idx;
+  if (!sv_elem_index_from_key(key, &idx)) {
+    *out = js_mkundef();
+    return true;
+  }
+
+  *out = buffer_typedarray_data_write_index(js, ta, (size_t)idx, val);
+  return true;
+}
+
+static inline bool sv_try_elem_fast_get(
+  ant_t *js, ant_value_t obj, ant_value_t key, ant_value_t *out
+) {
+  ant_offset_t idx;
+  if (vtype(obj) == T_ARR && sv_elem_index_from_key(key, &idx)) {
+    *out = js_arr_get(js, obj, idx);
+    return true;
+  }
+
+  return sv_try_typedarray_elem_get(js, obj, key, out);
+}
+
 static inline ant_value_t sv_op_get_elem(
   sv_vm_t *vm, ant_t *js,
   sv_func_t *func, uint8_t *ip
@@ -654,12 +721,11 @@ static inline ant_value_t sv_op_get_elem(
     return sv_mk_nullish_read_error_by_key(js, obj, key);
   }
 
-  if (vtype(obj) == T_ARR && vtype(key) == T_NUM) {
-    double d = tod(key);
-    if (d >= 0 && d == (uint32_t)d) {
-      vm->stack[vm->sp++] = js_arr_get(js, obj, (uint32_t)d);
-      return js_mkundef();
-    }
+  ant_value_t fast_elem = js_mkundef();
+  if (sv_try_elem_fast_get(js, obj, key, &fast_elem)) {
+    if (is_err(fast_elem)) return fast_elem;
+    vm->stack[vm->sp++] = fast_elem;
+    return js_mkundef();
   }
 
   ant_value_t str_elem = js_mkundef();
@@ -687,12 +753,11 @@ static inline ant_value_t sv_op_get_elem2(
     return sv_mk_nullish_read_error_by_key(js, obj, key);
   }
 
-  if (vtype(obj) == T_ARR && vtype(key) == T_NUM) {
-    double d = tod(key);
-    if (d >= 0 && d == (uint32_t)d) {
-      vm->stack[vm->sp++] = js_arr_get(js, obj, (uint32_t)d);
-      return js_mkundef();
-    }
+  ant_value_t fast_elem = js_mkundef();
+  if (sv_try_elem_fast_get(js, obj, key, &fast_elem)) {
+    if (is_err(fast_elem)) return fast_elem;
+    vm->stack[vm->sp++] = fast_elem;
+    return js_mkundef();
   }
 
   ant_value_t str_elem = js_mkundef();
@@ -711,6 +776,15 @@ static inline ant_value_t sv_op_put_elem(sv_vm_t *vm, ant_t *js) {
   ant_value_t val = vm->stack[--vm->sp];
   ant_value_t key = vm->stack[--vm->sp];
   ant_value_t obj = vm->stack[--vm->sp];
+
+  ant_offset_t idx;
+  if (sv_elem_index_from_key(key, &idx) && js_arr_try_fast_set(js, obj, idx, val))
+    return js_mkundef();
+
+  ant_value_t ta_res = js_mkundef();
+  if (sv_try_typedarray_elem_set(js, obj, key, val, &ta_res))
+    return is_err(ta_res) ? ta_res : js_mkundef();
+
   ant_value_t prop_key = sv_key_to_property_key(js, key);
   if (is_err(prop_key)) return prop_key;
   return js_setprop(js, obj, prop_key, val);

@@ -121,3 +121,27 @@ scheduled.
   - Impact: Web Streams byte-oriented consumers cannot rely on BYOB reader semantics, leaving an important platform feature gap for stream-heavy or browser-compatible code.
   - Proposed fix: Add real byte-source plumbing and implement `ReadableStreamBYOBReader` on top of it instead of routing byte sources through the default reader path.
   - Status: backlog
+
+- Area: Dense array index writes bypass property attributes
+  - Issue: The dense branch of `js_setprop_array_fast` (`src/ant.c`) stores straight into the element buffer whenever the index is inside the dense length, without consulting the property's attributes. `Object.freeze` and `Object.defineProperty` on an array index neither de-densify the array nor clear a flag, so a frozen array accepts writes, a non-writable index is overwritten, an accessor defined on an index is clobbered by the raw value, and a prototype setter for an unset index is shadowed by a new own data property. Node disagrees on all four. The VM-level fast path added alongside the typed-array work (`js_arr_try_fast_set`) deliberately routes exotic, frozen and non-extensible arrays to this same slow path, so it neither fixes nor widens the gap.
+  - Impact: Four spec deviations on ordinary arrays, silently producing wrong values rather than throwing. Not currently visible in tier 2/3 numbers.
+  - Proposed fix: Give the object a "plain elements" bit (the existing `flags.fast_array` is only set at allocation and growth, so it can be repurposed or joined by a sibling) and clear it in `Object.freeze`/`seal`/`preventExtensions` and in `defineProperty` when the key is an array index and the descriptor is not a plain writable/enumerable/configurable data descriptor. Both the dense branch and `js_arr_try_fast_set` then gate on that bit and de-opt to the general path once an array stops being plain.
+  - Status: backlog
+
+- Area: Typed array writes silently swallow a throwing coercion
+  - Issue: `typedarray_write_value` (`src/modules/buffer.c`) converts through `js_to_number`, which returns a raw `double` and has no error channel. When `ToNumber` runs a user `valueOf` that throws, the store still happens (writing NaN) and the exception escapes the surrounding `try`/`catch`, surfacing later as an uncaught error. Node throws at the assignment. The BigInt64/BigUint64 cases are unaffected because they go through `buffer_require_bigint_value`, which does return an error value.
+  - Impact: A throwing coercion during a typed-array element write is not catchable at the write site and corrupts the element. Pre-existing; unchanged by the integer-indexed fast path, which already propagates whatever `typedarray_write_value` returns.
+  - Proposed fix: Give `js_to_number` an error channel (an out-parameter, or an `ant_value_t` returning sibling used on paths that can observe user code) and have `typedarray_write_value` return the error instead of storing. This touches every `js_to_number` caller, so it belongs with a broader coercion-API change rather than a local patch.
+  - Status: backlog
+
+- Area: Typed array integer indices are invisible to key enumeration and `has`
+  - Issue: Element slots of an integer-indexed exotic object are own properties, but they live only in the backing store. `Object.getOwnPropertyDescriptor` now reports them (`builtin_object_getOwnPropertyDescriptor`), while `Object.keys` and `Reflect.has` do not: `Object.keys(new Float64Array(4))` returns the instance metadata names (`length`, `byteLength`, `byteOffset`, `BYTES_PER_ELEMENT`, `buffer`) instead of `["0","1","2","3"]`, and `Reflect.has(ta, "0")` is false. The metadata names should not be own enumerable properties of the instance at all.
+  - Impact: Enumeration, spread, and `in` over typed arrays disagree with the spec. Not covered by the tests that the integer-indexed element work fixed.
+  - Proposed fix: Give the typed-array object an `exotic_keys` implementation that yields the element indices, move the metadata names onto the prototype as accessors, and route `[[HasProperty]]` through the same canonical-index check that `buffer_typedarray_index_key` already provides.
+  - Status: backlog
+
+- Area: Non-canonical numeric string keys on typed arrays
+  - Issue: `buffer_typedarray_index_key` recognises only the array-index form (digits, no leading zero). Other canonical numeric strings reaching the exotic getter/setter as string keys — `"-1"`, `"1.5"`, `"1e21"` — are still treated as ordinary property keys, so `ta["1.5"] = 7` defines a real property instead of being discarded. The numeric-key paths (`ta[1.5]`) and `defineProperty` are correct, the latter via `buffer_is_canonical_numeric_key`.
+  - Impact: A narrow residual deviation: only string-literal non-index numeric keys, which are rare in practice.
+  - Proposed fix: Route the exotic getter/setter through `buffer_is_canonical_numeric_key` the way `builtin_object_defineProperty` does, returning undefined / discarding the write when the key is canonical numeric but not a valid index.
+  - Status: backlog
