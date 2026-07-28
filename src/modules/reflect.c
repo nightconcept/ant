@@ -60,12 +60,13 @@ static ant_value_t reflect_set(ant_t *js, ant_value_t *args, int nargs) {
   if (t != T_OBJ && t != T_ARR && t != T_FUNC) return js_false;
   
   if (vtype(key) != T_STR) return js_false;
-  
-  char *key_str = js_getstr(js, key, NULL);
-  if (!key_str) return js_false;
-  
-  js_set(js, target, key_str, value);
-  return js_true; 
+
+  // Ordinary [[Set]], not a bare own-property define: exotic receivers such as
+  // typed arrays and prototype-chain setters have to see the write.
+  ant_value_t result = js_setprop(js, target, key, value);
+  if (is_err(result)) return result;
+
+  return js_true;
 }
 
 static ant_value_t reflect_has(ant_t *js, ant_value_t *args, int nargs) {
