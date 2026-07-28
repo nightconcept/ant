@@ -160,6 +160,54 @@ compliance-diff-t3:
     python3 scripts/compliance_baseline.py diff .deps/compliance/logs/tier3-latest.json
 
 
+# Fetch upstream and report incoming commits plus which of our commits they collide with
+upstream-status branch="dev":
+    python3 scripts/sync_upstream.py status --branch {{branch}}
+
+# Three-way tier 3 comparison across a merge: pre-merge, merged (current tree), upstream standalone.
+# Run this from the sync branch. See docs/repo/upstream-sync.md.
+upstream-verify base="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    work=".deps/sync"
+    # Every run is measured against one pinned Test262 checkout - a fresh clone
+    # picks up new tests and reports corpus growth as merge regressions.
+    if [ ! -d .deps/compliance/test262 ]; then
+        echo "error: no Test262 checkout to pin. Run 'just compliance-t3' once first." >&2
+        exit 1
+    fi
+    for name in base upstream; do
+        git worktree remove --force "$work/$name" 2>/dev/null || true
+    done
+    rm -rf "$work"; mkdir -p "$work"
+
+    meson compile -C build
+    cp build/ant "$work/ant-merged"
+    # The upstream worktree has no compliance harness of its own - it is a
+    # fork-only addition - so every tier runs from this tree with the binary
+    # under test swapped in, and the merged binary restored afterwards.
+    restore() { cp "$work/ant-merged" build/ant 2>/dev/null || true; }
+    trap restore EXIT
+
+    echo "=== merged ($(git rev-parse --short HEAD)) ==="
+    python3 scripts/run_compliance.py --tier 3 --all --log-fail || true
+    cp .deps/compliance/logs/tier3-latest.json "$work/merged.json"
+
+    for spec in "base:{{base}}" "upstream:upstream/master"; do
+        name="${spec%%:*}"; rev="${spec#*:}"
+        echo "=== $name ($rev) ==="
+        python3 scripts/sync_upstream.py worktree "$work/$name" --rev "$rev"
+        meson setup "$work/$name/build" "$work/$name" >/dev/null
+        meson compile -C "$work/$name/build"
+        cp "$work/$name/build/ant" build/ant
+        python3 scripts/run_compliance.py --tier 3 --all --log-fail || true
+        cp .deps/compliance/logs/tier3-latest.json "$work/$name.json"
+    done
+    restore
+
+    python3 scripts/sync_upstream.py attribute \
+        "$work/base.json" "$work/merged.json" "$work/upstream.json"
+
 # Clean build directory
 clean:
     rm -rf build

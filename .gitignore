@@ -45,6 +45,10 @@ node_modules
 
 /vendor/*/
 /vendor/.wraplock
+# `/vendor/*/` only matches directories, so a symlinked packagecache - what
+# scripts/sync_upstream.py creates to share downloads with a sync worktree -
+# would otherwise be committable.
+/vendor/packagecache
 !/vendor/packagefiles
 
 *.todo

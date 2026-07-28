@@ -26,12 +26,11 @@ non-upstreamed commit).
 
 ## Fast Path
 
-- Start here for most changes: `just preflight`
+- Start here for most changes: `just preflight`; its steps individually are `just validate_changes`, `just structure`, `just knowledge`
 - Build from an existing configured tree: `meson compile -C build`
 - Fresh local setup: `just setup`
 - Run a focused test file: `./build/ant tests/test_<name>.cjs`
 - Run the spec suite: `./build/ant examples/spec/run.js --all`
-- Run the individual harness steps when needed: `just validate_changes`, `just structure`, `just knowledge`
 
 ## Codebase Map
 
@@ -81,6 +80,7 @@ guidance.
 - Runtime or subsystem question: [ARCHITECTURE.md](ARCHITECTURE.md)
 - Test selection or validation scope: [docs/repo/testing.md](docs/repo/testing.md)
 - Test262 / WPT / Node compat conformance work: [docs/repo/compliance.md](docs/repo/compliance.md)
+- Pulling in upstream (`theMackabu/ant`): [docs/repo/upstream-sync.md](docs/repo/upstream-sync.md)
 - Long-running or multi-step task: [docs/exec-plans/index.md](docs/exec-plans/index.md)
 
 ## Keep This File Small
