@@ -26,7 +26,7 @@ function runProxyBenchmark(iterations) {
 }
 
 const start = Date.now();
-const res = runProxyBenchmark(100000);
+const res = runProxyBenchmark(200000);
 const elapsed = Date.now() - start;
 
 console.log("ProxyTrap: result " + res + " in " + elapsed + "ms");

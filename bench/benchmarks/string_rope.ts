@@ -4,7 +4,7 @@ function runStringRope(): number {
     let totalLen = 0;
     const pieces: string[] = [];
 
-    for (let i = 0; i < 50000; i++) {
+    for (let i = 0; i < 500000; i++) {
         const token = "token_" + (i % 100) + "_" + (i * 17 % 9999);
         str += token;
         if (i % 500 === 0) {

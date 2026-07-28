@@ -39,7 +39,7 @@ function spectralNorm(n: number): number {
 }
 
 const start = Date.now();
-const result = spectralNorm(350);
+const result = spectralNorm(500);
 const elapsed = Date.now() - start;
 
 console.log("SpectralNorm: result " + result.toFixed(9) + " in " + elapsed + "ms");

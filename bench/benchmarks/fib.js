@@ -4,6 +4,7 @@ function fib(n) {
   return fib(n - 1) + fib(n - 2);
 }
 var start = Date.now();
-var result = fib(34);
+var N = 36;
+var result = fib(N);
 var elapsed = Date.now() - start;
-console.log(`Fibonacci(34) = ${result} (took ${elapsed}ms)`);
+console.log(`Fibonacci(${N}) = ${result} (took ${elapsed}ms)`);

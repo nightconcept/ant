@@ -25,7 +25,7 @@ function runGeneratorsBenchmark(iterations: number): number {
 }
 
 const start = Date.now();
-const result = runGeneratorsBenchmark(5000);
+const result = runGeneratorsBenchmark(7000);
 const elapsed = Date.now() - start;
 
 console.log("Generators: sum " + result + " in " + elapsed + "ms");

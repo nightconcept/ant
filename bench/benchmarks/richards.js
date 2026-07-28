@@ -48,7 +48,7 @@ function runRichards(iterations) {
 }
 
 const start = Date.now();
-const res = runRichards(25000);
+const res = runRichards(3250);
 const elapsed = Date.now() - start;
 
 console.log("Richards: processed " + res + " ops in " + elapsed + "ms");

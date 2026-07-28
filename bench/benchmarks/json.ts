@@ -19,7 +19,7 @@ function runJsonBench() {
   }
 
   let totalLength = 0;
-  for (let iter = 0; iter < 100; iter++) {
+  for (let iter = 0; iter < 40; iter++) {
     const jsonStr = JSON.stringify(items);
     const parsed = JSON.parse(jsonStr) as DataItem[];
     totalLength += parsed.length;

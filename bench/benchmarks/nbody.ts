@@ -79,7 +79,7 @@ function energy(bodies: Body[]): number {
 const bodies = initBodies();
 const start = Date.now();
 const e1 = energy(bodies);
-for (let n = 0; n < 300000; n++) {
+for (let n = 0; n < 75000; n++) {
     advance(bodies, 0.01);
 }
 const e2 = energy(bodies);

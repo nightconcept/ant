@@ -1,8 +1,18 @@
 // Regex DNA Sequence Processing Benchmark (from Computer Language Benchmarks Game & PyPerformance)
-function runRegexDNABenchmark() {
+//
+// Held at one round of 50000: this is the largest configuration Ant computes
+// correctly. Above it Ant silently drops characters and then throws
+// `TypeError: oom` - at SEQUENCE_LEN >= 70000 with one round, and at 50000
+// with three rounds. node/txiki.js/deno/bun all handle every size tried.
+// Growing this measures that bug rather than regex throughput; raise it only
+// once the underlying issue is fixed.
+const SEQUENCE_LEN = 50000;
+const ROUNDS = 1;
+
+function runRegexDNABenchmark(sequenceLen) {
     let dnaSequence = ">ONE Homo sapiens alu\n";
     const bases = ["agctntkbmrswyvhdAGCTNTKBMRSWYVHD", "GGCC", "AAAA", "TTTT", "CCCC"];
-    for (let i = 0; i < 2500; i++) {
+    for (let i = 0; i < sequenceLen; i++) {
         dnaSequence += bases[i % bases.length] + "\n";
     }
 
@@ -52,7 +62,10 @@ function runRegexDNABenchmark() {
 }
 
 const start = Date.now();
-const res = runRegexDNABenchmark();
+let res = 0;
+for (let round = 0; round < ROUNDS; round++) {
+    res += runRegexDNABenchmark(SEQUENCE_LEN);
+}
 const elapsed = Date.now() - start;
 
 console.log("RegexDNA: processed result " + res + " in " + elapsed + "ms");

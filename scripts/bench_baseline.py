@@ -68,6 +68,15 @@ DEFAULT_TIME_THRESHOLD = 5.0
 DEFAULT_RSS_THRESHOLD = 10.0
 DEFAULT_SIZE_THRESHOLD = 25.0
 
+# The fast tier runs 6 iterations instead of 10, so its means are noisier.
+# Measured on two back-to-back fast runs of identical code: median drift 2.4%,
+# p90 6.1%, worst 11.7% (gc_pressure - collection timing is inherently spiky).
+# At 5% that check would flag two or three benchmarks every single run and stop
+# meaning anything, so the fast tier gets a threshold matched to its own
+# precision. It catches breakage while iterating; the 5% gate lives on the full
+# run, which is what actually guards a merge.
+FAST_TIME_THRESHOLD = 12.0
+
 BOLD = "\033[1m"
 DIM = "\033[2m"
 RED = "\033[31m"
@@ -106,8 +115,15 @@ def pct(new: float, old: float) -> float:
 
 
 def ratio_to_reference(entry: dict, reference: str):
-    subject = metric(entry, "means", SUBJECT)
-    ref = metric(entry, "means", reference)
+    """Ant's time as a multiple of the reference runtime's.
+
+    Prefers `work` - the mean with that runtime's process startup subtracted -
+    because the runtimes' startup floors differ by 5x (Ant ~3.5ms, node ~18ms).
+    On a short benchmark the raw means make that gap look like a compute result.
+    Manifests written before `work` existed fall back to `means`.
+    """
+    subject = metric(entry, "work", SUBJECT) or metric(entry, "means", SUBJECT)
+    ref = metric(entry, "work", reference) or metric(entry, "means", reference)
     if subject is None or ref is None:
         return None
     return subject / ref
@@ -217,6 +233,18 @@ def cmd_update(args) -> int:
         print(f"error: refusing to baseline - {problem}.", file=sys.stderr)
         return 1
 
+    # A fast manifest holds a subset of the benchmarks and runtimes. Promoting
+    # it would shrink the baseline to that subset, and every benchmark it does
+    # not cover would then read as "new" on the next full run.
+    if manifest.get("tier", "full") != "full":
+        print(
+            f"error: refusing to baseline - this is a "
+            f"'{manifest.get('tier')}' tier run, which covers only part of the "
+            f"suite. Seed the baseline from a full run.",
+            file=sys.stderr,
+        )
+        return 1
+
     BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(BASELINE_PATH, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
@@ -266,10 +294,21 @@ def cmd_diff(args) -> int:
     removed = sorted(set(old) - set(new))
     shared = [n for n in new if n in old]
 
+    tier = manifest.get("tier", "full")
+    if args.threshold is None:
+        args.threshold = FAST_TIME_THRESHOLD if tier == "fast" else DEFAULT_TIME_THRESHOLD
+    if tier == "fast":
+        print(f"  {YELLOW}tier{RESET}     : fast - a subset of the suite at "
+              f"{args.threshold:.0f}% (its own noise floor). "
+              f"Gate on a full run before merging.")
+
     if added:
         print(f"\n{CYAN}new benchmarks{RESET} (no baseline yet): {', '.join(added)}")
     if removed:
-        print(f"{CYAN}missing from this run{RESET}: {', '.join(removed)}")
+        # A fast run legitimately skips most of the suite; calling that
+        # "missing" would read as something having gone wrong.
+        label = "not run in the fast tier" if tier == "fast" else "missing from this run"
+        print(f"{CYAN}{label}{RESET}: {', '.join(removed)}")
 
     if not shared:
         print(f"\n{YELLOW}Nothing comparable between the two runs.{RESET}")
@@ -427,8 +466,11 @@ def main() -> int:
 
     p = sub.add_parser("diff", help="Compare a manifest against the baseline")
     p.add_argument("manifest")
-    p.add_argument("--threshold", type=float, default=DEFAULT_TIME_THRESHOLD,
-                   help=f"Time regression threshold in %% (default: {DEFAULT_TIME_THRESHOLD})")
+    # Default resolved in cmd_diff: it depends on the manifest's tier, which is
+    # not known until the file is read.
+    p.add_argument("--threshold", type=float, default=None,
+                   help=f"Time regression threshold in %% (default: "
+                        f"{DEFAULT_TIME_THRESHOLD} full, {FAST_TIME_THRESHOLD} fast)")
     p.add_argument("--rss-threshold", type=float, default=DEFAULT_RSS_THRESHOLD,
                    help=f"Peak RSS regression threshold in %% (default: {DEFAULT_RSS_THRESHOLD})")
     p.add_argument("--size-threshold", type=float, default=DEFAULT_SIZE_THRESHOLD,

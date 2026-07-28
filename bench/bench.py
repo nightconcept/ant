@@ -8,6 +8,7 @@ import shutil
 import platform
 import zipfile
 import subprocess
+import time
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,24 +19,34 @@ BENCH_DIR = ROOT_DIR / "benchmarks"
 MANIFEST_PATH = ROOT_DIR / "versions.json"
 
 BENCHMARKS = [
+    # tier "fast" entries run in `--fast`; everything runs in the full suite.
+    # "runtimes" restricts a benchmark to a subset (used by the Ant-only group,
+    # where no portable cross-runtime API exists).
     {
         "id": "fib",
         "name": "Fibonacci Recursion",
-        "desc": "Recursive computation fib(34) - CPU & recursion overhead",
+        "desc": "Recursive computation fib(36) - CPU & recursion overhead",
+        # Full tier only: txiki.js takes ~1.2s here, four times Ant, making this
+        # the most expensive entry in the fast tier by a wide margin. Call and
+        # dispatch overhead is still covered per-iteration by richards and
+        # class_dispatch, on more realistic code than bare recursion.
+        "tier": "full",
         "ts": "fib.ts",
         "js": "fib.js"
     },
     {
         "id": "json",
         "name": "JSON Serialization",
-        "desc": "100 iterations of stringifying & parsing 5,000 objects",
+        "desc": "40 iterations of stringifying & parsing 5,000 objects",
+        "tier": "fast",
         "ts": "json.ts",
         "js": "json.js"
     },
     {
         "id": "string",
         "name": "String Manipulations",
-        "desc": "Regex replace, upper-case, split & join (50 iterations)",
+        "desc": "Case, split, join & slice over a 220KB string (50 passes)",
+        "tier": "fast",
         "ts": "string.ts",
         "js": "string.js"
     },
@@ -43,13 +54,15 @@ BENCHMARKS = [
         "id": "array",
         "name": "Array Operations",
         "desc": "Filter, map, sort & reduce on 100k items (10 passes)",
+        "tier": "fast",
         "ts": "array.ts",
         "js": "array.js"
     },
     {
         "id": "async",
         "name": "Async & Microtasks",
-        "desc": "500 concurrent async promise chains (100 steps each)",
+        "desc": "2,000 concurrent async promise chains (100 steps each)",
+        "tier": "fast",
         "ts": "async.ts",
         "js": "async.js"
     },
@@ -57,6 +70,7 @@ BENCHMARKS = [
         "id": "coldstart",
         "name": "Cold Start (Hono App)",
         "desc": "Import Hono router, register routes & exit - module init overhead",
+        "tier": "fast",
         "ts": "coldstart.js",
         "js": "coldstart.js"
     },
@@ -64,48 +78,113 @@ BENCHMARKS = [
         "id": "object_graph",
         "name": "Object Graph & AST",
         "desc": "150k AST object nodes creation, linking & traversal - heap & GC overhead",
+        "tier": "fast",
         "ts": "object_graph.ts",
         "js": "object_graph.js"
     },
     {
         "id": "string_rope",
         "name": "Rope String Concatenation",
-        "desc": "50k high-frequency string concatenations, slicing & indexOf search",
+        "desc": "500k high-frequency string concatenations, slicing & indexOf search",
+        "tier": "fast",
         "ts": "string_rope.ts",
         "js": "string_rope.js"
     },
     {
-        "id": "ic_polymorphic",
-        "name": "Polymorphic IC Lookup",
-        "desc": "Property accesses across 4 object shapes in a hot loop (500 passes)",
-        "ts": "ic_polymorphic.ts",
-        "js": "ic_polymorphic.js"
+        "id": "map_set",
+        "name": "Map & Set Collections",
+        "desc": "Insert, lookup, delete & iterate over Map/Set (20k keys, 9 passes)",
+        "tier": "fast",
+        "ts": "map_set.ts",
+        "js": "map_set.js"
+    },
+    {
+        "id": "class_dispatch",
+        "name": "Class & Megamorphic Dispatch",
+        "desc": "super chains, accessors & 4-shape megamorphic call sites (14 passes)",
+        "tier": "fast",
+        "ts": "class_dispatch.ts",
+        "js": "class_dispatch.js"
+    },
+    {
+        "id": "exceptions",
+        "name": "Exception Unwinding",
+        "desc": "15k throw/catch cycles across call depth, with stack capture",
+        "tier": "fast",
+        "ts": "exceptions.ts",
+        "js": "exceptions.js"
+    },
+    {
+        "id": "gc_pressure",
+        "name": "GC Pressure & Promotion",
+        "desc": "40k long-lived objects churned against 20k short-lived per pass",
+        "tier": "fast",
+        "ts": "gc_pressure.ts",
+        "js": "gc_pressure.js"
+    },
+    {
+        "id": "stream_pipe",
+        "name": "Web Streams Pipeline",
+        "desc": "ReadableStream -> 2x TransformStream -> reader (16 rounds x 200 chunks)",
+        "tier": "fast",
+        "ts": "stream_pipe.ts",
+        "js": "stream_pipe.js"
+    },
+    {
+        "id": "richards",
+        "name": "Richards OS Simulation",
+        "desc": "OS task queue simulation - OOP method dispatch & state machine",
+        "tier": "fast",
+        "ts": "richards.ts",
+        "js": "richards.js"
+    },
+    {
+        "id": "solo_http",
+        "name": "HTTP Server Round-Trip",
+        "desc": "1,800 in-process fetch round-trips against Ant.serve (Ant only)",
+        "tier": "fast",
+        "runtimes": ["ant"],
+        "ts": "solo_http.js",
+        "js": "solo_http.js"
+    },
+    {
+        "id": "solo_fs",
+        "name": "Filesystem Churn",
+        "desc": "write/stat/read/append/rename/unlink over 600 files x 8 passes (Ant only)",
+        "tier": "fast",
+        "runtimes": ["ant"],
+        "ts": "solo_fs.js",
+        "js": "solo_fs.js"
+    },
+    {
+        "id": "closures",
+        "name": "Closures & Upvalues",
+        "desc": "Escaping closures, shared captures & deep composition (3,000 passes)",
+        "tier": "full",
+        "ts": "closures.ts",
+        "js": "closures.js"
     },
     {
         "id": "proxy_trap",
         "name": "Proxy Trap Interception",
-        "desc": "100k property get/set intercept traps via ES6 Proxy handler",
+        "desc": "200k property get/set intercept traps via ES6 Proxy handler",
+        "tier": "full",
         "ts": "proxy_trap.ts",
         "js": "proxy_trap.js"
     },
     {
-        "id": "typedarray_matrix",
-        "name": "TypedArray Compute",
-        "desc": "20 passes of vector math over Float64Array(100k) elements",
-        "ts": "typedarray_matrix.ts",
-        "js": "typedarray_matrix.js"
-    },
-    {
         "id": "text_codec",
         "name": "TextEncoder/Decoder UTF-8",
-        "desc": "50 iterations of UTF-8 encoding/decoding multi-MB Unicode strings",
+        "desc": "300 iterations of UTF-8 encoding/decoding multi-MB Unicode strings",
+        "tier": "full",
         "ts": "text_codec.ts",
         "js": "text_codec.js"
     },
     {
         "id": "nbody",
         "name": "N-Body Simulation",
-        "desc": "3D celestial physics simulation (300k steps) - float math & loops",
+        "desc": "3D celestial physics simulation (75k steps) - float math & loops",
+        "tier": "full",
         "ts": "nbody.ts",
         "js": "nbody.js"
     },
@@ -113,27 +192,23 @@ BENCHMARKS = [
         "id": "fannkuch",
         "name": "Fannkuch-Redux",
         "desc": "Indexed array permutation & flip reversal (N=9)",
+        "tier": "full",
         "ts": "fannkuch.ts",
         "js": "fannkuch.js"
     },
     {
         "id": "spectral_norm",
         "name": "Spectral Norm",
-        "desc": "Eigenvalue spectral norm matrix calculation (N=350)",
+        "desc": "Eigenvalue spectral norm matrix calculation (N=500)",
+        "tier": "full",
         "ts": "spectral_norm.ts",
         "js": "spectral_norm.js"
-    },
-    {
-        "id": "richards",
-        "name": "Richards OS Simulation",
-        "desc": "OS task queue simulation - OOP method dispatch & state machine",
-        "ts": "richards.ts",
-        "js": "richards.js"
     },
     {
         "id": "deltablue",
         "name": "DeltaBlue Constraint Solver",
         "desc": "Constraint graph solver - dynamic type checks & graph mutation",
+        "tier": "full",
         "ts": "deltablue.ts",
         "js": "deltablue.js"
     },
@@ -141,13 +216,15 @@ BENCHMARKS = [
         "id": "heapsort",
         "name": "HeapSort Array Sort",
         "desc": "In-place HeapSort over 150k elements - non-sequential memory swaps",
+        "tier": "full",
         "ts": "heapsort.ts",
         "js": "heapsort.js"
     },
     {
         "id": "generators",
         "name": "Generators & Iterators",
-        "desc": "5k delegating generator invocations (yield*) & iteration protocol",
+        "desc": "7k delegating generator invocations (yield*) & iteration protocol",
+        "tier": "full",
         "ts": "generators.ts",
         "js": "generators.js"
     },
@@ -155,6 +232,7 @@ BENCHMARKS = [
         "id": "regex_dna",
         "name": "Regex DNA Processing",
         "desc": "DNA sequence pattern matching, capturing & IUPAC replacements",
+        "tier": "full",
         "ts": "regex_dna.ts",
         "js": "regex_dna.js"
     }
@@ -170,6 +248,9 @@ BOLD = "\033[1m"
 DIM = "\033[2m"
 RESET = "\033[0m"
 
+# "fast" runtimes are the ones `--fast` keeps: Ant, the reference (node) that
+# the ratio in scripts/bench_baseline.py divides machine noise out against, and
+# txiki.js as the closest-peer small runtime. Deno and Bun are full-suite only.
 RUNTIMES = [
     {
         "id": "ant",
@@ -177,6 +258,7 @@ RUNTIMES = [
         "repo": "themackabu/ant",
         "color": GREEN,
         "ts_file": True,
+        "fast": True,
         "args": []
     },
     {
@@ -185,6 +267,7 @@ RUNTIMES = [
         "repo": "saghul/txiki.js",
         "color": YELLOW,
         "ts_file": False,
+        "fast": True,
         "args": ["run"]
     },
     {
@@ -193,6 +276,7 @@ RUNTIMES = [
         "repo": "nodejs/node",
         "color": BLUE,
         "ts_file": False,
+        "fast": True,
         "args": []
     },
     {
@@ -201,7 +285,10 @@ RUNTIMES = [
         "repo": "denoland/deno",
         "color": MAGENTA,
         "ts_file": True,
-        "args": ["run"]
+        "fast": False,
+        # --allow-env so a benchmark reading process.env does not die on a
+        # permission prompt; Deno throws where the other four return undefined.
+        "args": ["run", "--allow-env"]
     },
     {
         "id": "bun",
@@ -209,9 +296,15 @@ RUNTIMES = [
         "repo": "oven-sh/bun",
         "color": CYAN,
         "ts_file": True,
+        "fast": False,
         "args": ["run"]
     }
 ]
+
+# Wall-clock ceiling for a single benchmark's hyperfine invocation. A hung
+# benchmark used to block the suite forever - fannkuch did exactly that, on
+# every runtime at once - because hyperfine has no timeout of its own.
+HYPERFINE_TIMEOUT_S = 300
 
 def strip_ansi(text: str) -> str:
     return re.sub(r'\x1b\[[0-9;]*m', '', text)
@@ -569,6 +662,59 @@ def measure_peak_rss(cmd: list) -> float:
             pass
     return 0.0
 
+def measure_startup_floor(bin_map: dict, runtimes: list, samples: int = 12) -> dict:
+    """Median wall time for each runtime to start and exit on a trivial script.
+
+    Every benchmark's wall time includes this constant. Without subtracting it,
+    a benchmark whose real work is a few milliseconds reports mostly process
+    startup: measured floors run from ~4ms (Ant) to ~18ms (node), so a 3ms
+    workload was being published as a compute ratio when it was a startup
+    ratio. Reported separately as a metric in its own right, too - Ant starting
+    in a quarter of node's time is a genuine result.
+    """
+    # Written into BENCH_DIR, not the bench root: module resolution walks the
+    # directory tree, so a floor measured elsewhere would not match what the
+    # real benchmarks pay.
+    probe = BENCH_DIR / "temp_startup_probe.js"
+    probe.write_text("const x = 1;\n")
+    floors = {}
+    try:
+        for r in runtimes:
+            bin_p = bin_map.get(r["id"])
+            if not bin_p or not Path(bin_p).exists():
+                continue
+            cmd = [str(bin_p)] + r["args"] + [str(probe)]
+
+            # Liveness check, bounded. The timed samples below deliberately run
+            # without a timeout: subprocess.run(timeout=...) makes Popen.wait
+            # poll with exponential backoff (0.5ms doubling to 50ms), which
+            # roughly doubles the measured time for a process this short - node
+            # reads 32ms timed against 16ms untimed. One bounded run proves the
+            # runtime exits; after that, accuracy wins.
+            try:
+                if subprocess.run(cmd, stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL, timeout=30).returncode != 0:
+                    continue
+            except (subprocess.TimeoutExpired, OSError):
+                continue
+
+            times = []
+            for _ in range(samples):
+                t0 = time.perf_counter()
+                try:
+                    subprocess.run(cmd, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL)
+                except OSError:
+                    times = []
+                    break
+                times.append((time.perf_counter() - t0) * 1000.0)
+            if times:
+                times.sort()
+                floors[r["id"]] = times[len(times) // 2]
+    finally:
+        probe.unlink(missing_ok=True)
+    return floors
+
 def get_hyperfine_base_cmd():
     local_hf = BIN_DIR / "hyperfine"
     if local_hf.exists() and local_hf.is_file():
@@ -583,26 +729,46 @@ def get_hyperfine_base_cmd():
         return [str(mise_installs[0])]
     return ["hyperfine"]
 
-def run_hyperfine(cmds_map: dict) -> dict:
+def run_hyperfine(cmds_map: dict, warmup: int = 2, runs: int = 10) -> dict:
     temp_json = ROOT_DIR / "temp_hyperfine.json"
     r_order = list(cmds_map.keys())
     cmd_strs = [" ".join(str(c) for c in cmds_map[r_id]) for r_id in r_order]
 
     base_cmd = get_hyperfine_base_cmd()
     cmd = base_cmd + [
-        "--warmup", "2",
-        "--runs", "10",
+        "--warmup", str(warmup),
+        "--runs", str(runs),
         "--export-json", str(temp_json),
     ] + cmd_strs
 
+    # Every subprocess.run below is bounded: a benchmark that never terminates
+    # must fail this one entry, not wedge the suite.
+    def _run(c):
+        return subprocess.run(
+            c, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=HYPERFINE_TIMEOUT_S,
+        )
+
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        proc = _run(cmd)
         if proc.returncode != 0 and base_cmd[0] != "mise":
             cmd = ["mise", "exec", "--"] + cmd
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            _run(cmd)
     except FileNotFoundError:
         cmd = ["mise", "exec", "--"] + cmd
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            _run(cmd)
+        except subprocess.TimeoutExpired:
+            temp_json.unlink(missing_ok=True)
+            return {}
+    except subprocess.TimeoutExpired:
+        print(
+            f"  {YELLOW}timed out after {HYPERFINE_TIMEOUT_S}s - reported as "
+            f"failed, continuing{RESET}",
+            flush=True,
+        )
+        temp_json.unlink(missing_ok=True)
+        return {}
 
     res_by_id = {}
     if temp_json.exists():
@@ -635,6 +801,37 @@ def draw_header_box(versions: dict, width=96) -> str:
         box.append("║  " + pad_cell(l, width - 6, "center") + "  ║")
     box.append("╚" + "═" * (width - 2) + "╝")
     return "\n".join(box)
+
+def draw_startup_floor_box(floors: dict, runtimes: list, width=96) -> str:
+    lines = [
+        f"{BOLD}{MAGENTA}PROCESS STARTUP FLOOR{RESET}",
+        "─" * (width - 6),
+        f"{BOLD}{pad_cell('Runtime', 14)} {pad_cell('Median startup', 20, 'right')} "
+        f"{pad_cell('vs fastest', 16, 'right')}{RESET}",
+        "─" * (width - 6),
+    ]
+
+    present = [r for r in runtimes if r["id"] in floors]
+    if not present:
+        return "\n".join(lines + ["  (unavailable)", "─" * (width - 6)])
+
+    best = min(floors[r["id"]] for r in present)
+    for r in sorted(present, key=lambda r: floors[r["id"]]):
+        ms = floors[r["id"]]
+        rel = "fastest" if ms <= best else f"{ms / best:.2f}x"
+        name_col = f"{r['color']}{pad_cell(r['name'], 14)}{RESET}"
+        lines.append(
+            f"{name_col} {pad_cell(f'{ms:.2f} ms', 20, 'right')} "
+            f"{pad_cell(rel, 16, 'right')}"
+        )
+
+    lines.append("─" * (width - 6))
+    lines.append(
+        f"{DIM}  Subtracted from every mean below to give work time - without it a"
+        f" few-ms{RESET}"
+    )
+    lines.append(f"{DIM}  benchmark reports mostly process startup.{RESET}")
+    return "\n".join(lines)
 
 def draw_binary_size_box(bin_map: dict, width=96) -> str:
     lines = [
@@ -684,31 +881,42 @@ def draw_binary_size_box(bin_map: dict, width=96) -> str:
     box.append("└" + "─" * (width - 2) + "┘")
     return "\n".join(box)
 
-def draw_benchmark_box(bench_info: dict, bench_results: dict, rss_map: dict, width=96) -> str:
+def draw_benchmark_box(bench_info: dict, bench_results: dict, rss_map: dict,
+                       startup_floor: dict | None = None, width=96) -> str:
     b_name = f"{BOLD}{CYAN}{bench_info['name']}{RESET}"
     b_desc = f"{DIM}{bench_info['desc']}{RESET}"
+    floors = startup_floor or {}
 
     lines = [
         f"{b_name} - {b_desc}",
         "─" * (width - 6),
-        f"{BOLD}Runtime          Mean Time (ms)      Min..Max (ms)       Peak RSS{RESET}",
+        f"{BOLD}Runtime          Mean Time (ms)        Work (ms)       Peak RSS{RESET}",
         "─" * (width - 6),
     ]
 
+    # Only runtimes that actually ran this benchmark: the fast tier drops two,
+    # and the Ant-only group drops four. Printing 0.00 for the rest reads as a
+    # result of zero rather than "not run".
     r_means = {}
     for r in RUNTIMES:
         r_id = r["id"]
+        if r_id not in rss_map:
+            continue
         res = bench_results.get(r_id, {})
         mean = res.get("mean", 0.0) * 1000.0
         stddev = res.get("stddev", 0.0) * 1000.0
-        min_t = res.get("min", 0.0) * 1000.0
-        max_t = res.get("max", 0.0) * 1000.0
         rss = rss_map.get(r_id, 0.0)
         r_means[r_id] = mean
 
+        # Work time strips this runtime's process startup out of the mean, so a
+        # short benchmark is not reported as a startup comparison.
+        work = max(mean - floors.get(r_id, 0.0), 0.0) if mean else 0.0
+        pct = (work / mean * 100.0) if mean > 0 else 0.0
+
         name_colored = f"{r['color']}{pad_cell(r['name'], 12)}{RESET}"
         lines.append(
-            f"{name_colored}     {mean:>8.2f} ± {stddev:<5.2f}    {min_t:>6.1f} .. {max_t:<6.1f}    {rss:>6.1f} MB"
+            f"{name_colored}     {mean:>8.2f} ± {stddev:<5.2f}    "
+            f"{work:>8.2f} ({pct:>3.0f}%)    {rss:>6.1f} MB"
         )
 
     lines.append("─" * (width - 6))
@@ -768,12 +976,18 @@ def draw_summary_table(summary_data: list, width=96) -> str:
 
     for r in RUNTIMES:
         r_id = r["id"]
+        # Skip runtimes that ran nothing at all - the fast tier excludes two.
+        if not any(item["means"].get(r_id, 0.0) > 0 for item in summary_data):
+            continue
         r_color = r.get("color", "")
         row = [pad_cell(f"{r_color}{r['name']}{RESET}", 14)]
 
         for item in summary_data:
             m_val = item["means"].get(r_id, 0.0)
-            row.append(pad_cell(f"{m_val:.2f}", 10, "right"))
+            # "-" distinguishes a benchmark this runtime did not run (the
+            # Ant-only group) from one that measured zero.
+            cell = f"{m_val:.2f}" if m_val > 0 else "-"
+            row.append(pad_cell(cell, 10, "right"))
 
         w_cnt = wins[r_id]
         row.append(pad_cell(f"{w_cnt}", 12, "right"))
@@ -831,6 +1045,10 @@ def draw_memory_summary_table(summary_data: list, width=96) -> str:
 
     for r in RUNTIMES:
         r_id = r["id"]
+        # Same as the time summary: skip runtimes this run never exercised, and
+        # mark per-benchmark gaps as "-" rather than 0.0 MB.
+        if not any(item["rss"].get(r_id, 0.0) > 0 for item in summary_data):
+            continue
         r_color = r.get("color", "")
         row = [pad_cell(f"{r_color}{r['name']}{RESET}", 14)]
 
@@ -839,7 +1057,7 @@ def draw_memory_summary_table(summary_data: list, width=96) -> str:
             rss_val = item["rss"].get(r_id, 0.0)
             if rss_val > 0:
                 rss_vals.append(rss_val)
-            row.append(pad_cell(f"{rss_val:.1f}", 10, "right"))
+            row.append(pad_cell(f"{rss_val:.1f}" if rss_val > 0 else "-", 10, "right"))
 
         avg_rss = (sum(rss_vals) / len(rss_vals)) if rss_vals else 0.0
         row.append(pad_cell(f"{avg_rss:.1f}", 10, "right"))
@@ -872,8 +1090,9 @@ def draw_memory_summary_table(summary_data: list, width=96) -> str:
     box.append("╚" + "═" * (width - 2) + "╝")
     return "\n".join(box)
 
-def save_bench_json_and_baseline(bin_map: dict, versions: dict, summary_results: list, update_baseline: bool = False) -> tuple[Path, Path | None]:
-    import time
+def save_bench_json_and_baseline(bin_map: dict, versions: dict, summary_results: list,
+                                 update_baseline: bool = False, tier: str = "full",
+                                 startup_floor: dict | None = None) -> tuple[Path, Path | None]:
     from datetime import datetime, timezone
     from compliance_common import git_revision
 
@@ -887,10 +1106,16 @@ def save_bench_json_and_baseline(bin_map: dict, versions: dict, summary_results:
     rev = git_revision()
 
     manifest_data = {
-        "schema_version": 1,
+        "schema_version": 2,
         "type": "performance_benchmark",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "revision": rev,
+        # Which tier produced this. A fast run covers a subset of benchmarks
+        # and runtimes; it diffs against the full baseline fine (the workloads
+        # are identical) but must never be promoted to one.
+        "tier": tier,
+        # Per-runtime process startup, subtracted from each mean to get "work".
+        "startup_floor_ms": startup_floor or {},
         "runtimes": {
             r["id"]: {
                 "name": r["name"],
@@ -919,7 +1144,16 @@ def save_bench_json_and_baseline(bin_map: dict, versions: dict, summary_results:
         pass
 
     baseline_written = None
-    if update_baseline:
+    if update_baseline and tier != "full":
+        # A fast manifest is missing most of the suite. Promoting it would
+        # silently shrink the baseline to whatever the fast tier happened to
+        # cover, and every absent benchmark would then read as "added".
+        print(
+            f"{YELLOW}--update-baseline ignored: this was a --fast run. "
+            f"Seed the baseline from a full run.{RESET}",
+            flush=True,
+        )
+    elif update_baseline:
         baseline_path = ROOT_DIR.parent / "docs" / "repo" / "bench-baseline.json"
         baseline_path.parent.mkdir(parents=True, exist_ok=True)
         with open(baseline_path, "w", encoding="utf-8") as f:
@@ -982,8 +1216,21 @@ def main():
     # CI on `main` and `upstream` passes these; before this they were parsed by
     # nothing and the job could not fail.
     do_check = "--check-thresholds" in sys.argv
+    fast = "--fast" in sys.argv
     speed_lag = flag_value("--max-speed-lag", 10.0)
     size_growth = flag_value("--max-size-growth", 25.0)
+
+    # Fast tier: fewer benchmarks, three runtimes, fewer runs - sized to fit an
+    # edit-test loop. The workloads are identical to the full tier, so a fast
+    # manifest diffs against the same baseline; only its coverage is narrower.
+    if fast:
+        benchmarks = [b for b in BENCHMARKS if b.get("tier") == "fast"]
+        runtimes = [r for r in RUNTIMES if r.get("fast")]
+        warmup, runs = 1, 6
+    else:
+        benchmarks = list(BENCHMARKS)
+        runtimes = list(RUNTIMES)
+        warmup, runs = 2, 10
 
     bin_map, asset_info = ensure_binaries(force_update=force_update)
     ensure_js_bundles(bin_map.get("tjs", resolve_binary("tjs")))
@@ -997,12 +1244,30 @@ def main():
     print(draw_binary_size_box(bin_map), flush=True)
     print(flush=True)
 
+    if fast:
+        print(
+            f"  {YELLOW}fast tier{RESET}: {len(benchmarks)}/{len(BENCHMARKS)} benchmarks, "
+            f"{len(runtimes)}/{len(RUNTIMES)} runtimes, {runs} runs. "
+            f"Run the full suite for release-quality numbers.",
+            flush=True,
+        )
+        print(flush=True)
+
+    startup_floor = measure_startup_floor(bin_map, runtimes)
+    print(draw_startup_floor_box(startup_floor, runtimes), flush=True)
+    print(flush=True)
+
     summary_results = []
 
-    for b in BENCHMARKS:
+    for b in benchmarks:
+        # A benchmark may restrict itself to a subset of runtimes - the Ant-only
+        # group covers subsystems with no portable cross-runtime API.
+        allowed = b.get("runtimes")
         cmds_map = {}
-        for r in RUNTIMES:
+        for r in runtimes:
             r_id = r["id"]
+            if allowed is not None and r_id not in allowed:
+                continue
             bin_p = bin_map[r_id]
             if not bin_p or not bin_p.exists():
                 continue
@@ -1011,13 +1276,13 @@ def main():
 
         print(f"⏳ Running Benchmark: {CYAN}{b['name']}{RESET}...", flush=True)
 
-        bench_results = run_hyperfine(cmds_map)
+        bench_results = run_hyperfine(cmds_map, warmup=warmup, runs=runs)
 
         rss_map = {}
         for r_id, cmd in cmds_map.items():
             rss_map[r_id] = measure_peak_rss(cmd)
 
-        print(draw_benchmark_box(b, bench_results, rss_map), flush=True)
+        print(draw_benchmark_box(b, bench_results, rss_map, startup_floor), flush=True)
         print(flush=True)
 
         # stddev and median ride along with the mean: scripts/bench_baseline.py
@@ -1027,18 +1292,28 @@ def main():
         means = {}
         stddev = {}
         median = {}
+        work = {}
         for r in RUNTIMES:
             r_id = r["id"]
             res = bench_results.get(r_id, {})
             means[r_id] = res.get("mean", 0.0) * 1000.0
             stddev[r_id] = res.get("stddev", 0.0) * 1000.0
             median[r_id] = res.get("median", 0.0) * 1000.0
+            # Mean minus this runtime's startup floor: what the benchmark
+            # actually spent, with process startup taken out. Clamped at zero
+            # so a benchmark at or below the floor reads as 0 rather than
+            # negative. coldstart deliberately measures the floor itself, so
+            # its work time being ~0 is the correct answer, not a bug.
+            floor = startup_floor.get(r_id, 0.0)
+            work[r_id] = max(means[r_id] - floor, 0.0) if means[r_id] else 0.0
 
         summary_results.append({
             "name": b["name"],
+            "id": b["id"],
             "means": means,
             "stddev": stddev,
             "median": median,
+            "work": work,
             "rss": rss_map
         })
 
@@ -1047,7 +1322,10 @@ def main():
     print(draw_memory_summary_table(summary_results), flush=True)
     print(flush=True)
 
-    manifest_path, baseline_path = save_bench_json_and_baseline(bin_map, versions, summary_results, update_baseline=update_baseline)
+    manifest_path, baseline_path = save_bench_json_and_baseline(
+        bin_map, versions, summary_results, update_baseline=update_baseline,
+        tier="fast" if fast else "full", startup_floor=startup_floor,
+    )
     print(f"  {CYAN}Benchmark Manifest JSON : {manifest_path}{RESET}", flush=True)
     if baseline_path:
         print(f"  {GREEN}Benchmark Baseline Updated: {baseline_path}{RESET}", flush=True)

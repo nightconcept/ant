@@ -74,9 +74,25 @@ test:
     meson compile -C build
     ./build/ant examples/spec/run.js
 
-# Run benchmark suite
+# Run the full benchmark suite (26 benchmarks, 5 runtimes, ~5 min)
 bench +args="":
     python3 bench/bench.py {{args}}
+
+# Fast tier for edit-test loops: 15 benchmarks, ant/txiki.js/node, ~85s.
+# Same workloads as the full suite, so it diffs against the same baseline.
+bench-fast +args="":
+    python3 bench/bench.py --fast {{args}}
+
+# Fast tier, then diff against the checked-in baseline. The everyday check.
+bench-fast-diff +args="":
+    -python3 bench/bench.py --fast {{args}}
+    python3 scripts/bench_baseline.py diff .deps/compliance/logs/bench-latest.json
+
+# Full run recorded to the history series - intended for the nightly cron.
+# Does not touch the baseline; use bench-update-baseline to move that.
+bench-nightly +args="":
+    python3 bench/bench.py {{args}}
+    python3 scripts/bench_baseline.py record .deps/compliance/logs/bench-latest.json
 
 # Run compliance benchmark suite across runtimes
 bench-compliance +args="":

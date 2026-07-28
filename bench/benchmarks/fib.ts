@@ -4,6 +4,7 @@ function fib(n: number): number {
 }
 
 const start = Date.now();
-const result = fib(34);
+const N = 36;
+const result = fib(N);
 const elapsed = Date.now() - start;
-console.log(`Fibonacci(34) = ${result} (took ${elapsed}ms)`);
+console.log(`Fibonacci(${N}) = ${result} (took ${elapsed}ms)`);

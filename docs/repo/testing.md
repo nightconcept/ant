@@ -13,6 +13,7 @@ This guide keeps validation proportional to the change while still protecting ru
 - Run one runtime test: `./build/ant tests/test_<name>.cjs`
 - Run the spec suite: `./build/ant examples/spec/run.js --all`
 - Run compliance test suite: `just compliance --tier all --smoke`
+- Check performance while working: `just bench-fast-diff` (~85s)
 - Validate repo knowledge docs: `just knowledge`
 - Validate changed-file boundaries: `just structure`
 - Ask the harness what to run for the current diff: `just validate_changes`
@@ -31,6 +32,9 @@ This guide keeps validation proportional to the change while still protecting ru
 - Rebuild with `maid build`.
 - Run focused regression tests first.
 - Run `./build/ant examples/spec/run.js --all` before landing behavior changes.
+- These are the paths where performance moves. Run `just bench-fast-diff` while
+  iterating and a full `just bench-diff` before landing. See
+  [benchmarking.md](benchmarking.md) for the tiers.
 
 ### Build or toolchain changes
 
