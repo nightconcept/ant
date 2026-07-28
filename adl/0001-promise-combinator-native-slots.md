@@ -60,7 +60,9 @@ Benchmark: `Promise.all` over 50,000 resolved promises.
 | baseline | 301,632 | 0.14 s | 85.3 MB |
 | after | 1,627 | 0.10 s | 75.5 MB |
 
-Combined with 0002 and 0003, on `js-bench/benchmarks/async.js`:
+Combined with 0002 and the since-superseded async activation sizing work
+(reverted in e122ffd9; upstream #62 replaced activation VMs with heap
+`sv_activation_t` snapshots), on `js-bench/benchmarks/async.js`:
 0.15 s / 115.2 MB → 0.12 s / 109.1 MB.
 
 Compliance: spec suite 3672/3672. Test262 tier 3 **32842/53434 both before and
@@ -86,7 +88,8 @@ through a subclass executor. Doing this safely requires a "pristine Promise"
 guard (constructor untouched, `Symbol.species` untouched, prototype intact)
 with correct invalidation — note that value-overwrite without a shape change
 means a shape-version guard alone is insufficient. Worth roughly 240 B/element;
-revisit alongside 0004.
+revisit if the promise combinators are
+revisited.
 
 ## Consequences
 

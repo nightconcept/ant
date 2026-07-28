@@ -38,6 +38,4 @@ Required sections:
 |---|------|--------|
 | [0001](0001-promise-combinator-native-slots.md) | Promise combinator bookkeeping in native slots | accepted |
 | [0002](0002-iterator-result-interned-keys.md) | Iterator result objects use interned keys | accepted |
-| [0003](0003-async-activation-frame-headroom.md) | Async activation VM frame headroom | accepted |
-| [0004](0004-async-vm-stack-guard-band.md) | Async VM stack guard band sizing | deferred |
 | [0005](0005-promise-state-free-list.md) | Promise state free list | rejected |
