@@ -1239,17 +1239,17 @@ void init_iterator_module(ant_t *js) {
   js_set_proto_init(g_wrap_iter_proto, iter_proto);
   js_set(js, g_wrap_iter_proto, "next", js_mkfun(wrap_iter_next));
 
-  js_set(js, iter_proto, "map",     js_mkfun(iter_map));
-  js_set(js, iter_proto, "filter",  js_mkfun(iter_filter));
-  js_set(js, iter_proto, "take",    js_mkfun(iter_take));
-  js_set(js, iter_proto, "drop",    js_mkfun(iter_drop));
-  js_set(js, iter_proto, "flatMap", js_mkfun(iter_flatMap));
-  js_set(js, iter_proto, "every",   js_mkfun(iter_every));
-  js_set(js, iter_proto, "some",    js_mkfun(iter_some));
-  js_set(js, iter_proto, "find",    js_mkfun(iter_find));
-  js_set(js, iter_proto, "forEach", js_mkfun(iter_forEach));
-  js_set(js, iter_proto, "reduce",  js_mkfun(iter_reduce));
-  js_set(js, iter_proto, "toArray", js_mkfun(iter_toArray));
+  defmethod(js, iter_proto, "map", 3, js_mkfun_arity(iter_map, 1));
+  defmethod(js, iter_proto, "filter", 6, js_mkfun_arity(iter_filter, 1));
+  defmethod(js, iter_proto, "take", 4, js_mkfun_arity(iter_take, 1));
+  defmethod(js, iter_proto, "drop", 4, js_mkfun_arity(iter_drop, 1));
+  defmethod(js, iter_proto, "flatMap", 7, js_mkfun_arity(iter_flatMap, 1));
+  defmethod(js, iter_proto, "every", 5, js_mkfun_arity(iter_every, 1));
+  defmethod(js, iter_proto, "some", 4, js_mkfun_arity(iter_some, 1));
+  defmethod(js, iter_proto, "find", 4, js_mkfun_arity(iter_find, 1));
+  defmethod(js, iter_proto, "forEach", 7, js_mkfun_arity(iter_forEach, 1));
+  defmethod(js, iter_proto, "reduce", 6, js_mkfun_arity(iter_reduce, 1));
+  defmethod(js, iter_proto, "toArray", 7, js_mkfun_arity(iter_toArray, 0));
   js_set_sym(js, iter_proto, get_toStringTag_sym(), js_mkstr(js, "Iterator", 8));
 
   ant_value_t ctor_obj = js_mkobj(js);
@@ -1259,7 +1259,7 @@ void init_iterator_module(ant_t *js) {
   js_set_descriptor(js, ctor_obj, "name", 4, 0);
   
   ant_value_t ctor = js_obj_to_func(js, ctor_obj);
-  js_set(js, ctor, "from", js_mkfun(iter_from));
+  defmethod(js, ctor, "from", 4, js_mkfun_arity(iter_from, 1));
   js_set(js, iter_proto, "constructor", ctor);
   js_set(js, g, "Iterator", ctor);
 
