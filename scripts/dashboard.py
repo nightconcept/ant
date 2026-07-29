@@ -138,7 +138,7 @@ def print_bench(data, top_n):
 
     if top_n and len(all_benchmarks) > top_n:
         remaining = len(all_benchmarks) - top_n
-        print(f"\n  {DIM}... {remaining} more, run with --bench-all to see everything{RESET}")
+        print(f"\n  {DIM}... {remaining} more, drop --bench-top to see everything{RESET}")
 
     print()
     print(f"  {BOLD}Average peak RSS across all benchmarks{RESET}")
@@ -167,9 +167,10 @@ def print_bench(data, top_n):
 
 
 def main(argv):
-    top_n = 10
-    if "--bench-all" in argv:
-        top_n = None
+    top_n = None
+    if "--bench-top" in argv:
+        idx = argv.index("--bench-top")
+        top_n = int(argv[idx + 1])
 
     compliance = load(COMPLIANCE_BASELINE)
     bench = load(BENCH_BASELINE)
