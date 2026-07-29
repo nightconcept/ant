@@ -3,20 +3,24 @@
 
 Reads the same files the CI regression gates diff against:
 
-  * docs/repo/compliance-baseline.json - tier 1/2/3 pass rates
-  * docs/repo/bench-baseline.json      - Ant vs. other runtimes timing/size
+  * docs/repo/compliance-baseline.json          - ant tier 1/2/3 pass rates (CI gate)
+  * docs/repo/compliance-runtimes-baseline.json - ant vs. other runtimes compliance
+  * docs/repo/bench-baseline.json                - ant vs. other runtimes timing/size
 
-Both are checked-in snapshots, not live measurements - see the commit/branch
+All are checked-in snapshots, not live measurements - see the commit/branch
 printed with each section before treating a number as current. Run
-`just compliance-diff-t<N>` or `just bench-fast-diff` for a fresh run.
+`just compliance-diff-t<N>`, `just compliance-runtimes-update`, or
+`just bench-fast-diff` for a fresh run.
 """
 
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMPLIANCE_BASELINE = REPO_ROOT / "docs" / "repo" / "compliance-baseline.json"
+COMPLIANCE_RUNTIMES_BASELINE = REPO_ROOT / "docs" / "repo" / "compliance-runtimes-baseline.json"
 BENCH_BASELINE = REPO_ROOT / "docs" / "repo" / "bench-baseline.json"
 
 BOLD = "\033[1m"
@@ -39,6 +43,16 @@ def load(path):
         return None
     with path.open() as f:
         return json.load(f)
+
+
+def format_local(iso_str):
+    """Parse an ISO timestamp (aware or naive-UTC) and render it in local time."""
+    if not iso_str:
+        return f"{DIM}unknown time{RESET}"
+    dt = datetime.fromisoformat(iso_str)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone().strftime("%Y-%m-%d %H:%M %Z")
 
 
 def pass_rate_color(rate):
@@ -68,12 +82,49 @@ def print_compliance(data):
         rate = totals["pass_rate"]
         color = pass_rate_color(rate)
         name = TIER_NAMES.get(tier, f"tier {tier}")
+        when = format_local(entry.get("finished"))
         print(
             f"  Tier {tier} {DIM}({name}){RESET}: "
             f"{color}{rate:5.1f}%{RESET} "
             f"({totals['passed']}/{totals['total']} passed, {totals['failed']} failed) "
-            f"{DIM}@ {rev['short']} [{rev['branch']}]{RESET}"
+            f"{DIM}@ {rev['short']} [{rev['branch']}] recorded {when}{RESET}"
         )
+
+
+def print_compliance_runtimes(data):
+    print_header("Compliance vs other runtimes")
+    if data is None:
+        print(f"  {DIM}no baseline at {COMPLIANCE_RUNTIMES_BASELINE.relative_to(REPO_ROOT)}{RESET}")
+        print(f"  {DIM}run `just compliance-runtimes-update` to record one{RESET}")
+        return
+
+    rev = data["revision"]
+    print(f"  {DIM}@ {rev['short']} [{rev['branch']}] recorded {format_local(data['timestamp'])}{RESET}")
+
+    runtime_ids = list(data.get("runtimes", []))
+    if "ant" in runtime_ids:
+        runtime_ids.remove("ant")
+        runtime_ids = ["ant"] + runtime_ids
+
+    for tier_label, runtime_stats in data.get("tier_results", {}).items():
+        print()
+        print(f"  {BOLD}{tier_label}{RESET}")
+        header = "    " + f"{'runtime':<12}" + f"{'pass rate':>12}" + f"{'passed/total':>16}"
+        print(header)
+        for rt in runtime_ids:
+            stats = runtime_stats.get(rt)
+            if stats is None:
+                continue
+            rate = stats.get("pass_pct", 0.0)
+            color = GREEN if rt == "ant" else pass_rate_color(rate)
+            rate_cell = f"{rate:5.1f}%"
+            ratio_cell = f"{stats.get('passed', 0)}/{stats.get('total', 0)}"
+            row = (
+                f"    {rt:<12}"
+                f"{color}{rate_cell:>12}{RESET}"
+                f"{ratio_cell:>16}"
+            )
+            print(row)
 
 
 def format_ms(value):
@@ -108,7 +159,7 @@ def print_bench(data, top_n):
         return
 
     rev = data["revision"]
-    print(f"  {DIM}@ {rev['short']} [{rev['branch']}] recorded {data['timestamp']}{RESET}")
+    print(f"  {DIM}@ {rev['short']} [{rev['branch']}] recorded {format_local(data['timestamp'])}{RESET}")
 
     runtimes = data["runtimes"]
     names = list(runtimes.keys())
@@ -173,10 +224,12 @@ def main(argv):
         top_n = int(argv[idx + 1])
 
     compliance = load(COMPLIANCE_BASELINE)
+    compliance_runtimes = load(COMPLIANCE_RUNTIMES_BASELINE)
     bench = load(BENCH_BASELINE)
 
     print(f"{BOLD}Ant dashboard{RESET} {DIM}(checked-in baselines, not a live run){RESET}")
     print_compliance(compliance)
+    print_compliance_runtimes(compliance_runtimes)
     print_bench(bench, top_n)
     print()
 

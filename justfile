@@ -98,6 +98,20 @@ bench-nightly +args="":
 bench-compliance +args="":
     python3 bench/compliance.py --allow-failures {{args}}
 
+# Run compliance across runtimes (ant/txiki.js/node/deno/bun), no persistence
+compliance-runtimes +args="":
+    python3 bench/compliance.py --allow-failures {{args}}
+
+# Full clean cross-runtime compliance run, then promote it to the checked-in snapshot (informational, not a CI gate)
+compliance-runtimes-update +args="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "error: working tree is dirty - refusing to update the compliance-runtimes baseline from an unreproducible run." >&2
+        exit 1
+    fi
+    python3 bench/compliance.py --allow-failures --update-baseline {{args}}
+
 # Run the benchmarks and record them in the history, leaving the baseline alone
 bench-record +args="":
     python3 bench/bench.py {{args}}

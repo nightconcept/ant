@@ -150,6 +150,26 @@ case; call the script directly for a manifest from an ad-hoc or filtered run):
   regressed. Pass `--allow-regressions` to report without failing the exit
   code.
 
+## Compliance Vs Other Runtimes
+
+`docs/repo/compliance-runtimes-baseline.json` is a separate, **informational**
+snapshot of tiers 1-3 run across Ant and other JS runtimes (txiki.js, Node,
+Deno, Bun — the same binaries `bench/bench.py` uses, resolved via
+`bench/versions.json`). It is not a CI regression gate, and it is not the same
+file as `compliance-baseline.json` above — the schemas differ (this one is
+keyed by tier label with a `{runtime_id: {total, passed, failed, pass_pct}}`
+matrix per tier) and mixing them up will corrupt whichever file is written
+second.
+
+- `just compliance-runtimes` — run the multi-runtime suite and print the
+  matrix, no persistence.
+- `just compliance-runtimes-update` — same, on a clean tree, then promote the
+  manifest to the checked-in snapshot at
+  `docs/repo/compliance-runtimes-baseline.json`.
+
+`just dashboard` renders this snapshot in its own section, alongside the
+ant-only baseline and the bench comparison.
+
 ## Measuring A Change Without A Full Run
 
 A full tier 3 run is expensive. To attribute a delta:
