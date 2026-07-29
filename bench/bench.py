@@ -653,6 +653,18 @@ def update_version_manifest(bin_map: dict, versions: dict, asset_info: dict):
             "ts_native": r["ts_file"]
         }
 
+    # Only rewrite when the runtime set actually moved. A timestamp bump on
+    # every run dirties the tree mid-run, and `bench-update-baseline` then
+    # refuses its own run as unreproducible.
+    try:
+        with open(MANIFEST_PATH) as f:
+            existing = json.load(f)
+    except (OSError, ValueError):
+        existing = None
+
+    if existing is not None and existing.get("runtimes") == manifest_data["runtimes"]:
+        return
+
     with open(MANIFEST_PATH, "w") as f:
         json.dump(manifest_data, f, indent=2)
 
