@@ -169,6 +169,50 @@ const nativeReproSym = Symbol('native-method-descriptors');
 const originalFetchProto = Object.getPrototypeOf(fetch);
 const customFetchProto = { fromCustomProto: 42 };
 
+if (originalFetchProto !== Function.prototype) {
+  console.log('FAIL: native functions should inherit from Function.prototype');
+  pass = false;
+}
+
+for (const [name, length] of [
+  ['map', 1],
+  ['filter', 1],
+  ['take', 1],
+  ['drop', 1],
+  ['flatMap', 1],
+  ['every', 1],
+  ['some', 1],
+  ['find', 1],
+  ['forEach', 1],
+  ['reduce', 1],
+  ['toArray', 0],
+]) {
+  const method = Iterator.prototype[name];
+  const descriptor = Object.getOwnPropertyDescriptor(Iterator.prototype, name);
+  if (
+    method.length !== length ||
+    !descriptor ||
+    !descriptor.writable ||
+    descriptor.enumerable ||
+    !descriptor.configurable
+  ) {
+    console.log(`FAIL: Iterator.prototype.${name} metadata should match the specification`);
+    pass = false;
+  }
+}
+
+const iteratorFromDesc = Object.getOwnPropertyDescriptor(Iterator, 'from');
+if (
+  Iterator.from.length !== 1 ||
+  !iteratorFromDesc ||
+  !iteratorFromDesc.writable ||
+  iteratorFromDesc.enumerable ||
+  !iteratorFromDesc.configurable
+) {
+  console.log('FAIL: Iterator.from metadata should match the specification');
+  pass = false;
+}
+
 fetch.extra = 'value-from-set';
 Object.defineProperty(fetch, 'defined', {
   value: 'value-from-defineProperty',

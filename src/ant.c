@@ -4724,7 +4724,8 @@ switch (type) {
   case T_STR:       return get_ctor_proto(js, "String", 6);
   case T_NUM:       return get_ctor_proto(js, "Number", 6);
   case T_BOOL:      return get_ctor_proto(js, "Boolean", 7);
-  case T_FUNC:      return get_ctor_proto(js, "Function", 8);
+  case T_FUNC:
+  case T_CFUNC:     return get_ctor_proto(js, "Function", 8);
   case T_PROMISE:   return get_ctor_proto(js, "Promise", 7);
   case T_GENERATOR: return js->sym.generator_proto;
   case T_BIGINT:    return get_ctor_proto(js, "BigInt", 6);
