@@ -12,6 +12,7 @@
 #include "gc.h"
 #include "gc/objects.h"
 #include "gc/roots.h"
+#include "gc/stats.h"
 #include "gc/modules.h"
 
 #include <stdlib.h>
@@ -130,6 +131,8 @@ void gc_remember_add(ant_t *js, ant_object_t *obj) {
   }
   obj->flags.in_remember_set = 1;
   js->remember_set[js->remember_set_len++] = obj;
+  if (__builtin_expect(gc_stats_enabled, 0))
+    gc_stats_note_remember(js->remember_set_len);
 }
 
 void gc_remember_upvalue(ant_t *js, struct sv_upvalue *uv) {
