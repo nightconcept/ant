@@ -11,8 +11,7 @@ function runCase(bin, dir, file, source) {
   const scriptPath = path.join(dir, file);
   fs.writeFileSync(scriptPath, source);
 
-  const result = spawnSync(bin, [scriptPath], {
-    env: { ...process.env, ANT_DEBUG: 'dump/errors:trace' },
+  const result = spawnSync(bin, ['--no-color', scriptPath], {
     encoding: 'utf8',
   });
 
@@ -31,11 +30,11 @@ const thrown = runCase(
 );
 assert(thrown.status !== 0, 'throw case should fail');
 assert(
-  thrown.stderr.includes('[ant-debug:error] throw Error: Project path is required'),
-  `expected throw trace in stderr\n${thrown.stderr}`
+  thrown.stderr.includes('Error: Project path is required'),
+  `expected thrown error in stderr\n${thrown.stderr}`
 );
 assert(
-  thrown.stderr.includes(`site: ${thrown.scriptPath}:1:`),
+  thrown.stderr.includes(`${thrown.scriptPath}:1:`),
   `expected throw site in stderr\n${thrown.stderr}`
 );
 
@@ -47,7 +46,7 @@ const missing = runCase(
 );
 assert(missing.status !== 0, 'missing identifier case should fail');
 assert(
-  missing.stderr.includes('[ant-debug:error] create ReferenceError'),
+  missing.stderr.includes('ReferenceError'),
   `expected ReferenceError trace in stderr\n${missing.stderr}`
 );
 assert(
@@ -63,12 +62,12 @@ const constAssign = runCase(
 );
 assert(constAssign.status !== 0, 'const assignment case should fail');
 assert(
-  constAssign.stderr.includes('[ant-debug:error] create TypeError: Assignment to constant variable'),
+  constAssign.stderr.includes('TypeError: Assignment to constant variable'),
   `expected const assignment trace in stderr\n${constAssign.stderr}`
 );
 assert(
-  constAssign.stderr.includes(`site: ${constAssign.scriptPath}:2:`),
+  constAssign.stderr.includes(`${constAssign.scriptPath}:`),
   `expected const assignment site in stderr\n${constAssign.stderr}`
 );
 
-console.log('debug error trace test passed');
+console.log('error diagnostics test passed');

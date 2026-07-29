@@ -35,6 +35,7 @@ const file = new File(['hi'], 'note.txt', { type: 'text/plain', lastModified: 42
 const headers = new Headers({ 'content-type': 'text/plain' });
 const request = new Request('https://google.com');
 const response = new Response('ok', { headers });
+const controller = new AbortController();
 const timeout = setTimeout(() => {}, 1);
 const interval = setInterval(() => {}, 5);
 const headersInspect = inspect(headers);
@@ -43,13 +44,22 @@ const intervalInspect = inspect(interval);
 const requestInspect = inspect(request);
 const responseInspect = inspect(response);
 
+try {
 assert(typeof Headers.prototype[Symbol.inspect] === 'function', 'expected Headers.prototype[Symbol.inspect] to exist');
 assert(typeof Request.prototype[Symbol.inspect] === 'function', 'expected Request.prototype[Symbol.inspect] to exist');
 assert(typeof Response.prototype[Symbol.inspect] === 'function', 'expected Response.prototype[Symbol.inspect] to exist');
+assert(typeof AbortSignal.prototype[Symbol.inspect] === 'function', 'expected AbortSignal.prototype[Symbol.inspect] to exist');
 
 assert(inspect(new Connection('localhost', 3000, 'open')) === 'Connection { localhost:3000 (open) }', 'expected custom inspect result');
 assert(inspect(blob) === "Blob { size: 2, type: 'text/plain' }", 'expected Blob custom inspect output');
 assert(inspect(file) === "File { size: 2, type: 'text/plain', name: 'note.txt', lastModified: 42 }", 'expected File custom inspect output');
+assert(inspect(controller.signal) === 'AbortSignal { aborted: false }', 'expected live AbortSignal inspect output');
+controller.abort();
+assert(inspect(controller.signal) === 'AbortSignal { aborted: true }', 'expected aborted AbortSignal inspect output');
+assert(
+  AbortSignal.prototype[Symbol.inspect].call(controller.signal) === 'AbortSignal { aborted: true }',
+  'expected direct AbortSignal Symbol.inspect output'
+);
 assert(
   Headers.prototype[Symbol.inspect].call(headers) === headersInspect,
   `expected Headers Symbol.inspect output, got: ${Headers.prototype[Symbol.inspect].call(headers)}`
@@ -75,13 +85,14 @@ assert(
   `expected legacy Interval inspect output, got: ${intervalInspect}`
 );
 
-clearTimeout(timeout);
-clearInterval(interval);
-
 const fallback = inspect(new FallbackConnection('db.internal'));
 assert(
   fallback === "FallbackConnection { host: 'db.internal' }",
   `expected fallback formatting after inspect throw, got: ${fallback}`
 );
+} finally {
+  clearTimeout(timeout);
+  clearInterval(interval);
+}
 
 console.log('PASS');

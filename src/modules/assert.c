@@ -184,7 +184,9 @@ static ant_value_t assert_throws(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1 || vtype(args[0]) != T_FUNC)
     return js_mkerr(js, "assert.throws: first argument must be a function");
   ant_value_t result = sv_vm_call(js->vm, js, args[0], js_mkundef(), NULL, 0, NULL, false);
-  if (!is_err(result))
+  bool threw = is_err(result) || js->thrown_exists;
+  if (js->thrown_exists) js_take_thrown(js, result);
+  if (!threw)
     return js_mkerr(js, "Missing expected exception");
   return js_mkundef();
 }
@@ -193,8 +195,10 @@ static ant_value_t assert_does_not_throw(ant_t *js, ant_value_t *args, int nargs
   if (nargs < 1 || vtype(args[0]) != T_FUNC)
     return js_mkerr(js, "assert.doesNotThrow: first argument must be a function");
   ant_value_t result = sv_vm_call(js->vm, js, args[0], js_mkundef(), NULL, 0, NULL, false);
-  if (is_err(result))
-    return js_mkerr(js, "Got unwanted exception: %s", js_str(js, result));
+  bool threw = is_err(result) || js->thrown_exists;
+  ant_value_t exception = js->thrown_exists ? js_take_thrown(js, result) : result;
+  if (threw)
+    return js_mkerr(js, "Got unwanted exception: %s", js_str(js, exception));
   return js_mkundef();
 }
 
@@ -204,7 +208,10 @@ static ant_value_t assert_rejects(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t result = vtype(args[0]) == T_FUNC
     ? sv_vm_call(js->vm, js, args[0], js_mkundef(), NULL, 0, NULL, false)
     : args[0];
-  if (is_err(result) || promise_was_rejected(result)) {
+  if (is_err(result) || js->thrown_exists) {
+    ant_value_t exception = js_take_thrown(js, result);
+    js_reject_promise(js, promise, exception);
+  } else if (promise_was_rejected(result)) {
     promise_mark_handled(result);
     js_resolve_promise(js, promise, js_mkundef());
   } else js_reject_promise(js, promise, js_mkerr(js, "Missing expected rejection"));
@@ -217,7 +224,10 @@ static ant_value_t assert_does_not_reject(ant_t *js, ant_value_t *args, int narg
   ant_value_t result = vtype(args[0]) == T_FUNC
     ? sv_vm_call(js->vm, js, args[0], js_mkundef(), NULL, 0, NULL, false)
     : args[0];
-  if (is_err(result) || promise_was_rejected(result)) {
+  if (is_err(result) || js->thrown_exists) {
+    ant_value_t exception = js_take_thrown(js, result);
+    js_reject_promise(js, promise, exception);
+  } else if (promise_was_rejected(result)) {
     promise_mark_handled(result);
     js_reject_promise(js, promise, js_mkerr(js, "Got unwanted rejection"));
   } else js_resolve_promise(js, promise, js_mkundef());

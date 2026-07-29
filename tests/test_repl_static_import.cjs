@@ -18,6 +18,7 @@ buf = bytearray()
 sent_import = False
 sent_check = False
 sent_exit = False
+prompt_count = 0
 exit_code = None
 deadline = time.time() + 7.0
 
@@ -40,12 +41,15 @@ while time.time() < deadline:
         break
 
     buf.extend(chunk)
-    if (not sent_import) and b'\\xe2\\x9d\\xaf ' in buf:
+    prompts = buf.count(b'\\xe2\\x9d\\xaf')
+    if (not sent_import) and prompts > prompt_count:
         os.write(master, b"import fs from 'node:fs/promises';\\r")
         sent_import = True
-    elif sent_import and (not sent_check) and b'\\xe2\\x9d\\xaf ' in buf:
+        prompt_count = prompts
+    elif sent_import and (not sent_check) and prompts > prompt_count:
         os.write(master, b"console.log('FS_READFILE', typeof fs.readFile);\\r")
         sent_check = True
+        prompt_count = prompts
     elif sent_check and (not sent_exit) and b'FS_READFILE function' in buf:
         os.write(master, b".exit\\r")
         sent_exit = True

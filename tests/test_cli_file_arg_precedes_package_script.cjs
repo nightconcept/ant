@@ -28,6 +28,7 @@ try {
   );
   fs.writeFileSync(path.join(tmp, 't.js'), "console.log('file-entry');\n");
   fs.writeFileSync(path.join(tmp, 'start.js'), "console.log('start-file');\n");
+  fs.symlinkSync(path.join(tmp, 't.js'), path.join(tmp, 'linked.js'));
 
   const explicitFile = run(['--no-color', 't.js']);
   assert.strictEqual(
@@ -38,6 +39,18 @@ try {
   assert.match(explicitFile.stdout, /file-entry/);
   assert.doesNotMatch(explicitFile.stdout, /script-shadow/);
 
+  for (const fileArg of ['./t.js', path.join(tmp, 't.js'), 'linked.js']) {
+    const variant = run(['--no-color', fileArg]);
+    assert.strictEqual(
+      variant.status,
+      0,
+      `file variant ${fileArg} failed\nstdout:\n${variant.stdout}\nstderr:\n${variant.stderr}`
+    );
+    assert.match(variant.stdout, /file-entry/);
+    assert.doesNotMatch(variant.stdout, /script-shadow/);
+  }
+
+  fs.mkdirSync(path.join(tmp, 'start'));
   const scriptShortcut = run(['--no-color', 'start']);
   assert.strictEqual(
     scriptShortcut.status,

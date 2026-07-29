@@ -200,7 +200,8 @@ static inline ant_value_t sv_op_new_apply(sv_vm_t *vm, ant_t *js, uint8_t *ip) {
 
 static inline ant_value_t sv_eval_in_frame(
   sv_vm_t *vm, ant_t *js, sv_frame_t *frame,
-  const char *source, ant_offset_t source_len, uint32_t scope_index
+  const char *source, ant_offset_t source_len, uint32_t scope_index,
+  bool retain_var_env
 ) {
   sv_func_t *caller = frame ? frame->func : NULL;
   
@@ -236,11 +237,20 @@ static inline ant_value_t sv_eval_in_frame(
     GC_ROOT_RESTORE(js, root_mark);
     return js_mkerr(js, "failed to attach direct eval bindings");
   }
-  
+
   ant_value_t result = js_eval_bytecode_eval_in_env_with_strict(
     js, source, source_len, 
     sv_frame_is_strict(frame), frame->this, env
   );
+
+  // Keep top-level sloppy-eval declarations available to the remainder of the
+  // entry script. Function frames still use their statically captured locals;
+  // publishing arbitrary new names there requires a fully dynamic function
+  // environment rather than retaining pointers into a completed eval frame.
+  ant_object_t *env_obj = js_obj_ptr(js_as_obj(env));
+  if (!sv_frame_is_strict(frame) && retain_var_env &&
+      env_obj && env_obj->prop_count > 0)
+    frame->eval_env = env;
   
   GC_ROOT_RESTORE(js, root_mark);
   return result;
@@ -256,9 +266,12 @@ static inline ant_value_t sv_op_eval(sv_vm_t *vm, ant_t *js, sv_frame_t *frame, 
   ant_offset_t off = vstr(js, code, &len);
   
   const char *str = (const char *)(uintptr_t)(off);
-  uint32_t scope_index = sv_get_u32(ip + 1);
+  uint32_t scope_operand = sv_get_u32(ip + 1);
+  bool retain_var_env = (scope_operand & UINT32_C(0x80000000)) != 0;
+  uint32_t scope_index = scope_operand & UINT32_C(0x7fffffff);
   
-  ant_value_t result = sv_eval_in_frame(vm, js, frame, str, len, scope_index);
+  ant_value_t result = sv_eval_in_frame(
+    vm, js, frame, str, len, scope_index, retain_var_env);
   if (!is_err(result)) vm->stack[vm->sp++] = result;
   
   return result;

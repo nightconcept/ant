@@ -9,15 +9,17 @@ console.log('Test 1: Basic arithmetic');
 console.log('  eval("1 + 2"):', eval('1 + 2'), '(expected: 3)');
 console.log('  eval("10 * 5"):', eval('10 * 5'), '(expected: 50)');
 
-// Test 2: Variable declaration and use
-console.log('\nTest 2: Variable declaration and access');
+// Test 2: Lexical declarations stay inside the eval environment
+console.log('\nTest 2: Lexical declaration isolation');
 eval('let x = 42');
-console.log('  After eval("let x = 42"), x =', x, '(expected: 42)');
+console.log('  After eval("let x = 42"), typeof x =', typeof x, '(expected: undefined)');
+if (typeof x !== 'undefined') throw new Error('eval lexical declaration leaked into caller scope');
 
 // Test 3: Function definition
 console.log('\nTest 3: Function definition via eval');
 eval('function add(a, b) { return a + b; }');
 console.log('  add(3, 4):', add(3, 4), '(expected: 7)');
+if (add(3, 4) !== 7) throw new Error('eval function declaration was not installed');
 
 // Test 4: Access to outer scope variables
 console.log('\nTest 4: Access to outer scope variables');

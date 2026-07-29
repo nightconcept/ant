@@ -2464,7 +2464,7 @@ static size_t strcfunc(ant_t *js, ant_value_t value, char *buf, size_t len) {
     return n;
   }
 
-  return cpy(buf, len, fmt->anon, fmt->anon_len);
+  return ANT_COPY(buf, len, "[native code]");
 }
 
 static size_t tostr(ant_t *js, ant_value_t value, char *buf, size_t len) {

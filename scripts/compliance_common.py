@@ -201,6 +201,26 @@ def suite_tier(suite_name: str) -> int | None:
 def find_ant_binary() -> Path:
     local_ant = REPO_ROOT / "build" / "ant"
     if local_ant.exists() and os.access(local_ant, os.X_OK):
+        expected = git_revision()["short"]
+        try:
+            result = subprocess.run(
+                [str(local_ant), "--version-raw"],
+                cwd=REPO_ROOT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=10,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise RuntimeError(f"Could not verify {local_ant}: {exc}") from exc
+        version = result.stdout.strip()
+        if result.returncode != 0 or expected == "unknown" or not re.search(
+            rf"(?:^|\.){re.escape(expected)}(?:\.|$)", version
+        ):
+            raise RuntimeError(
+                f"{local_ant} reports version {version or '(none)'}, but HEAD is {expected}. "
+                "Reconfigure and rebuild before running compliance."
+            )
         return local_ant
     
     import shutil

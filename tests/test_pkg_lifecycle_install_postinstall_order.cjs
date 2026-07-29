@@ -224,6 +224,10 @@ assert(
   `expected node-gyp lifecycle to pass, got ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
 );
 assert(
+  fs.existsSync(gypOutPath),
+  `expected lifecycle node-gyp shim output\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+);
+assert(
   fs.readFileSync(gypOutPath, 'utf8') === 'fake-gyp rebuild\n',
   `expected lifecycle node-gyp shim to run bundled gyp, got ${JSON.stringify(fs.readFileSync(gypOutPath, 'utf8'))}`
 );
