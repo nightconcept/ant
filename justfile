@@ -123,6 +123,10 @@ bench-update-baseline +args="":
 bench-history +args="":
     python3 scripts/bench_baseline.py history {{args}}
 
+# Pretty-print the checked-in compliance + bench baselines (no fresh run)
+dashboard +args="":
+    python3 scripts/dashboard.py {{args}}
+
 # Run compliance test suite (generic escape hatch; prefer compliance-t1/t2/t3 below)
 compliance +args="":
     meson compile -C build
