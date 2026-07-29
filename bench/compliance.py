@@ -159,7 +159,12 @@ def save_compliance_json_and_baseline(runtimes: list[dict], tier_results: dict, 
 
     baseline_written = None
     if update_baseline:
-        baseline_path = REPO_ROOT.parent / "docs" / "repo" / "compliance-baseline.json"
+        # Deliberately NOT docs/repo/compliance-baseline.json - that file is the
+        # ant-only CI regression gate (scripts/compliance_baseline.py, keyed by
+        # tier number) and has an incompatible schema from this multi-runtime
+        # manifest (keyed by tier label). Keep this snapshot separate so running
+        # --update-baseline can't corrupt the CI gate's baseline.
+        baseline_path = REPO_ROOT.parent / "docs" / "repo" / "compliance-runtimes-baseline.json"
         baseline_path.parent.mkdir(parents=True, exist_ok=True)
         with open(baseline_path, "w", encoding="utf-8") as f:
             json.dump(manifest_data, f, indent=2)

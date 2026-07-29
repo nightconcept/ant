@@ -7,6 +7,7 @@ import time
 import urllib.request
 import subprocess
 from pathlib import Path
+from datetime import datetime, timezone
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEPS_DIR = REPO_ROOT / ".deps" / "compliance"
@@ -384,7 +385,7 @@ class SummaryTracker:
         self.filter = filter
         self._log_file = None
         self.revision = git_revision()
-        self.started = time.strftime("%Y-%m-%dT%H:%M:%S")
+        self.started = datetime.now(timezone.utc).isoformat()
 
         if self.log_path:
             self.log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -476,7 +477,7 @@ class SummaryTracker:
             "suite": self.suite_name,
             "tier": suite_tier(self.suite_name),
             "started": self.started,
-            "finished": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "finished": datetime.now(timezone.utc).isoformat(),
             "revision": self.revision,
             "filter": self.filter,
             "totals": {
