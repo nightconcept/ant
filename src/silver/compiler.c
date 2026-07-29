@@ -3841,6 +3841,14 @@ static int resolve_raw_length_local(sv_compiler_t *c, sv_ast_t *base) {
 
   int local = resolve_local(c, base->str, base->len);
   if (local < 0 || c->locals[local].is_tdz) return -1;
+
+  // An imported binding is indirect - the frame slot holds the link to the
+  // exporting module, not the value - so OP_GET_SLOT_RAW would read straight
+  // past the indirection and `imported.length` would come back undefined.
+  // Every other property goes through OP_GET_FIELD and resolves correctly,
+  // which is why only `.length` was affected.
+  if (c->locals[local].binding.import_kind != SV_IMPORT_BIND_NONE) return -1;
+
   return local_to_frame_slot(c, local);
 }
 

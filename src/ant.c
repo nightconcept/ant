@@ -3221,6 +3221,7 @@ ant_value_t mkprop(ant_t *js, ant_value_t obj, ant_value_t k, ant_value_t v, uin
   
   if (!ptr || !ptr->shape) return js_mkerr(js, "invalid object");
   if (!attrs) attrs = ANT_PROP_ATTR_DEFAULT;
+  else if (attrs == ANT_PROP_ATTR_FROZEN) attrs = 0;
 
   uint32_t slot = 0;
   bool added = false;
@@ -3284,6 +3285,7 @@ static ant_value_t mkprop_interned_impl(
   }
 
   if (!attrs) attrs = ANT_PROP_ATTR_DEFAULT;
+  else if (attrs == ANT_PROP_ATTR_FROZEN) attrs = 0;
 
   uint32_t slot = 0;
   bool added = false;
