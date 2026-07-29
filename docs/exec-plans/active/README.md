@@ -8,6 +8,7 @@ Store in-progress execution plans here.
 
 ## Active
 
+- [GC Pool-Pressure Retest](gc-pool-pressure-retest.md)
 - [Dynamic Property Performance](dynamic-property-perf.md)
   - [Dynamic Property Performance Extras](dynamic-property-perf-extras.md)
 - [Large AST Workload Performance](large-ast-workload-perf.md)
