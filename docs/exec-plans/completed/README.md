@@ -10,6 +10,7 @@ can reuse the decision history.
 
 ## Plans
 
+- [IC Accessor Caching + JIT Put-Field Unification](ic-accessor-caching.md)
 - [CI Build Cache Optimization](ci-build-cache-optimization.md)
 - [CI Build and WinterTC Repair](ci-build-and-wintertc-repair.md)
 - [Static c-ares Release Portability](static-cares-release-portability.md)

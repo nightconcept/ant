@@ -154,8 +154,30 @@ static inline sv_ic_entry_t *sv_ic_slot_for_ip(sv_func_t *func, uint8_t *ip) {
   return &func->ic_slots[ic_idx];
 }
 
+// Out of line so that the accessor call sequence does not enlarge the
+// interpreter dispatch loop that sv_ic_try_get_hit is inlined into.
+// The slot holds no readable value, so the getter is invoked with the original
+// receiver as `this`; a setter-only property reads as undefined. The getter is
+// copied out before the call, which can collect while `prop` points into shape
+// storage.
+__attribute__((noinline))
+static bool sv_ic_get_invoke_accessor(
+  ant_t *js,
+  const ant_shape_prop_t *prop,
+  ant_value_t receiver_val,
+  ant_value_t *out
+) {
+  if (!prop->has_getter) { *out = js_mkundef(); return true; }
+  ant_value_t getter = prop->getter;
+  if (vtype(getter) != T_FUNC) return false;
+  *out = sv_vm_call_explicit_this(js->vm, js, getter, receiver_val, NULL, 0);
+  return true;
+}
+
 static inline bool sv_ic_try_get_hit(
+  ant_t *js,
   sv_ic_entry_t *ic,
+  ant_value_t receiver_val,
   ant_object_t *receiver,
   sv_atom_t *a,
   ant_value_t *out
@@ -166,7 +188,7 @@ static inline bool sv_ic_try_get_hit(
 
   ant_object_t *source;
   ant_shape_t *prop_shape;
-  
+
   if (ic->cached_is_own) {
     source = receiver;
     prop_shape = receiver->shape;
@@ -177,23 +199,29 @@ static inline bool sv_ic_try_get_hit(
     source = holder;
     prop_shape = holder->shape;
   }
-  if (ic->cached_index >= source->prop_count) return false;
 
   const ant_shape_prop_t *prop = ant_shape_prop_at(prop_shape, ic->cached_index);
   if (!prop) return false;
   if (prop->type != ANT_SHAPE_KEY_STRING || prop->key.interned != a->str) return false;
-  if (prop->has_getter || prop->has_setter) return false;
 
+  if (prop->has_getter || prop->has_setter)
+    return sv_ic_get_invoke_accessor(js, prop, receiver_val, out);
+
+  if (ic->cached_index >= source->prop_count) return false;
   *out = ant_object_prop_get_unchecked(source, ic->cached_index);
   return true;
 }
 
+// Walks the prototype chain for `interned` and reports where it lives so the
+// caller can fill an IC. Accessors are reported too (with *out_is_accessor set
+// and *out_value left undefined); the caller invokes them.
 static inline bool sv_ic_probe_get_chain(
   ant_value_t obj,
   const char *interned,
   ant_object_t **out_holder,
   uint32_t *out_index,
-  ant_value_t *out_value
+  ant_value_t *out_value,
+  bool *out_is_accessor
 ) {
   ant_value_t cur = obj;
   sv_proto_guard_t guard;
@@ -221,10 +249,15 @@ static inline bool sv_ic_probe_get_chain(
     uint32_t idx = (uint32_t)slot;
     const ant_shape_prop_t *prop = ant_shape_prop_at(ptr->shape, idx);
     if (!prop) return false;
-    if (prop->has_getter || prop->has_setter) return false;
 
     *out_holder = ptr;
     *out_index = idx;
+    if (prop->has_getter || prop->has_setter) {
+      *out_is_accessor = true;
+      *out_value = js_mkundef();
+      return true;
+    }
+    *out_is_accessor = false;
     *out_value = (idx < ptr->prop_count) ? ant_object_prop_get_unchecked(ptr, idx) : js_mkundef();
     return true;
   }
@@ -238,7 +271,8 @@ static inline void sv_gf_ic_note_success(sv_ic_entry_t *ic) {
   uint8_t warmup = sv_gf_ic_warmup(aux);
   if (warmup < 0xFFu) warmup++;
   bool active = sv_gf_ic_active(aux) || warmup >= SV_GF_IC_WARMUP_ENABLE;
-  ic->cached_aux = sv_gf_ic_pack_aux(warmup, 0u, active);
+  ic->cached_aux = sv_gf_ic_pack_aux(warmup, 0u, active) |
+                   (aux & SV_GF_IC_AUX_ACCESSOR_BIT);
 }
 
 static inline void sv_gf_ic_note_miss(sv_ic_entry_t *ic) {
@@ -255,7 +289,8 @@ static inline void sv_gf_ic_note_miss(sv_ic_entry_t *ic) {
     active = false;
   }
 
-  ic->cached_aux = sv_gf_ic_pack_aux(warmup, miss, active);
+  ic->cached_aux = sv_gf_ic_pack_aux(warmup, miss, active) |
+                   (aux & SV_GF_IC_AUX_ACCESSOR_BIT);
 }
 
 static inline ant_value_t sv_getprop_by_key(ant_t *js, ant_value_t obj, ant_value_t key) {
@@ -413,7 +448,7 @@ static inline ant_value_t sv_prop_get_field_ic(
 
   ant_value_t hit = js_mkundef();
   if (ic && ptr && !ptr->flags.is_exotic && track_ic &&
-      sv_ic_try_get_hit(ic, ptr, a, &hit)) {
+      sv_ic_try_get_hit(js, ic, obj, ptr, a, &hit)) {
     sv_gf_ic_note_success(ic);
     return hit;
   }
@@ -422,15 +457,21 @@ static inline ant_value_t sv_prop_get_field_ic(
     ant_object_t *holder = NULL;
     uint32_t prop_idx = 0;
     ant_value_t out = js_mkundef();
-    if (sv_ic_probe_get_chain(obj, a->str, &holder, &prop_idx, &out)) {
+    bool is_accessor = false;
+    if (sv_ic_probe_get_chain(obj, a->str, &holder, &prop_idx, &out, &is_accessor)) {
       ic->cached_shape = ptr->shape;
       ic->cached_holder = holder;
       ic->guard.receiver_proto = ptr->proto;
       ic->cached_index = prop_idx;
       ic->cached_is_own = (holder == ptr);
       ic->epoch = ant_ic_epoch_counter;
+      if (is_accessor) ic->cached_aux |= SV_GF_IC_AUX_ACCESSOR_BIT;
+      else ic->cached_aux &= ~SV_GF_IC_AUX_ACCESSOR_BIT;
       sv_gf_ic_note_success(ic);
-      return out;
+      if (!is_accessor) return out;
+      // Re-enter through the hit path so the getter invocation lives in exactly
+      // one place.
+      if (sv_ic_try_get_hit(js, ic, obj, ptr, a, &hit)) return hit;
     }
   }
 
@@ -529,20 +570,121 @@ static inline void sv_ic_set_add_transition(
   ic->guard.add.epoch = epoch;
 }
 
-static inline ant_value_t sv_op_put_field(
-  sv_vm_t *vm, ant_t *js,
-  sv_func_t *func, uint8_t *ip
+// The add transition and the accessor proto guard share the same union storage,
+// so an entry switching between them must drop the old state first. Only the
+// add transition retains shapes; the proto guard holds a plain value, and
+// releasing that as a shape would corrupt the heap.
+static inline void sv_ic_put_drop_add_guard(sv_ic_entry_t *ic) {
+  if (!ic) return;
+  if (sv_gf_ic_accessor(ic->cached_aux)) {
+    ic->guard.add.from_shape = NULL;
+    ic->guard.add.to_shape = NULL;
+    ic->guard.add.slot = 0;
+    ic->guard.add.epoch = 0;
+    return;
+  }
+  sv_ic_set_add_transition(ic, NULL, NULL, 0, 0);
+}
+
+// Kept out of line: this runs at most once per site (it fills the IC, after
+// which the fast path above serves the site), and sv_prop_put_field_ic is
+// inlined into the interpreter's dispatch loop, where every extra byte costs
+// all other opcodes.
+__attribute__((noinline))
+static bool sv_ic_put_fill_proto_accessor(
+  ant_t *js,
+  ant_value_t obj,
+  ant_value_t val,
+  sv_atom_t *a,
+  sv_ic_entry_t *ic,
+  ant_object_t *ptr,
+  ant_value_t *out
 ) {
-  uint32_t idx = sv_get_u32(ip + 1);
-  sv_atom_t *a = &func->atoms[idx];
-  ant_value_t val = vm->stack[--vm->sp];
-  ant_value_t obj = vm->stack[--vm->sp];
-  
+  ant_object_t *holder = NULL;
+  uint32_t prop_idx = 0;
+  ant_value_t probed = js_mkundef();
+  bool is_accessor = false;
+  if (!sv_ic_probe_get_chain(obj, a->str, &holder, &prop_idx, &probed, &is_accessor))
+    return false;
+  if (!is_accessor || holder == ptr) return false;
+
+  const ant_shape_prop_t *prop = ant_shape_prop_at(holder->shape, prop_idx);
+  if (!prop || !prop->has_setter || vtype(prop->setter) != T_FUNC) return false;
+
+  sv_ic_put_drop_add_guard(ic);
+  ic->cached_shape = ptr->shape;
+  ic->cached_holder = holder;
+  ic->guard.receiver_proto = ptr->proto;
+  ic->cached_index = prop_idx;
+  ic->cached_is_own = false;
+  ic->cached_aux |= SV_GF_IC_AUX_ACCESSOR_BIT;
+  ic->epoch = ant_ic_epoch_counter;
+
+  ant_value_t setter = prop->setter;
+  ant_value_t r = sv_vm_call_explicit_this(js->vm, js, setter, obj, &val, 1);
+  *out = is_err(r) ? r : val;
+  return true;
+}
+
+// Also out of line: the guard chain and call sequence would otherwise sit in
+// the interpreter dispatch loop, where sv_prop_put_field_ic is inlined.
+__attribute__((noinline))
+static bool sv_ic_put_try_cached_accessor(
+  ant_t *js,
+  ant_value_t obj,
+  ant_value_t val,
+  sv_atom_t *a,
+  sv_ic_entry_t *ic,
+  ant_object_t *ptr,
+  ant_value_t *out
+) {
+  if (ic->epoch != ant_ic_epoch_counter) return false;
+  if (ic->cached_shape != ptr->shape) return false;
+  if (ptr->proto != ic->guard.receiver_proto) return false;
+
+  ant_object_t *holder = ic->cached_holder;
+  if (!holder || holder->flags.is_exotic || !holder->shape) return false;
+
+  const ant_shape_prop_t *prop = ant_shape_prop_at(holder->shape, ic->cached_index);
+  if (!prop ||
+      prop->type != ANT_SHAPE_KEY_STRING ||
+      prop->key.interned != a->str ||
+      !prop->has_setter ||
+      vtype(prop->setter) != T_FUNC) return false;
+
+  // Copy the setter out first: the call can collect, and `prop` points into
+  // shape storage.
+  ant_value_t setter = prop->setter;
+  ant_value_t r = sv_vm_call_explicit_this(js->vm, js, setter, obj, &val, 1);
+  *out = is_err(r) ? r : val;
+  return true;
+}
+
+static inline ant_value_t sv_prop_put_field_ic(
+  ant_t *js,
+  ant_value_t obj,
+  ant_value_t val,
+  sv_atom_t *a,
+  sv_func_t *func,
+  uint8_t *ip
+) {
   ant_object_t *ptr = is_object_type(obj) ? js_obj_ptr(js_as_obj(obj)) : NULL;
   sv_ic_entry_t *ic = sv_ic_slot_for_ip(func, ip);
   regexp_note_property_write(a->str, a->len);
 
-  if (ic && ptr && !ptr->flags.is_exotic && ptr->shape && ic->epoch == ant_ic_epoch_counter &&
+  // A cached accessor setter lives on the prototype, so this entry uses the
+  // proto guard rather than the own-property/add guards below. The ACCESSOR aux
+  // bit keeps the two states mutually exclusive: only one of them ever holds,
+  // and testing it is all this hot path pays when no accessor is cached.
+  bool ic_is_accessor = ic && sv_gf_ic_accessor(ic->cached_aux);
+  if (ic_is_accessor && ptr && !ptr->flags.is_exotic && ptr->shape) {
+    ant_value_t acc_out = js_mkundef();
+    if (sv_ic_put_try_cached_accessor(js, obj, val, a, ic, ptr, &acc_out))
+      return acc_out;
+  }
+
+  if (!ic_is_accessor &&
+      ic && ptr && !ptr->flags.is_exotic && ptr->shape && ic->epoch == ant_ic_epoch_counter &&
       ic->cached_shape == ptr->shape && ic->cached_holder == ptr &&
       ic->cached_index < ptr->prop_count) {
     const ant_shape_prop_t *prop = ant_shape_prop_at(ptr->shape, ic->cached_index);
@@ -558,7 +700,8 @@ static inline ant_value_t sv_op_put_field(
     }
   }
 
-  if (ic && ptr && !ptr->flags.is_exotic && ptr->shape &&
+  if (!ic_is_accessor &&
+      ic && ptr && !ptr->flags.is_exotic && ptr->shape &&
       !ptr->flags.frozen && !ptr->flags.sealed && ptr->flags.extensible &&
       ptr->type_tag != T_ARR &&
       !sv_is_proto_atom(a) &&
@@ -587,12 +730,24 @@ static inline ant_value_t sv_op_put_field(
   uint32_t fast_idx = 0;
   if (sv_try_put_field_fast(js, obj, a, val, &fast_idx)) {
     if (ic && ptr && ptr->shape) {
+      sv_ic_put_drop_add_guard(ic);
       ic->cached_shape = ptr->shape;
       ic->cached_holder = ptr;
       ic->cached_index = fast_idx;
+      ic->cached_aux &= ~SV_GF_IC_AUX_ACCESSOR_BIT;
       ic->epoch = ant_ic_epoch_counter;
     }
     return val;
+  }
+
+  // Before falling back, check whether this site is writing through a
+  // prototype accessor. sv_try_put_field_fast only ever declines an own data
+  // property, so an accessor found on the chain is the reason we got here.
+  if (ic && ptr && !ptr->flags.is_exotic && ptr->shape &&
+      !is_length_key(a->str, a->len)) {
+    ant_value_t acc_out = js_mkundef();
+    if (sv_ic_put_fill_proto_accessor(js, obj, val, a, ic, ptr, &acc_out))
+      return acc_out;
   }
 
   ant_shape_t *old_shape = NULL;
@@ -619,9 +774,11 @@ static inline ant_value_t sv_op_put_field(
           !prop->has_setter &&
           (prop->attrs & ANT_PROP_ATTR_WRITABLE) != 0 &&
           prop_idx < ptr->prop_count) {
+        sv_ic_put_drop_add_guard(ic);
         ic->cached_shape = ptr->shape;
         ic->cached_holder = ptr;
         ic->cached_index = prop_idx;
+        ic->cached_aux &= ~SV_GF_IC_AUX_ACCESSOR_BIT;
         ic->epoch = ant_ic_epoch_counter;
         if (old_shape &&
             old_shape != ptr->shape &&
@@ -640,6 +797,17 @@ static inline ant_value_t sv_op_put_field(
   if (old_shape) ant_shape_release(old_shape);
 
   return out;
+}
+
+static inline ant_value_t sv_op_put_field(
+  sv_vm_t *vm, ant_t *js,
+  sv_func_t *func, uint8_t *ip
+) {
+  uint32_t idx = sv_get_u32(ip + 1);
+  sv_atom_t *a = &func->atoms[idx];
+  ant_value_t val = vm->stack[--vm->sp];
+  ant_value_t obj = vm->stack[--vm->sp];
+  return sv_prop_put_field_ic(js, obj, val, a, func, ip);
 }
 
 // A numeric element key only reaches the property machinery as the canonical

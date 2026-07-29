@@ -1110,6 +1110,7 @@ static bool mir_emit_get_field_ic_fastpath(
   if (is_length_key(atom->str, atom->len)) return false;
 
   sv_ic_entry_t *ic = &func->ic_slots[ic_idx];
+  if (sv_gf_ic_accessor(ic->cached_aux)) return false;
   if (!sv_gf_ic_active(ic->cached_aux) && func->code_len > 1024) return false;
   char gf_ic_name[32], gf_ice_name[32];
   char gf_ot_name[32], gf_op_name[32], gf_os_name[32], gf_ics_name[32];
@@ -1168,16 +1169,19 @@ static bool mir_emit_get_field_ic_fastpath(
       MIR_new_reg_op(ctx, r_ic_aux),
       MIR_new_mem_op(ctx, MIR_T_I64,
         (MIR_disp_t)offsetof(sv_ic_entry_t, cached_aux), r_ic, 0, 1)));
+  // The inline load tail can only serve an active, non-accessor entry, so both
+  // bits are tested at once: (aux & (ACTIVE|ACCESSOR)) must equal ACTIVE.
   MIR_append_insn(ctx, fn,
     MIR_new_insn(ctx, MIR_AND,
       MIR_new_reg_op(ctx, r_ic_aux),
       MIR_new_reg_op(ctx, r_ic_aux),
-      MIR_new_uint_op(ctx, (uint64_t)SV_GF_IC_AUX_ACTIVE_BIT)));
+      MIR_new_uint_op(ctx,
+        (uint64_t)(SV_GF_IC_AUX_ACTIVE_BIT | SV_GF_IC_AUX_ACCESSOR_BIT))));
   MIR_append_insn(ctx, fn,
-    MIR_new_insn(ctx, MIR_BEQ,
+    MIR_new_insn(ctx, MIR_BNE,
       MIR_new_label_op(ctx, slow),
       MIR_new_reg_op(ctx, r_ic_aux),
-      MIR_new_int_op(ctx, 0)));
+      MIR_new_uint_op(ctx, (uint64_t)SV_GF_IC_AUX_ACTIVE_BIT)));
   MIR_append_insn(ctx, fn,
     MIR_new_insn(ctx, MIR_MOV,
       MIR_new_reg_op(ctx, r_ic_epoch),
@@ -3151,13 +3155,15 @@ sv_jit_func_t sv_jit_compile(ant_t *js, sv_func_t *func, sv_closure_t *hint_clos
 
   MIR_type_t pf_ret = MIR_JSVAL;
   MIR_item_t put_field_proto = MIR_new_proto(ctx, "pf_proto",
-    1, &pf_ret, 6,
+    1, &pf_ret, 8,
     MIR_T_I64, "vm",
     MIR_T_I64, "js",
     MIR_JSVAL,  "obj",
     MIR_JSVAL,  "val",
     MIR_T_P,   "str",
-    MIR_T_I32, "len");
+    MIR_T_I32, "len",
+    MIR_T_I64, "func",
+    MIR_T_I32, "bc_off");
 
   MIR_type_t pe_ret = MIR_JSVAL;
   MIR_item_t put_elem_proto = MIR_new_proto(ctx, "pe_proto",
@@ -7251,7 +7257,7 @@ sv_jit_func_t sv_jit_compile(ant_t *js, sv_func_t *func, sv_closure_t *hint_clos
         MIR_reg_t val = vstack_pop(&vs);
         MIR_reg_t obj = vstack_pop(&vs);
         MIR_append_insn(ctx, jit_func,
-          MIR_new_call_insn(ctx, 9,
+          MIR_new_call_insn(ctx, 11,
             MIR_new_ref_op(ctx, put_field_proto),
             MIR_new_ref_op(ctx, imp_put_field),
             MIR_new_reg_op(ctx, r_err_tmp),
@@ -7260,7 +7266,9 @@ sv_jit_func_t sv_jit_compile(ant_t *js, sv_func_t *func, sv_closure_t *hint_clos
             MIR_new_reg_op(ctx, obj),
             MIR_new_reg_op(ctx, val),
             MIR_new_uint_op(ctx, (uint64_t)(uintptr_t)atom->str),
-            MIR_new_uint_op(ctx, (uint64_t)atom->len)));
+            MIR_new_uint_op(ctx, (uint64_t)atom->len),
+            MIR_new_uint_op(ctx, (uint64_t)(uintptr_t)func),
+            MIR_new_int_op(ctx, (int64_t)bc_off)));
         MIR_label_t no_err = MIR_new_label(ctx);
         MIR_append_insn(ctx, jit_func,
           MIR_new_insn(ctx, MIR_URSH,
