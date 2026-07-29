@@ -7,7 +7,7 @@ async function runAsyncBench() {
   }
 
   const tasks: Promise<number>[] = [];
-  for (let i = 0; i < 500; i++) {
+  for (let i = 0; i < 2000; i++) {
     tasks.push(step(100));
   }
 

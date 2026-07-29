@@ -13,6 +13,7 @@ This guide keeps validation proportional to the change while still protecting ru
 - Run one runtime test: `./build/ant tests/test_<name>.cjs`
 - Run the spec suite: `./build/ant examples/spec/run.js --all`
 - Run compliance test suite: `just compliance --tier all --smoke`
+- Check performance while working: `just bench-fast-diff` (~75s)
 - Validate repo knowledge docs: `just knowledge`
 - Validate changed-file boundaries: `just structure`
 - Ask the harness what to run for the current diff: `just validate_changes`
@@ -31,6 +32,9 @@ This guide keeps validation proportional to the change while still protecting ru
 - Rebuild with `maid build`.
 - Run focused regression tests first.
 - Run `./build/ant examples/spec/run.js --all` before landing behavior changes.
+- These are the paths where performance moves. Run `just bench-fast-diff` while
+  iterating and a full `just bench-diff` before landing. See
+  [benchmarking.md](benchmarking.md) for the tiers.
 
 ### Build or toolchain changes
 
@@ -54,10 +58,11 @@ runs), so a single push fires exactly one of them.
   `dev-ci.yml`, plus `compliance-benchmarking` — Tier 2/3 metric collection
   (`--allow-failures --log`) with a regression check against
   `docs/repo/compliance-baseline.json` (fails if passed-test counts drop),
-  and the cold-start bench threshold assertion (`python3 bench/bench.py
-  --check-thresholds --max-speed-lag 10.0 --max-size-growth 25.0`, never
-  slower by >10% or larger by >25% vs Upstream Ant). All jobs gate merges to
-  `main`.
+  and the bench threshold assertion (`python3 bench/bench.py
+  --check-thresholds --max-speed-lag 10.0 --max-size-growth 25.0`), which
+  diffs the run against `docs/repo/bench-baseline.json` and fails if Ant got
+  >10% slower or >25% larger. See [benchmarking.md](benchmarking.md). All jobs
+  gate merges to `main`.
 - **`.github/workflows/upstream-ci.yml`** (branch `upstream`): identical job
   set and bar to `main-ci.yml`, kept as its own file so it can be retired
   independently once a change actually ships upstream.

@@ -9,7 +9,7 @@ function runTextCodecBenchmark() {
     const decoder = new TextDecoder("utf-8");
     let totalBytes = 0;
 
-    for (let iter = 0; iter < 50; iter++) {
+    for (let iter = 0; iter < 300; iter++) {
         const encoded = encoder.encode(sourceText);
         totalBytes += encoded.byteLength;
         const decoded = decoder.decode(encoded);

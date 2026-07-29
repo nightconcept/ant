@@ -74,13 +74,54 @@ test:
     meson compile -C build
     ./build/ant examples/spec/run.js
 
-# Run benchmark suite
+# Run the full benchmark suite (26 benchmarks, 5 runtimes, ~5 min)
 bench +args="":
     python3 bench/bench.py {{args}}
+
+# Fast tier for edit-test loops: 15 benchmarks, ant/txiki.js/node, ~85s.
+# Same workloads as the full suite, so it diffs against the same baseline.
+bench-fast +args="":
+    python3 bench/bench.py --fast {{args}}
+
+# Fast tier, then diff against the checked-in baseline. The everyday check.
+bench-fast-diff +args="":
+    -python3 bench/bench.py --fast {{args}}
+    python3 scripts/bench_baseline.py diff .deps/compliance/logs/bench-latest.json
+
+# Full run recorded to the history series - intended for the nightly cron.
+# Does not touch the baseline; use bench-update-baseline to move that.
+bench-nightly +args="":
+    python3 bench/bench.py {{args}}
+    python3 scripts/bench_baseline.py record .deps/compliance/logs/bench-latest.json
 
 # Run compliance benchmark suite across runtimes
 bench-compliance +args="":
     python3 bench/compliance.py --allow-failures {{args}}
+
+# Run the benchmarks and record them in the history, leaving the baseline alone
+bench-record +args="":
+    python3 bench/bench.py {{args}}
+    python3 scripts/bench_baseline.py record .deps/compliance/logs/bench-latest.json
+
+# Run the benchmarks and diff them against the checked-in baseline
+bench-diff +args="":
+    -python3 bench/bench.py {{args}}
+    python3 scripts/bench_baseline.py diff .deps/compliance/logs/bench-latest.json
+
+# Full clean benchmark run, then promote it to the checked-in baseline
+bench-update-baseline +args="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "error: working tree is dirty - refusing to update the bench baseline from an unreproducible run." >&2
+        exit 1
+    fi
+    python3 bench/bench.py {{args}}
+    python3 scripts/bench_baseline.py update .deps/compliance/logs/bench-latest.json
+
+# Print the recorded benchmark series (no run)
+bench-history +args="":
+    python3 scripts/bench_baseline.py history {{args}}
 
 # Run compliance test suite (generic escape hatch; prefer compliance-t1/t2/t3 below)
 compliance +args="":

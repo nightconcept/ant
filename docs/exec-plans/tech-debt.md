@@ -145,3 +145,9 @@ scheduled.
   - Impact: A narrow residual deviation: only string-literal non-index numeric keys, which are rare in practice.
   - Proposed fix: Route the exotic getter/setter through `buffer_is_canonical_numeric_key` the way `builtin_object_defineProperty` does, returning undefined / discarding the write when the key is canonical numeric but not a valid index.
   - Status: backlog
+
+- Area: `String.prototype.replace` over deeply chained rope results
+  - Issue: A chain of global `replace` calls, each applied to the result of the previous one, starts dropping characters and then throws `TypeError: oom`. Repro (`bench/benchmarks/regex_dna.js` is the workload it was found in): build a sequence from `["agctntkbmrswyvhdAGCTNTKBMRSWYVHD", "GGCC", "AAAA", "TTTT", "CCCC"]` joined with newlines, strip it with `.replace(/^>.*$/mg, "").replace(/\n/g, "")`, run the nine IUPAC `match` variants, then apply the eleven `[/B/g, "(c|g|t)"] ...` replacements in sequence. At 50000 sequence entries this is correct; at 70000 Ant returns 2127233 where node/txiki.js/deno/bun all return 2128000, and stderr carries an `oom` TypeError. It is not a plain size limit or a plain leak: the same eleven replacements over a 50000-entry string built without the newline/`match` phases run five times over with no divergence, and the failing string is under 1MB.
+  - Impact: Silent wrong answers before the throw, which is worse than the throw. Any code doing repeated global replaces over a growing string can hit it. It is why `regex_dna` is pinned at one round of 50000 rather than sized like the rest of the suite, so that benchmark currently under-measures the regex engine.
+  - Proposed fix: Find where the rope produced by `replace` loses length under nesting — most likely flattening or the length bookkeeping on the concatenation path in `src/gc/` — and add a regression test under `tests/` built from the repro above.
+  - Status: backlog

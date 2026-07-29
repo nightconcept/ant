@@ -7,7 +7,7 @@ async function runAsyncBench() {
     return await step(n - 1) + 1;
   }
   const tasks = [];
-  for (let i = 0; i < 500; i++) {
+  for (let i = 0; i < 2000; i++) {
     tasks.push(step(100));
   }
   const results = await Promise.all(tasks);
