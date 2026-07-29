@@ -1,12 +1,12 @@
 {
-  "last_updated": "2026-07-29T05:11:01.195736+00:00",
+  "last_updated": "2026-07-29T11:08:18.285239+00:00",
   "runtimes": {
     "ant": {
       "name": "ant",
       "repo": "themackabu/ant",
-      "version": "v12.3.e9076ec7.0",
+      "version": "v12.3.c484d26d.0",
       "binary_path": "bin/ant",
-      "binary_size_mb": 12.36,
+      "binary_size_mb": 12.23,
       "download_url": "https://github.com/themackabu/ant/releases/latest",
       "asset_name": "N/A",
       "ts_native": true
