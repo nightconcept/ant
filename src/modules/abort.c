@@ -288,6 +288,30 @@ static ant_value_t abort_signal_throw_if_aborted(ant_t *js, ant_value_t *args, i
   return js_throw(js, data->reason);
 }
 
+static ant_value_t abort_signal_inspect(ant_t *js, ant_value_t *args, int nargs) {
+  ant_value_t signal = js_getthis(js);
+  abort_signal_data_t *data = get_signal_data(signal);
+  if (!data) return js_mkerr(js, "Invalid AbortSignal object");
+
+  ant_value_t body = js_mkobj(js);
+  js_set(js, body, "aborted", js_bool(data->aborted));
+
+  js_inspect_builder_t builder;
+  if (!js_inspect_builder_init_dynamic(&builder, js, 64)) {
+    return js_mkerr(js, "out of memory");
+  }
+
+  bool ok = js_inspect_header_for(&builder, body, "AbortSignal");
+  if (ok) ok = js_inspect_object_body(&builder, body);
+  if (ok) ok = js_inspect_close(&builder);
+  if (!ok) {
+    js_inspect_builder_dispose(&builder);
+    return js_mkerr(js, "out of memory");
+  }
+
+  return js_inspect_builder_result(&builder);
+}
+
 // AbortSignal.abort(reason?)
 static ant_value_t abort_signal_static_abort(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t reason = (nargs >= 1 && vtype(args[0]) != T_UNDEF)
@@ -438,6 +462,7 @@ void init_abort_module(ant_t *js) {
   js_set(js, signal_proto, "removeEventListener", js_mkfun(abort_signal_remove_event_listener));
   js_set(js, signal_proto, "dispatchEvent",       js_mkfun(abort_signal_dispatch_event));
   js_set(js, signal_proto, "throwIfAborted",      js_mkfun(abort_signal_throw_if_aborted));
+  js_set_sym(js, signal_proto, get_inspect_sym(), js_mkfun(abort_signal_inspect));
   js_set_sym(js, signal_proto, get_toStringTag_sym(), js_mkstr(js, "AbortSignal", 11));
 
   ant_value_t signal_ctor = js_mkobj(js);

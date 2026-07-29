@@ -2327,19 +2327,34 @@ fn findNpmNodeGypNearExecutable(allocator: std.mem.Allocator, executable_path: [
   return null;
 }
 
-fn findNpmNodeGyp(allocator: std.mem.Allocator, env_map: *std.process.Environ.Map) !?[]u8 {
+const NpmNodeGypCommand = struct {
+  node_path: []u8,
+  script_path: []u8,
+};
+
+fn findNpmNodeGyp(allocator: std.mem.Allocator, env_map: *std.process.Environ.Map) !?NpmNodeGypCommand {
   const path_env = env_map.get("PATH") orelse return null;
 
   const node_name = if (builtin.os.tag == .windows) "node.exe" else "node";
   if (try findExecutableInPath(allocator, path_env, node_name)) |node_path| {
-    defer allocator.free(node_path);
-    if (try findNpmNodeGypNearExecutable(allocator, node_path)) |node_gyp| return node_gyp;
+    errdefer allocator.free(node_path);
+    if (try findNpmNodeGypNearExecutable(allocator, node_path)) |node_gyp| {
+      return .{ .node_path = node_path, .script_path = node_gyp };
+    }
+    allocator.free(node_path);
   }
 
   const npm_name = if (builtin.os.tag == .windows) "npm.cmd" else "npm";
   if (try findExecutableInPath(allocator, path_env, npm_name)) |npm_path| {
     defer allocator.free(npm_path);
-    if (try findNpmNodeGypNearExecutable(allocator, npm_path)) |node_gyp| return node_gyp;
+    if (try findNpmNodeGypNearExecutable(allocator, npm_path)) |node_gyp| {
+      errdefer allocator.free(node_gyp);
+      const node_path = (try findExecutableInPath(allocator, path_env, node_name)) orelse {
+        allocator.free(node_gyp);
+        return null;
+      };
+      return .{ .node_path = node_path, .script_path = node_gyp };
+    }
   }
 
   return null;
@@ -2357,9 +2372,20 @@ fn appendShellSingleQuoted(allocator: std.mem.Allocator, out: *std.ArrayListUnma
   try out.append(allocator, '\'');
 }
 
+fn appendWindowsBatchQuoted(allocator: std.mem.Allocator, out: *std.ArrayListUnmanaged(u8), text: []const u8) !void {
+  try out.append(allocator, '"');
+  for (text) |ch| {
+    // Percent expansion happens even inside quotes in cmd.exe batch files.
+    if (ch == '%') try out.append(allocator, '%');
+    try out.append(allocator, ch);
+  }
+  try out.append(allocator, '"');
+}
+
 fn ensureLifecycleNodeGypShim(ctx: *PkgContext, allocator: std.mem.Allocator, env_map: *std.process.Environ.Map) !?[]u8 {
-  const node_gyp_path = (try findNpmNodeGyp(allocator, env_map)) orelse return null;
-  defer allocator.free(node_gyp_path);
+  const command = (try findNpmNodeGyp(allocator, env_map)) orelse return null;
+  defer allocator.free(command.node_path);
+  defer allocator.free(command.script_path);
 
   const bin_dir = try std.fs.path.join(allocator, &.{ ctx.cache_dir, "tools", "node-gyp", "npm-bundled", "bin" });
   errdefer allocator.free(bin_dir);
@@ -2372,12 +2398,16 @@ fn ensureLifecycleNodeGypShim(ctx: *PkgContext, allocator: std.mem.Allocator, en
   var content = std.ArrayListUnmanaged(u8).empty;
   defer content.deinit(allocator);
   if (builtin.os.tag == .windows) {
-    try content.appendSlice(allocator, "@echo off\r\nnode \"");
-    try content.appendSlice(allocator, node_gyp_path);
-    try content.appendSlice(allocator, "\" %*\r\n");
+    try content.appendSlice(allocator, "@echo off\r\n");
+    try appendWindowsBatchQuoted(allocator, &content, command.node_path);
+    try content.append(allocator, ' ');
+    try appendWindowsBatchQuoted(allocator, &content, command.script_path);
+    try content.appendSlice(allocator, " %*\r\n");
   } else {
-    try content.appendSlice(allocator, "#!/bin/sh\nexec node ");
-    try appendShellSingleQuoted(allocator, &content, node_gyp_path);
+    try content.appendSlice(allocator, "#!/bin/sh\nexec ");
+    try appendShellSingleQuoted(allocator, &content, command.node_path);
+    try content.append(allocator, ' ');
+    try appendShellSingleQuoted(allocator, &content, command.script_path);
     try content.appendSlice(allocator, " \"$@\"\n");
   }
 
@@ -2388,7 +2418,7 @@ fn ensureLifecycleNodeGypShim(ctx: *PkgContext, allocator: std.mem.Allocator, en
   defer file.close(io);
   try file.writeStreamingAll(io, content.items);
 
-  debug.log("prepared lifecycle node-gyp shim: {s}", .{node_gyp_path});
+  debug.log("prepared lifecycle node-gyp shim: {s} {s}", .{ command.node_path, command.script_path });
   return bin_dir;
 }
 

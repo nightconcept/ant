@@ -15,6 +15,7 @@ Store in-progress execution plans here.
 - [LLVM 21 Codegen Investigation](llvm-21-codegen-investigation.md)
 - [Platform Toolchains](platform-toolchains.md)
 - [Silver Recursive JIT Performance](silver-recursive-jit-perf.md)
+- [Tier 2 Compliance to 100%](tier2-compliance-100.md)
 - [WICG Observable Migration](wicg-observable.md)
 
 Recommended sections:

@@ -264,10 +264,10 @@ static inline ant_value_t sv_op_get_global(
     return sv;
   }
   ant_value_t val = sv_global_get_interned_ic(js, a->str, func, ip);
-  if (is_undefined(val) && lkp_interned(js, js->global, a->str) == 0) return js_mkerr_typed(
-    js, JS_ERR_REFERENCE, "'%.*s' is not defined",
-    (int)a->len, a->str
-  );
+  if (is_undefined(val) && lkp_interned(js, js->global, a->str) == 0)
+    return js_mkerr_typed(
+      js, JS_ERR_REFERENCE, "'%.*s' is not defined",
+      (int)a->len, a->str);
   vm->stack[vm->sp++] = val;
   return val;
 }
@@ -338,6 +338,19 @@ static inline ant_value_t sv_op_put_eval_global(
   return sv_env_put(
     js, sv_frame_eval_env(js, frame),
     a->str, a->len, vm->stack[--vm->sp], sv_frame_is_strict(frame));
+}
+
+static inline ant_value_t sv_op_define_eval_var(
+  sv_vm_t *vm, ant_t *js,
+  sv_frame_t *frame, sv_func_t *func, uint8_t *ip
+) {
+  sv_atom_t *a = &func->atoms[sv_get_u32(ip + 1)];
+  ant_value_t env = sv_frame_eval_env(js, frame);
+  ant_value_t val = vm->stack[--vm->sp];
+  ant_value_t existing = js_mkundef();
+  if (sv_env_try_get_interned(js, env, a->str, a->len, &existing))
+    return sv_env_put(js, env, a->str, a->len, val, false);
+  return setprop_interned(js, env, a->str, a->len, val);
 }
 
 #endif

@@ -749,7 +749,10 @@ int main(int argc, char *argv[]) {
       return exitcode;
     }
 
-    if (pkg_script_exists("package.json", positional)) {
+    struct stat positional_stat;
+    bool positional_is_file =
+      stat(positional, &positional_stat) == 0 && S_ISREG(positional_stat.st_mode);
+    if (!positional_is_file && pkg_script_exists("package.json", positional)) {
       if (watch->count > 0) {
         crfprintf(stderr, msg.watch_subcommand_error);
         CLEANUP_ARGS_AND_ARGV();
