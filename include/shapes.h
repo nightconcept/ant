@@ -15,6 +15,12 @@
 #define ANT_PROP_ATTR_CONFIGURABLE (1u << 2)
 #define ANT_PROP_ATTR_DEFAULT      (ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_ENUMERABLE | ANT_PROP_ATTR_CONFIGURABLE)
 
+// mkprop()/mkprop_interned() read attrs == 0 as "caller did not care, use
+// ANT_PROP_ATTR_DEFAULT", so a genuinely all-false property (non-writable,
+// non-enumerable, non-configurable — Math.PI and friends) cannot be spelled
+// with a plain 0. Pass this instead; the mkprop family strips it back to 0.
+#define ANT_PROP_ATTR_FROZEN       (1u << 3)
+
 typedef enum {
   ANT_SHAPE_KEY_STRING = 0,
   ANT_SHAPE_KEY_SYMBOL = 1,

@@ -101,6 +101,18 @@ static inline void sv_op_set_brand(sv_vm_t *vm, uint8_t *ip) {
     js_set_slot(obj, SLOT_BRAND, js_mknum((double)brand));
 }
 
+// Mirrors regexp_def_prop in src/modules/regex.c: a RegExp instance exposes
+// nothing enumerable, so its own properties must not be created with the
+// default attributes js_mkprop_fast applies. The literal path builds instances
+// independently of the constructor, so both have to agree.
+static inline void regexp_literal_def(
+  ant_t *js, ant_value_t obj, const char *key, size_t klen, ant_value_t val, uint8_t attrs
+) {
+  const char *interned = intern_string(key, klen);
+  if (!interned) return;
+  mkprop_interned(js, obj, interned, val, attrs);
+}
+
 static inline void sv_op_regexp(sv_vm_t *vm, ant_t *js) {
   ant_value_t pattern = vm->stack[vm->sp - 2];
   ant_value_t flags = vm->stack[vm->sp - 1];
@@ -110,7 +122,8 @@ static inline void sv_op_regexp(sv_vm_t *vm, ant_t *js) {
   ant_value_t regexp_proto = js_get_ctor_proto(js, "RegExp", 6);
   if (vtype(regexp_proto) == T_OBJ) js_set_proto_init(regexp_obj, regexp_proto);
 
-  js_mkprop_fast(js, regexp_obj, "source", 6, pattern);
+  regexp_literal_def(js, regexp_obj, "source", 6, pattern,
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
   js_set_slot(regexp_obj, SLOT_DATA, pattern);
 
   ant_offset_t flen = 0;
@@ -146,16 +159,25 @@ static inline void sv_op_regexp(sv_vm_t *vm, ant_t *js) {
   if (y) sorted[si++] = 'y';
 
   ant_value_t flags_value = js_mkstr(js, sorted, si);
-  js_mkprop_fast(js, regexp_obj, "flags", 5, flags_value);
-  js_mkprop_fast(js, regexp_obj, "hasIndices", 10, mkval(T_BOOL, d ? 1 : 0));
-  js_mkprop_fast(js, regexp_obj, "global", 6, mkval(T_BOOL, g ? 1 : 0));
-  js_mkprop_fast(js, regexp_obj, "ignoreCase", 10, mkval(T_BOOL, i ? 1 : 0));
-  js_mkprop_fast(js, regexp_obj, "multiline", 9, mkval(T_BOOL, m ? 1 : 0));
-  js_mkprop_fast(js, regexp_obj, "dotAll", 6, mkval(T_BOOL, s ? 1 : 0));
-  js_mkprop_fast(js, regexp_obj, "unicode", 7, mkval(T_BOOL, u ? 1 : 0));
-  js_mkprop_fast(js, regexp_obj, "unicodeSets", 11, mkval(T_BOOL, v ? 1 : 0));
-  js_mkprop_fast(js, regexp_obj, "sticky", 6, mkval(T_BOOL, y ? 1 : 0));
-  js_mkprop_fast(js, regexp_obj, "lastIndex", 9, tov(0));
+  regexp_literal_def(js, regexp_obj, "flags", 5, flags_value,
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "hasIndices", 10, mkval(T_BOOL, d ? 1 : 0),
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "global", 6, mkval(T_BOOL, g ? 1 : 0),
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "ignoreCase", 10, mkval(T_BOOL, i ? 1 : 0),
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "multiline", 9, mkval(T_BOOL, m ? 1 : 0),
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "dotAll", 6, mkval(T_BOOL, s ? 1 : 0),
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "unicode", 7, mkval(T_BOOL, u ? 1 : 0),
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "unicodeSets", 11, mkval(T_BOOL, v ? 1 : 0),
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "sticky", 6, mkval(T_BOOL, y ? 1 : 0),
+    ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE);
+  regexp_literal_def(js, regexp_obj, "lastIndex", 9, tov(0), ANT_PROP_ATTR_WRITABLE);
   
   js_set_slot(regexp_obj, SLOT_REGEXP_FLAGS_MASK, tov((double)(
     (d ? 1 : 0)  | (g ? 2 : 0)  | (i ? 4 : 0)  |
