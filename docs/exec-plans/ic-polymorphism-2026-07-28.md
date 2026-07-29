@@ -149,7 +149,14 @@ We use:
 
 ## Next Steps (Ordered by Leverage)
 
-### 1. **Add a CALL_METHOD IC** (Medium effort, medium upside)
+> **Outcome (2026-07-28):** Step 1 was investigated and dropped — its premise
+> does not hold in Ant (method resolution already runs through the `GET_FIELD`
+> IC, and the JIT devirtualizes calls via type feedback). Step 2 was built and
+> landed, together with a separate JIT put-field fix that measurement surfaced.
+> See [completed/ic-accessor-caching.md](completed/ic-accessor-caching.md) for
+> the data and results.
+
+### 1. **Add a CALL_METHOD IC** (Medium effort, medium upside) — *dropped, see above*
 
 This was Task #3 in the original plan, not yet attempted. The CALL_METHOD bytecode has no IC slot. Adding one would let us cache method resolution, which is currently a full property lookup + function type check on every call. For polymorphic call sites (like the dispatch loops in class_dispatch), this amortizes the lookup across 4 shapes.
 
@@ -160,7 +167,7 @@ Implementation sketch:
 
 **Why this is better than property IC polymorphism:** Method calls are inherently megamorphic in OOP code (different receiver shapes, same method). We already have the shape infrastructure. This is a small addition to an existing operation, not a new subsystem.
 
-### 2. **Cache accessors in the IC** (Medium-high effort, high upside)
+### 2. **Cache accessors in the IC** (Medium-high effort, high upside) — *done, see above*
 
 Store the getter/setter function in the way (or alongside it) and invoke it directly on a hit. This unlocks the 162ms hidden in class_dispatch's accessor cost.
 

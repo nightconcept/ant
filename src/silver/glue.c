@@ -926,10 +926,14 @@ ant_value_t jit_helper_get_length(sv_vm_t *vm, ant_t *js, ant_value_t obj) {
 
 ant_value_t jit_helper_put_field(
   sv_vm_t *vm, ant_t *js, ant_value_t obj,
-  ant_value_t val, const char *str, uint32_t len
+  ant_value_t val, const char *str, uint32_t len,
+  sv_func_t *func, int32_t bc_off
 ) {
-  ant_value_t key = js_mkstr(js, str, len);
-  return js_setprop(js, obj, key, val);
+  (void)vm;
+  uint8_t *ip = NULL;
+  if (func && bc_off >= 0 && bc_off < func->code_len) ip = func->code + bc_off;
+  sv_atom_t atom = { .str = str, .len = len };
+  return sv_prop_put_field_ic(js, obj, val, &atom, func, ip);
 }
 
 ant_value_t jit_helper_get_elem(

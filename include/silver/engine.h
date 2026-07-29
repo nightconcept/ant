@@ -127,6 +127,10 @@ typedef struct {
 #define SV_GF_IC_AUX_WARMUP_MASK    ((uintptr_t)0xFFu)
 #define SV_GF_IC_AUX_MISS_MASK      ((uintptr_t)0xFF00u)
 #define SV_GF_IC_AUX_ACTIVE_BIT     ((uintptr_t)0x10000u)
+// Set when the cached property is an accessor: the cached index names a
+// getter/setter pair in the shape, not a readable slot. The JIT's inline load
+// tail cannot serve those, so it must treat such an entry as a miss.
+#define SV_GF_IC_AUX_ACCESSOR_BIT   ((uintptr_t)0x20000u)
 #define SV_GF_IC_AUX_MISS_SHIFT     8u
 
 #define SV_GF_IC_WARMUP_ENABLE      16u
@@ -142,6 +146,10 @@ static inline uint8_t sv_gf_ic_miss_streak(uintptr_t aux) {
 
 static inline bool sv_gf_ic_active(uintptr_t aux) {
   return (aux & SV_GF_IC_AUX_ACTIVE_BIT) != 0;
+}
+
+static inline bool sv_gf_ic_accessor(uintptr_t aux) {
+  return (aux & SV_GF_IC_AUX_ACCESSOR_BIT) != 0;
 }
 
 static inline uintptr_t sv_gf_ic_pack_aux(uint8_t warmup, uint8_t miss_streak, bool active) {
