@@ -430,11 +430,23 @@ def ensure_binaries(force_update=False):
             build_bin = ROOT_DIR.parent / "build" / "ant"
             if build_bin.exists() and build_bin.is_file() and build_bin.stat().st_size > 0:
                 target = BIN_DIR / "ant"
+                # Unlink first: copying onto a binary that some process still
+                # has open for execution fails with ETXTBSY, and a silent
+                # failure here means the whole run measures a stale build.
+                try:
+                    target.unlink()
+                except FileNotFoundError:
+                    pass
+                except Exception:
+                    pass
                 try:
                     shutil.copy2(build_bin, target)
                     target.chmod(target.stat().st_mode | stat.S_IEXEC)
-                except Exception:
-                    pass
+                except Exception as e:
+                    raise RuntimeError(
+                        f"could not stage {build_bin} -> {target}: {e}. "
+                        "Refusing to benchmark a stale binary."
+                    ) from e
                 bin_map["ant"] = target
                 continue
 
