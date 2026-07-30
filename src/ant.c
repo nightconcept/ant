@@ -9120,7 +9120,7 @@ static ant_value_t object_define_properties(ant_t *js, ant_value_t obj, ant_valu
     GC_ROOT_PIN(js, obj);
     GC_ROOT_PIN(js, props);
 
-    ant_value_t keys = proxy_enum(js, props, OBJ_ENUM_KEYS);
+    ant_value_t keys = proxy_own_keys_raw(js, props);
     GC_ROOT_PIN(js, keys);
     if (is_err(keys)) {
       GC_ROOT_RESTORE(js, root_mark);
@@ -9132,6 +9132,19 @@ static ant_value_t object_define_properties(ant_t *js, ant_value_t obj, ant_valu
       GC_ROOT_SAVE(iter_mark, js);
       ant_value_t prop_key = js_arr_get(js, keys, i);
       GC_ROOT_PIN(js, prop_key);
+
+      ant_value_t own_desc = proxy_get_own_property_descriptor(js, props, prop_key);
+      GC_ROOT_PIN(js, own_desc);
+      if (is_err(own_desc)) {
+        GC_ROOT_RESTORE(js, iter_mark);
+        GC_ROOT_RESTORE(js, root_mark);
+        return own_desc;
+      }
+      if (vtype(own_desc) == T_UNDEF ||
+          !descriptor_bool_value(js, own_desc, "enumerable", 10, false)) {
+        GC_ROOT_RESTORE(js, iter_mark);
+        continue;
+      }
 
       ant_value_t descriptor = proxy_get_val(js, props, prop_key);
       GC_ROOT_PIN(js, descriptor);
@@ -9156,14 +9169,14 @@ static ant_value_t object_define_properties(ant_t *js, ant_value_t obj, ant_valu
 
   // ObjectDefineProperties steps 4-5: only own *enumerable* keys contribute,
   // and each descriptor is read with [[Get]] so accessors on the props object
-  // are honoured. Symbol keys are still skipped, as they were before: several
-  // built-ins expose a wrongly-enumerable @@toStringTag, and picking those up
-  // would turn "Object.create({}, JSON)" into a TypeError.
+  // are honoured. OwnPropertyKeys orders integer indices first, then strings,
+  // then symbols; retaining that array order also preserves observable getter
+  // and proxy behavior.
   GC_ROOT_SAVE(root_mark, js);
   GC_ROOT_PIN(js, obj);
   GC_ROOT_PIN(js, props);
 
-  ant_value_t keys = js_own_property_keys(js, props, false, true);
+  ant_value_t keys = js_own_property_keys(js, props, true, true);
   GC_ROOT_PIN(js, keys);
   if (is_err(keys)) {
     GC_ROOT_RESTORE(js, root_mark);
@@ -18632,7 +18645,7 @@ void js_set_exact(ant_t *js, ant_value_t obj, const char *key, ant_value_t val) 
   }
 }
 
-void js_set_sym(ant_t *js, ant_value_t obj, ant_value_t sym, ant_value_t val) {
+void js_set_sym_desc(ant_t *js, ant_value_t obj, ant_value_t sym, ant_value_t val, int flags) {
   if (vtype(sym) != T_SYMBOL) return;
   ant_offset_t sym_off = (ant_offset_t)vdata(sym);
   
@@ -18644,7 +18657,30 @@ void js_set_sym(ant_t *js, ant_value_t obj, ant_value_t sym, ant_value_t val) {
   if (existing > 0) {
     if (is_const_prop(js, existing)) return;
     js_saveval(js, existing, val);
-  } else mkprop(js, obj, sym, val, 0);
+    ant_object_t *ptr = js_obj_ptr(obj);
+    if (ptr && ptr->shape && js_obj_ensure_unique_shape(ptr)) {
+      uint8_t attrs = 0;
+      if (flags & JS_DESC_W) attrs |= ANT_PROP_ATTR_WRITABLE;
+      if (flags & JS_DESC_E) attrs |= ANT_PROP_ATTR_ENUMERABLE;
+      if (flags & JS_DESC_C) attrs |= ANT_PROP_ATTR_CONFIGURABLE;
+      ant_shape_set_attrs_symbol(ptr->shape, sym_off, attrs);
+    }
+  } else {
+    uint8_t attrs = 0;
+    if (flags & JS_DESC_W) attrs |= ANT_PROP_ATTR_WRITABLE;
+    if (flags & JS_DESC_E) attrs |= ANT_PROP_ATTR_ENUMERABLE;
+    if (flags & JS_DESC_C) attrs |= ANT_PROP_ATTR_CONFIGURABLE;
+    if (attrs == 0) attrs = ANT_PROP_ATTR_FROZEN;
+    mkprop(js, obj, sym, val, attrs);
+  }
+}
+
+void js_set_sym(ant_t *js, ant_value_t obj, ant_value_t sym, ant_value_t val) {
+  int flags = (vtype(sym) == T_SYMBOL &&
+               (ant_offset_t)vdata(sym) == (ant_offset_t)vdata(get_toStringTag_sym()))
+    ? JS_DESC_C
+    : JS_DESC_W | JS_DESC_E | JS_DESC_C;
+  js_set_sym_desc(js, obj, sym, val, flags);
 }
 
 void js_set_symbol(ant_t *js, ant_value_t obj, const char *key, ant_value_t val) {
