@@ -11,6 +11,7 @@
 
 #include "modules/json.h"
 #include "modules/napi.h"
+#include "modules/symbol.h"
 #include "modules/uri.h"
 
 #include "silver/ast.h"
@@ -443,6 +444,7 @@ static ant_value_t esm_make_namespace_object(ant_t *js) {
   ant_value_t ns = js_mkobj(js);
   js_set_slot(ns, SLOT_BRAND, js_mknum(BRAND_MODULE_NAMESPACE));
   js_set_slot(ns, SLOT_MODULE_LOADING, js_true);
+  js_set_sym_desc(js, ns, get_toStringTag_sym(), ANT_STRING("Module"), 0);
   return ns;
 }
 
@@ -458,6 +460,7 @@ static ant_value_t esm_complete_value_module(ant_t *js, esm_module_t *mod, ant_v
   ant_value_t ns = js_mkobj(js);
   GC_ROOT_PIN(js, ns);
   js_set_slot(ns, SLOT_BRAND, js_mknum(BRAND_MODULE_NAMESPACE));
+  js_set_sym_desc(js, ns, get_toStringTag_sym(), ANT_STRING("Module"), 0);
 
   if (is_object_type(value)) {
     ant_value_t keys = js_own_property_keys(js, value, false, true);
