@@ -4,7 +4,7 @@
 
 **Owner:** Claude Code (2026-07-28)
 
-Follow-on from [IC Polymorphism Exploration](../ic-polymorphism-2026-07-28.md),
+Follow-on from [IC Polymorphism Exploration](ic-polymorphism-2026-07-28.md),
 which ended with a ranked list of next steps. This plan records why step 1 of
 that list was dropped and what was built instead.
 

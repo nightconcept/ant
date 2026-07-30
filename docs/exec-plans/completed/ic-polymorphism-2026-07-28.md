@@ -1,8 +1,13 @@
 # IC Polymorphism Exploration (2026-07-28)
 
-**Status:** Attempted, measured, reverted. Provided valuable context for future dispatch optimization.
+Status: completed — attempted, measured, reverted
+Last reviewed: 2026-07-29
+Owner: Core Engineering
 
-**Owner:** Claude Code (2026-07-28)
+Kept as a rejected path: the implementation was correct and validated, but the
+payoff was zero and it cost 136 bytes per IC site. Recorded so the measurement
+is not repeated. Followed up by
+[IC Accessor Caching](ic-accessor-caching.md).
 
 ## Summary
 

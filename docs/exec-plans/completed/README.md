@@ -10,7 +10,10 @@ can reuse the decision history.
 
 ## Plans
 
+- [Tier 2 Compliance to 100%](tier2-compliance-100.md)
+- [Ant Compliance Test Suite Runner Scripts](compliance-suite-runner.md)
 - [IC Accessor Caching + JIT Put-Field Unification](ic-accessor-caching.md)
+- [IC Polymorphism Exploration](ic-polymorphism-2026-07-28.md) — rejected path
 - [CI Build Cache Optimization](ci-build-cache-optimization.md)
 - [CI Build and WinterTC Repair](ci-build-and-wintertc-repair.md)
 - [Static c-ares Release Portability](static-cares-release-portability.md)

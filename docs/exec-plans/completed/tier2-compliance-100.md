@@ -1,6 +1,6 @@
 # Tier 2 Compliance to 100%
 
-Status: implementation complete; awaiting landing
+Status: completed
 Last reviewed: 2026-07-29
 Owner: Core Engineering
 
