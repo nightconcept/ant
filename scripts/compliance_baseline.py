@@ -37,22 +37,90 @@ def load_json(path: Path) -> dict:
         return json.load(f)
 
 
-def load_baseline() -> dict:
-    if not BASELINE_PATH.exists():
+def load_baseline(path: Path) -> dict:
+    if not path.exists():
         return {"schema_version": 1, "tiers": {}}
-    return load_json(BASELINE_PATH)
+    return load_json(path)
 
 
-def save_baseline(baseline: dict):
-    BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(BASELINE_PATH, "w", encoding="utf-8") as f:
+def save_baseline(baseline: dict, path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(baseline, f, indent=2, sort_keys=True)
         f.write("\n")
 
 
+def _load_json_checked(path: Path, label: str) -> dict | None:
+    try:
+        value = load_json(path)
+    except FileNotFoundError:
+        print(f"error: {label} not found: {path}", file=sys.stderr)
+        return None
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"error: cannot read {label} {path}: {exc}", file=sys.stderr)
+        return None
+    if not isinstance(value, dict):
+        print(f"error: {label} {path} must contain a JSON object", file=sys.stderr)
+        return None
+    return value
+
+
+def _manifest_errors(
+    manifest: dict,
+    *,
+    label: str,
+    require_full: bool = False,
+    require_clean: bool = False,
+    expected_commit: str | None = None,
+    expected_branch: str | None = None,
+) -> list[str]:
+    errors = []
+    if manifest.get("schema_version") != 1:
+        errors.append(f"{label} has unsupported schema_version {manifest.get('schema_version')!r}")
+    if not isinstance(manifest.get("tier"), int):
+        errors.append(f"{label} has no integer 'tier' field")
+    if not isinstance(manifest.get("categories"), dict):
+        errors.append(f"{label} has no object-valued 'categories' field")
+    if not isinstance(manifest.get("totals"), dict):
+        errors.append(f"{label} has no object-valued 'totals' field")
+    if require_full and manifest.get("filter") is not None:
+        errors.append(f"{label} is partial (filter={manifest.get('filter')!r}); a full run is required")
+
+    revision = manifest.get("revision")
+    if not isinstance(revision, dict):
+        errors.append(f"{label} has no object-valued 'revision' field")
+        revision = {}
+    commit = revision.get("commit")
+    if not commit or commit == "unknown":
+        errors.append(f"{label} has no known revision commit")
+    if require_clean and revision.get("dirty"):
+        errors.append(f"{label} was produced from a dirty working tree")
+    if expected_commit and commit != expected_commit:
+        errors.append(f"{label} commit {commit!r} does not match expected {expected_commit!r}")
+    if expected_branch and revision.get("branch") != expected_branch:
+        errors.append(
+            f"{label} branch {revision.get('branch')!r} does not match expected {expected_branch!r}"
+        )
+
+    categories = manifest.get("categories")
+    if isinstance(categories, dict):
+        for name, category in categories.items():
+            if not isinstance(category, dict) or not isinstance(category.get("failing"), list):
+                errors.append(f"{label} category {name!r} has no failing-test list")
+    return errors
+
+
+def _report_errors(errors: list[str]) -> bool:
+    for error in errors:
+        print(f"error: {error}", file=sys.stderr)
+    return bool(errors)
+
+
 def cmd_update(args) -> int:
     manifest_path = Path(args.manifest)
-    manifest = load_json(manifest_path)
+    manifest = _load_json_checked(manifest_path, "manifest")
+    if manifest is None:
+        return 1
 
     tier = manifest.get("tier")
     if tier is None:
@@ -82,11 +150,12 @@ def cmd_update(args) -> int:
         )
         return 1
 
-    baseline = load_baseline()
+    baseline_path = Path(args.baseline)
+    baseline = load_baseline(baseline_path)
     baseline.setdefault("schema_version", 1)
     baseline.setdefault("tiers", {})
     baseline["tiers"][str(tier)] = manifest
-    save_baseline(baseline)
+    save_baseline(baseline, baseline_path)
 
     totals = manifest.get("totals", {})
     print(
@@ -94,7 +163,7 @@ def cmd_update(args) -> int:
         f"({totals.get('passed', '?')}/{totals.get('total', '?')} = "
         f"{totals.get('pass_rate', '?')}%) at commit {revision.get('short', '?')}."
     )
-    print(f"Baseline written to {BASELINE_PATH}")
+    print(f"Baseline written to {baseline_path}")
     return 0
 
 
@@ -106,20 +175,55 @@ def _in_scope(test_name: str, filter_value: str | None) -> bool:
 
 def cmd_diff(args) -> int:
     manifest_path = Path(args.manifest)
-    manifest = load_json(manifest_path)
+    manifest = _load_json_checked(manifest_path, "manifest")
+    if manifest is None:
+        return 1
+
+    manifest_errors = _manifest_errors(
+        manifest,
+        label="manifest",
+        require_full=args.require_full,
+        require_clean=bool(args.expect_commit or args.expect_branch),
+        expected_commit=args.expect_commit,
+        expected_branch=args.expect_branch,
+    )
+    if _report_errors(manifest_errors):
+        return 1
 
     tier = manifest.get("tier")
     if tier is None:
         print(f"error: manifest {manifest_path} has no 'tier' field", file=sys.stderr)
         return 1
 
-    baseline = load_baseline()
+    baseline_path = Path(args.baseline)
+    try:
+        baseline = load_baseline(baseline_path)
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"error: cannot read baseline {baseline_path}: {exc}", file=sys.stderr)
+        return 1
     base_tier = baseline.get("tiers", {}).get(str(tier))
 
     if base_tier is None:
+        if args.require_baseline:
+            print(f"error: no baseline recorded for tier {tier} in {baseline_path}", file=sys.stderr)
+            return 1
         print(f"No baseline recorded for tier {tier} - nothing to diff against.")
         print(f"(Seed one with: python3 scripts/compliance_baseline.py update <full-run-manifest.json>)")
         return 0
+
+    if args.require_baseline:
+        baseline_errors = _manifest_errors(
+            base_tier,
+            label=f"tier {tier} baseline",
+            require_full=True,
+            require_clean=True,
+        )
+        if base_tier.get("tier") != tier:
+            baseline_errors.append(
+                f"tier {tier} baseline identifies itself as tier {base_tier.get('tier')!r}"
+            )
+        if _report_errors(baseline_errors):
+            return 1
 
     filter_value = manifest.get("filter")
     manifest_categories = manifest.get("categories", {})
@@ -167,7 +271,7 @@ def cmd_diff(args) -> int:
     print(f"Manifest : {manifest_path}")
     print(f"  commit : {rev.get('short', '?')}{' (dirty)' if rev.get('dirty') else ''}")
     print(f"  filter : {filter_value if filter_value else '(none - full run)'}")
-    print(f"Baseline : {BASELINE_PATH}")
+    print(f"Baseline : {baseline_path}")
     print(f"  commit : {base_rev.get('short', '?')}{' (dirty)' if base_rev.get('dirty') else ''}")
     print(f"  categories covered by this run: {len(manifest_categories)}")
     print()
@@ -241,12 +345,24 @@ def main() -> int:
 
     p_update = sub.add_parser("update", help="Store a full-run manifest as the tier's baseline")
     p_update.add_argument("manifest", help="Path to a manifest .json produced by a compliance run")
+    p_update.add_argument("--baseline", default=str(BASELINE_PATH),
+                          help="Baseline JSON path (default: checked-in repository baseline)")
     p_update.set_defaults(func=cmd_update)
 
     p_diff = sub.add_parser("diff", help="Compare a manifest against the stored baseline")
     p_diff.add_argument("manifest", help="Path to a manifest .json produced by a compliance run")
+    p_diff.add_argument("--baseline", default=str(BASELINE_PATH),
+                        help="Baseline JSON path (default: checked-in repository baseline)")
     p_diff.add_argument("--allow-regressions", action="store_true",
                          help="Report regressions without failing the exit code (for informational runs)")
+    p_diff.add_argument("--require-baseline", action="store_true",
+                        help="Fail if the tier baseline is absent, partial, dirty, or malformed")
+    p_diff.add_argument("--require-full", action="store_true",
+                        help="Fail unless the manifest describes a full, unfiltered run")
+    p_diff.add_argument("--expect-commit",
+                        help="Fail unless the manifest records this exact commit")
+    p_diff.add_argument("--expect-branch",
+                        help="Fail unless the manifest records this exact branch")
     p_diff.set_defaults(func=cmd_diff)
 
     args = ap.parse_args()
