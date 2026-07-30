@@ -8458,39 +8458,69 @@ static bool descriptor_field_get(
   return true;
 }
 
-// TODO: decompose this huge function into small pieces
-static ant_value_t object_define_property(ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor) {
+/*
+ * ValidateAndApplyPropertyDescriptor's prologue: promote the callable-only
+ * receiver/descriptor forms, reject non-objects, and run ToPropertyKey.
+ *
+ * These steps allocate — ToPropertyKey can run user code, and the promotions
+ * make new objects — and the results are reachable only from these locals, so
+ * they are pinned for the whole definition. Callers used to get that for free
+ * by writing the coerced values back into their rooted `args` array; the
+ * definition body is now a helper that has no such array to write to.
+ */
+static ant_value_t object_define_property_coerced(
+  ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor
+);
+
+static ant_value_t object_define_property(
+  ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor
+) {
+  GC_ROOT_SAVE(root_mark, js);
+  GC_ROOT_PIN(js, obj);
+  GC_ROOT_PIN(js, prop);
+  GC_ROOT_PIN(js, descriptor);
+
+  ant_value_t result;
   if (vtype(obj) == T_CFUNC) obj = js_cfunc_promote(js, obj);
 
   if (!is_object_type(obj)) {
-    return js_mkerr(js, "Object.defineProperty called on non-object");
+    result = js_mkerr(js, "Object.defineProperty called on non-object");
+    goto done;
   }
-  
+
   // ToPropertyKey: ToPrimitive with a string hint, then ToString unless the
   // result is a symbol. `tostr` would format the key for display instead, and
   // truncate it to its buffer.
   if (vtype(prop) != T_STR && vtype(prop) != T_SYMBOL) {
     prop = js_to_primitive(js, prop, 1);
-    if (is_err(prop)) return prop;
+    if (is_err(prop)) { result = prop; goto done; }
     if (vtype(prop) != T_SYMBOL) {
       prop = js_tostring_val(js, prop);
-      if (is_err(prop)) return prop;
+      if (is_err(prop)) { result = prop; goto done; }
     }
   }
-
-  bool sym_key = (vtype(prop) == T_SYMBOL);
-  args[1] = prop;
 
   // ToPropertyDescriptor accepts any Object, not just a plain one: functions,
   // arrays, and boxed primitives all carry descriptor fields on themselves or
   // their prototype chain.
-  if (vtype(descriptor) == T_CFUNC) {
-    descriptor = js_cfunc_promote(js, descriptor);
-    args[2] = descriptor;
-  }
+  if (vtype(descriptor) == T_CFUNC) descriptor = js_cfunc_promote(js, descriptor);
   if (!is_object_type(descriptor)) {
-    return js_mkerr(js, "Property descriptor must be an object");
+    result = js_mkerr(js, "Property descriptor must be an object");
+    goto done;
   }
+
+  result = object_define_property_coerced(js, obj, prop, descriptor);
+
+done:
+  GC_ROOT_RESTORE(js, root_mark);
+  return result;
+}
+
+// TODO: decompose this huge function into small pieces
+static ant_value_t object_define_property_coerced(
+  ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor
+) {
+  bool sym_key = (vtype(prop) == T_SYMBOL);
 
   ant_value_t as_obj = js_as_obj(obj);
   if (is_proxy(as_obj)) {
