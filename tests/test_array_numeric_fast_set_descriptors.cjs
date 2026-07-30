@@ -91,4 +91,13 @@ Object.defineProperties(redefinedMany, {
 write(redefinedMany, 0, 102);
 assert.strictEqual(redefinedMany[0], 102, "defineProperties materializes a dense element");
 
+const copySource = [5, 0, 3];
+Object.defineProperty(copySource, "0", {
+  get() {
+    copySource.push(1);
+    return 5;
+  },
+});
+assert.deepStrictEqual(copySource.toReversed(), [3, 0, 5]);
+
 console.log("OK: test_array_numeric_fast_set_descriptors");
