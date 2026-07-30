@@ -207,12 +207,36 @@ In progress on `dev`, starting from `00874ed1`.
 - `aa542117` routes Tier 2 and Tier 3 workflows through the shared exact-set
   comparator and gives weekly Tier 3 explicit, independent `main` and `dev`
   matrix jobs with branch-qualified caches and artifacts.
+- The first full exact-set run found three descriptor/tag regressions hidden by
+  a net gain. `7689a78b` materializes dense elements before explicit descriptor
+  changes, and `196e0513` keeps Ant's synthetic Arguments and RegExp tags
+  overrideable. The next full run found three array-copy regressions hidden by
+  another net gain; `d75d49a4` makes the dense copy shortcut decline when
+  indexed descriptors or holes require ordinary `Get`.
+- The final clean Tier 3 manifest is
+  `.deps/compliance/logs/tier3_20260730_090013_d75d49a4.json`: 53,431 total,
+  34,139 passed, 19,292 failed (63.9%), with zero newly failing and 438 newly
+  passing tests. `c6483619` refreshes the clean `dev` Tier 2 and Tier 3
+  baselines from `d75d49a4`.
 
-Focused Test262 slices were also run. The relevant symbol-key and built-in tag
-cases passed; remaining failures were pre-existing harness or feature gaps.
-The broad clean-tree suites, branch baseline snapshots, and live two-branch
-workflow dispatch remain to be completed before this plan can move to
-`completed/`.
+Final local validation on the corrected runtime:
+
+- `just preflight`: passed.
+- `meson setup --reconfigure build && meson compile -C build`: passed; only
+  pre-existing ignored-return-value warnings.
+- `./build/ant examples/spec/run.js --all`: 3,672 passed, zero failed.
+- `python3 scripts/run_compliance.py --tier 1 --all --log-fail`: 100%.
+- `python3 scripts/run_compliance.py --tier 2 --all --log-fail`: 468/468,
+  followed by a strict exact-set diff with zero newly failing tests.
+- `python3 tests/test_compliance_baseline.py`: seven tests passed.
+- `just bench-fast-diff`: Array Operations +0.5%; no time, RSS, or size
+  threshold regressions.
+
+The plan remains active because live CI confirmation is an external rollout
+step. The commits have not been pushed, and the checked-out `main` branch does
+not yet contain the new baseline-tool options. Land the shared tooling on the
+long-lived branches, publish `dev`, then dispatch `tier3-weekly.yml` and record
+the two job/artifact URLs before moving this plan to `completed/`.
 
 ## Decision Log
 
@@ -232,6 +256,13 @@ workflow dispatch remain to be completed before this plan can move to
 - 2026-07-30: Weekly Tier 3 uses a branch matrix rather than duplicated jobs;
   the matrix still yields separate conclusions, concurrency groups, caches,
   and artifacts for `main` and `dev`.
+- 2026-07-30: Full exact-set comparison was used as a correctness feedback
+  loop, not merely a final report. It caught six regressions across two runs
+  even though both runs had large net pass gains; all six were fixed before
+  refreshing the baseline.
+- 2026-07-30: Refreshed only the `dev` baseline from a clean full run. A live
+  two-branch dispatch waits until `main` has the shared comparator options, so
+  the workflow cannot accidentally exercise an older branch-local tool.
 
 ## Completion Criteria
 
@@ -248,6 +279,13 @@ This plan is complete only when:
 
 ## Follow-Ups
 
-Record newly discovered correctness or tooling issues here while executing the
-plan. Do not expand this plan to rewrite historical commits or absorb unrelated
+- Promote the shared baseline tool and workflow-compatible baseline state to
+  `main` and `upstream` through the repository's normal branch flow.
+- Dispatch `tier3-weekly.yml` after publication; record separate green
+  `main`/`dev` job URLs and `tier3-compliance-main` /
+  `tier3-compliance-dev` artifact URLs here.
+- Exercise a controlled exact-set regression in CI (or an equivalent temporary
+  branch) and record the failing gate URL.
+
+Do not expand this plan to rewrite historical commits or absorb unrelated
 conformance improvements.
