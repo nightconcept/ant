@@ -208,14 +208,27 @@ dirty tree are marked `*` — treat those as indicative only.
 
 ## CI
 
-`main` and `upstream` run `bench/bench.py --check-thresholds --max-speed-lag
-10.0 --max-size-growth 25.0`, which diffs the run against the checked-in
-baseline and fails the job on a regression. `--max-speed-lag` is the time
-threshold and `--max-size-growth` the binary-size threshold.
+**No benchmark gate runs in CI** — not for speed, not for memory. `bench.py
+--check-thresholds` still exists and still fails when there is nothing to
+compare against, but no workflow calls it.
 
-If there is no baseline yet, the check **fails** rather than passing quietly —
-a gate with nothing to compare against is not a gate, and the previous silent
-pass is what let this go unnoticed. Seed one with `just bench-update-baseline`.
+The reason is that the comparison is not valid across machines. The gate diffs
+absolute milliseconds against `bench-baseline.json`, which is recorded wherever
+`just bench-update-baseline` was run, so on a GitHub runner every benchmark reads
+15–47% slower with no code change. Normalising by the ratio to node does not
+rescue it: between two runs of identical Ant code on one machine with the same
+node build, Ant's own fastest-sample time drifts at worst 5.4% while node drifts
+15% (28% once its ~18ms startup floor is subtracted), so the reference is noisier
+than the subject.
+
+The full measurement, and what re-enabling it would take, is recorded in
+[../exec-plans/tech-debt.md](../exec-plans/tech-debt.md). Do not re-add the step
+without a baseline recorded on the runner class CI uses — it will fail on every
+push.
+
+Until then, performance is checked locally: `just bench-fast-diff` against a
+locally-recorded baseline is a valid Ant-vs-Ant comparison, and
+`bench-history.jsonl` carries the trend.
 
 ## Recording A Decision
 

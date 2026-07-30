@@ -20,9 +20,9 @@ entire repository into context.
 Three long-lived branches, each with its own CI gate (see
 [docs/repo/testing.md](docs/repo/testing.md)):
 - **`dev`** — active work. Build all platforms + tier 1.
-- **`main`** — release-quality, and where "upstreamable" is the standard. Adds
-  bench thresholds. Landing here requires tier 1 at 100% and no tier 1/2/3
-  regression against `dev`, compared as failing-test *sets*, not percentages.
+- **`main`** — release-quality, and where "upstreamable" is the standard. Needs
+  tier 1 at 100% and no tier 1/2 regression against `dev`, compared as
+  failing-test *sets*. Tier 3 runs weekly and must not regress. No perf gate.
 - **`upstream`** — a record, not a delivery target: it tracks
   `theMackabu/ant`'s work and keeps our history legible for inspection.
 

@@ -1,0 +1,116 @@
+name: Tier 3 Weekly
+
+# Tier 3 is ~50k Test262/WPT tests and takes far too long to sit in front of a
+# push. It runs on a schedule instead, against `main`, and reports a regression
+# the same way the tier 2 push gate does.
+on:
+  schedule:
+    # Mondays, 04:00 UTC - off-peak, and a full working week before anyone is
+    # likely to be looking at the result.
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  compliance-tier3:
+    name: Compliance (Tier 3)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build ccache jq
+          pip install --break-system-packages -U meson
+
+      # Same pinned toolchain as the platform builds: the runner's default clang
+      # is older than the C23 the engine requires and cannot compile src/ant.c.
+      - name: Resolve pinned tool versions
+        id: config
+        run: |
+          TOOLS=$(jq -r '.tools' .github/versions.json)
+          echo "llvm_version=$(echo $TOOLS | jq -r '.llvm')" >> $GITHUB_OUTPUT
+
+      - name: Setup LLVM
+        id: llvm
+        uses: ./.github/actions/setup-llvm
+        with:
+          version: ${{ steps.config.outputs.llvm_version }}
+          os_type: linux-glibc
+
+      - name: Setup Zig
+        uses: ./.github/actions/setup-zig
+        with:
+          version: "0.16.0"
+
+      - name: Setup build caches
+        uses: ./.github/actions/setup-build-caches
+        with:
+          platform: compliance-linux-x64
+          compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
+          zig_version: "0.16.0"
+
+      - name: Configure build
+        env:
+          CC: ccache ${{ steps.llvm.outputs.cc }}
+          CXX: ccache ${{ steps.llvm.outputs.cxx }}
+        run: meson setup build -Dbuildtype=release
+
+      - name: Compile Ant
+        env:
+          CC: ccache ${{ steps.llvm.outputs.cc }}
+          CXX: ccache ${{ steps.llvm.outputs.cxx }}
+        run: meson compile -C build
+
+      - name: Report compiler cache statistics
+        if: always()
+        run: ccache --show-stats
+
+      - name: Run Tier 3 Compliance Tracking
+        run: python3 scripts/run_compliance.py --tier 3 --all --allow-failures --log
+
+      - name: Check tier 3 pass counts against baseline
+        run: |
+          python3 - <<'PYEOF'
+          import json, sys, pathlib
+
+          baseline = json.loads(pathlib.Path("docs/repo/compliance-baseline.json").read_text())["tiers"]
+          logs = sorted(pathlib.Path(".deps/compliance/logs").glob("*.json"))
+
+          failed = False
+          for tier in ("3",):
+              if tier not in baseline:
+                  print(f"Tier {tier}: no baseline seeded yet, skipping regression check")
+                  continue
+              manifest_path = next((p for p in logs if f"tier{tier}_" in p.name), None)
+              if manifest_path is None:
+                  print(f"::error::Tier {tier}: no manifest produced by this run")
+                  failed = True
+                  continue
+              manifest = json.loads(manifest_path.read_text())
+              base_passed = baseline[tier]["totals"]["passed"]
+              cur_passed = manifest["totals"]["passed"]
+              print(f"Tier {tier}: baseline passed={base_passed}, current passed={cur_passed}")
+              if cur_passed < base_passed:
+                  print(f"::error::Tier {tier} regressed: {cur_passed} passed vs baseline {base_passed}")
+                  failed = True
+
+          sys.exit(1 if failed else 0)
+          PYEOF
+
+      - name: Upload tier 3 manifest and log
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: tier3-compliance
+          path: .deps/compliance/logs/tier3_*
+          if-no-files-found: warn

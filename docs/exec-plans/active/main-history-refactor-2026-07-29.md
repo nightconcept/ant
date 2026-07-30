@@ -249,8 +249,8 @@ Two caveats worth stating rather than hiding:
 
 - The tier 3 log is stamped `52abfd36`, a SHA that no longer exists — two commits
   were reworded afterwards to give them commit bodies. No file changed, so the
-  result stands; `main-ci.yml` re-runs tier 2/3 at the final SHA and is the
-  authoritative record.
+  result stands; `main-ci.yml` re-runs tier 2 at the final SHA and the weekly
+  `tier3-weekly.yml` covers tier 3.
 - Running the benchmarks rewrites `bench/versions.json` (timestamp and an
   embedded version string) even when the runtime set is unchanged, which
   `983bf315` was meant to stop. Discarded locally; the committed file matches

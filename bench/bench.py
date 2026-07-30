@@ -306,6 +306,9 @@ RUNTIMES = [
 # every runtime at once - because hyperfine has no timeout of its own.
 HYPERFINE_TIMEOUT_S = 300
 
+# Pinned so the timing tool is not a moving part of the measurement.
+HYPERFINE_VERSION = "v1.18.0"
+
 # Sampling, shared by both tiers.
 #
 # Benchmark noise is one-sided: scheduling, interrupts, cache eviction and
@@ -775,7 +778,40 @@ def get_hyperfine_base_cmd():
     mise_installs = list(home.glob(".local/share/mise/installs/hyperfine/**/hyperfine"))
     if mise_installs:
         return [str(mise_installs[0])]
-    return ["hyperfine"]
+
+    # Nothing local: fetch it, the same way every other runtime here is
+    # bootstrapped. Without this the suite only runs on a machine that already
+    # has hyperfine or mise - a bare CI runner has neither, and the first
+    # benchmark dies on FileNotFoundError before any measurement happens.
+    import tarfile
+
+    _, _, is_mac, _, is_arm = get_platform_info()
+    hf_arch = "aarch64" if is_arm else "x86_64"
+    hf_os = "apple-darwin" if is_mac else "unknown-linux-gnu"
+    hf_name = f"hyperfine-{HYPERFINE_VERSION}-{hf_arch}-{hf_os}"
+    url = (
+        "https://github.com/sharkdp/hyperfine/releases/download/"
+        f"{HYPERFINE_VERSION}/{hf_name}.tar.gz"
+    )
+
+    BIN_DIR.mkdir(parents=True, exist_ok=True)
+    archive = BIN_DIR / "hyperfine.tar.gz"
+    try:
+        print(f"  ➜ Fetching hyperfine {HYPERFINE_VERSION}...", flush=True)
+        urllib.request.urlretrieve(url, archive)
+        with tarfile.open(archive, "r:gz") as tf:
+            for member in tf.getmembers():
+                if member.name.endswith("/hyperfine") or member.name == "hyperfine":
+                    with tf.extractfile(member) as src, open(local_hf, "wb") as dst:
+                        shutil.copyfileobj(src, dst)
+                    break
+        local_hf.chmod(0o755)
+        return [str(local_hf)]
+    except Exception as exc:
+        print(f"  {YELLOW}could not fetch hyperfine: {exc}{RESET}", flush=True)
+        return ["hyperfine"]
+    finally:
+        archive.unlink(missing_ok=True)
 
 def run_hyperfine(cmds_map: dict, warmup: int = 2, runs: int = 10) -> dict:
     temp_json = ROOT_DIR / "temp_hyperfine.json"

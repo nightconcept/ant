@@ -38,10 +38,26 @@ runs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-        echo "deb https://apt.llvm.org/jammy/ llvm-toolchain-jammy-${{ inputs.version }} main" > /etc/apt/sources.list.d/llvm.list
-        apt-get update
-        apt-get install -y clang-${{ inputs.version }} lld-${{ inputs.version }} llvm-${{ inputs.version }}
+        set -euo pipefail
+
+        # The platform builds run in a root container; the compliance job runs
+        # directly on a runner as a non-root user. Prefix with sudo only when it
+        # exists, so the same action works in both.
+        SUDO=""
+        if [ "$(id -u)" -ne 0 ]; then SUDO="sudo"; fi
+
+        # Take the codename from the image rather than hardcoding one, so the
+        # apt.llvm.org suite matches the distro actually being installed onto.
+        # /etc/os-release is always present; lsb_release may not be.
+        CODENAME="$(. /etc/os-release && echo "${VERSION_CODENAME:-jammy}")"
+
+        wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+          | $SUDO tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+        echo "deb https://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-${{ inputs.version }} main" \
+          | $SUDO tee /etc/apt/sources.list.d/llvm.list > /dev/null
+        $SUDO apt-get update
+        $SUDO apt-get install -y \
+          clang-${{ inputs.version }} lld-${{ inputs.version }} llvm-${{ inputs.version }}
 
     # linux-musl: LLVM installed via apk in workflow setup step
     # macos: LLVM installed via brew in workflow setup step

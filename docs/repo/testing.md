@@ -55,20 +55,29 @@ runs), so a single push fires exactly one of them.
   and failing it if any test fails), `repo-knowledge` (doc-link and
   changed-file structure checks).
 - **`.github/workflows/main-ci.yml`** (branch `main`): everything in
-  `dev-ci.yml`, plus `compliance-benchmarking` — Tier 2/3 metric collection
+  `dev-ci.yml`, plus `compliance-tier2` — Tier 2 metric collection
   (`--allow-failures --log`) with a regression check against
-  `docs/repo/compliance-baseline.json` (fails if passed-test counts drop),
-  and the bench threshold assertion (`python3 bench/bench.py
-  --check-thresholds --max-speed-lag 10.0 --max-size-growth 25.0`), which
-  diffs the run against `docs/repo/bench-baseline.json` and fails if Ant got
-  >10% slower or >25% larger. See [benchmarking.md](benchmarking.md). All jobs
-  gate merges to `main`. Tier 2/3 are compared against `dev` as failing-test
-  sets, not percentages: a net-positive rate can still hide a newly failing
-  test, and only the sets separate the two.
+  `docs/repo/compliance-baseline.json` (fails if the passed-test count drops).
+  All jobs gate merges to `main`. Tier 1 is already gated inside
+  `build-platform.yml`, so a push is checked against tiers 1 and 2.
 - **`.github/workflows/upstream-ci.yml`** (branch `upstream`): identical job
   set and bar to `main-ci.yml`. `upstream` is a record of `theMackabu/ant`'s
   work kept for history and inspection, so this workflow exists to tell us when
   that record stops building — not to clear anything for submission.
+- **`.github/workflows/tier3-weekly.yml`** (schedule): tier 3 is ~50k
+  Test262/WPT tests, too slow to sit in front of a push, so it runs weekly
+  (Mondays 04:00 UTC) plus on demand, with the same baseline regression check
+  and the manifest uploaded as an artifact.
+
+**No performance gate runs in CI.** The bench threshold assertion compared
+absolute milliseconds against a baseline recorded on a developer machine, which
+cannot hold on a runner, and the ratio-based alternative is defeated by the
+reference runtime being noisier than Ant itself. Both the reasoning and the
+measurements are in [../exec-plans/tech-debt.md](../exec-plans/tech-debt.md);
+speed and memory are checked locally with `just bench-fast-diff`.
+
+Compare tiers as failing-test *sets*, not percentages: a net-positive rate can
+still hide a newly failing test, and only the sets separate the two.
 
 Reusable/utility workflows are not part of any branch's automatic signal —
 they're `workflow_call` targets or `workflow_dispatch`-only:
