@@ -2876,7 +2876,13 @@ void init_regex_module(ant_t *js) {
   js_set_sym(js, regexp_matchall_iter_proto_val, get_iterator_sym(), js_mkfun(sym_this_cb));
   js_set_sym(js, regexp_proto, get_replace_sym(), js_mkfun(builtin_regexp_symbol_replace));
   js_set_sym(js, regexp_proto, get_search_sym(), js_mkfun(builtin_regexp_symbol_search));
-  js_set_sym(js, regexp_proto, get_toStringTag_sym(), js_mkstr(js, "RegExp", 6));
+  // This is an implementation compatibility tag (the spec's built-in tag
+  // algorithm already classifies RegExp instances), so it must remain
+  // overrideable by an ordinary instance @@toStringTag assignment.
+  js_set_sym_desc(
+    js, regexp_proto, get_toStringTag_sym(), js_mkstr(js, "RegExp", 6),
+    JS_DESC_W | JS_DESC_C
+  );
   js_set_getter_desc(js, regexp_proto, "flags", 5, js_mkfun(builtin_regexp_flags_getter), JS_DESC_C);
   defmethod(js, regexp_proto, "compile", 7, js_mkfun(builtin_regexp_compile));
 

@@ -60,4 +60,15 @@ const props = new RegExp();
 props.prop = { value: 12, enumerable: true };
 assert.ok(Object.create({}, props).hasOwnProperty("prop"), "Object.create with a RegExp");
 
+// Ant models the Arguments and RegExp built-in classifications with
+// compatibility @@toStringTag properties. They must remain non-enumerable
+// without blocking an instance's ordinary tag override.
+const args = (function () { return arguments; })();
+args[Symbol.toStringTag] = "custom";
+assert.strictEqual(Object.prototype.toString.call(args), "[object custom]");
+
+const taggedRegExp = /x/;
+taggedRegExp[Symbol.toStringTag] = "custom";
+assert.strictEqual(Object.prototype.toString.call(taggedRegExp), "[object custom]");
+
 console.log("test_builtin_prop_attrs: OK");
