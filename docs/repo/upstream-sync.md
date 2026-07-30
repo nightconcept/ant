@@ -137,4 +137,6 @@ per [compliance.md](compliance.md), in a shape small enough to send upstream.
 
 - Compliance tiers and the definition of done: [compliance.md](compliance.md)
 - Validation scope: [testing.md](testing.md)
-- Branch layout (`dev` / `main` / `upstream`): [../../AGENTS.md](../../AGENTS.md)
+- Branch layout (`dev` / `main` / `upstream`): [../../AGENTS.md](../../AGENTS.md).
+  Note that `upstream` is a record of `theMackabu/ant`'s work kept for history
+  and inspection; "upstreamable" is `main`'s standard.

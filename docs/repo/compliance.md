@@ -57,7 +57,8 @@ A compliance change is done when all of the following hold.
 2. **No tier 2 or tier 3 percentage regression** measured on the final state of
    the change. A net gain that hides a regression in one area is not done —
    diff the failing-test *lists*, not just the totals (see below).
-3. **The change is small and upstreamable.** Prefer one root cause per commit,
+3. **The change is small and upstreamable.** This is the bar for landing on
+   `main`, not something deferred to the `upstream` branch. Prefer one root cause per commit,
    expressed the way the surrounding subsystem already expresses things. If a
    fix needs a new subsystem, a feature flag, or a suite-specific special case,
    it is the wrong shape — split it or write an exec plan first.

@@ -18,15 +18,17 @@ entire repository into context.
 ## Branches
 
 Three long-lived branches, each with its own CI gate (see
-[docs/repo/testing.md](docs/repo/testing.md)): `dev` (active work; build all
-platforms + tier 1), `main` (release-quality; adds tier 2/3 no-regression +
-bench thresholds), `upstream` (dev/main cleaned up for the real upstream
-project; same bar as `main`, fork-only CI/bench/test infra squashed into one
-non-upstreamed commit).
+[docs/repo/testing.md](docs/repo/testing.md)):
+- **`dev`** — active work. Build all platforms + tier 1.
+- **`main`** — release-quality, and where "upstreamable" is the standard. Adds
+  bench thresholds. Landing here requires tier 1 at 100% and no tier 1/2/3
+  regression against `dev`, compared as failing-test *sets*, not percentages.
+- **`upstream`** — a record, not a delivery target: it tracks
+  `theMackabu/ant`'s work and keeps our history legible for inspection.
 
 ## Fast Path
 
-- Start here for most changes: `just preflight`; its steps individually are `just validate_changes`, `just structure`, `just knowledge`
+- Start here for most changes: `just preflight` (`validate_changes`, `structure`, `knowledge`)
 - Build from an existing configured tree: `meson compile -C build`
 - Fresh local setup: `just setup`
 - Run a focused test file: `./build/ant tests/test_<name>.cjs`
@@ -67,12 +69,10 @@ guidance.
 - Check [docs/repo/testing.md](docs/repo/testing.md) before choosing validation
   scope or retrying a failing broad test command.
 - For conformance work read [docs/repo/compliance.md](docs/repo/compliance.md)
-  first. Done means: tier 1 at 100%, no tier 2/3 percentage regression, and
-  small upstreamable changes. Logs are stamped with the commit they ran at —
-  check it before treating a logged failure as live.
-- Before finalizing most code changes, run `just preflight` and then execute any
-  additional build or spec commands it recommends, or explain why they were not
-  run.
+  first. Done means tier 1 at 100%, no tier 2/3 regression, small upstreamable
+  changes. Logs are commit-stamped — check that before treating one as live.
+- Before finalizing most code changes, run `just preflight` and then whatever
+  build or spec commands it recommends, or explain why they were not run.
 
 ## Which Doc To Open Next
 

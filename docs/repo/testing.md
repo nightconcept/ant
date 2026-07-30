@@ -62,10 +62,13 @@ runs), so a single push fires exactly one of them.
   --check-thresholds --max-speed-lag 10.0 --max-size-growth 25.0`), which
   diffs the run against `docs/repo/bench-baseline.json` and fails if Ant got
   >10% slower or >25% larger. See [benchmarking.md](benchmarking.md). All jobs
-  gate merges to `main`.
+  gate merges to `main`. Tier 2/3 are compared against `dev` as failing-test
+  sets, not percentages: a net-positive rate can still hide a newly failing
+  test, and only the sets separate the two.
 - **`.github/workflows/upstream-ci.yml`** (branch `upstream`): identical job
-  set and bar to `main-ci.yml`, kept as its own file so it can be retired
-  independently once a change actually ships upstream.
+  set and bar to `main-ci.yml`. `upstream` is a record of `theMackabu/ant`'s
+  work kept for history and inspection, so this workflow exists to tell us when
+  that record stops building — not to clear anything for submission.
 
 Reusable/utility workflows are not part of any branch's automatic signal —
 they're `workflow_call` targets or `workflow_dispatch`-only:
