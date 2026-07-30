@@ -1,7 +1,7 @@
 # Active Plans
 
 Status: active
-Last reviewed: 2026-07-29
+Last reviewed: 2026-07-30
 Owner: theMackabu
 
 Store in-progress execution plans here.
@@ -16,6 +16,7 @@ Store in-progress execution plans here.
 - [Main History Refactor (2026-07-29)](main-history-refactor-2026-07-29.md)
 - [Nanos Sandbox](nanos-sandbox.md)
 - [Platform Toolchains](platform-toolchains.md)
+- [Post-Audit Correctness and Compliance Gates](post-audit-correctness-and-compliance-gates.md)
 - [Silver Recursive JIT Performance](silver-recursive-jit-perf.md)
 - [WICG Observable Migration](wicg-observable.md)
 
