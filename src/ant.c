@@ -3889,8 +3889,10 @@ static ant_value_t js_setprop_array_fast(ant_t *js, ant_value_t obj, ant_value_t
   ant_offset_t doff = get_dense_buf(obj);
   if (doff) {
     ant_offset_t dense_len = dense_iterable_length(js, obj);
+    // An explicit numeric shape property owns the index even when its former
+    // dense slot is now empty. Let ordinary [[Set]] enforce that descriptor.
+    if (lkp(js, obj, key, (size_t)klen) != 0) return js_mkundef();
     if (idx < dense_len && !is_empty_slot(dense_get(doff, (ant_offset_t)idx))) {
-      if (lkp(js, obj, key, (size_t)klen) != 0) return js_mkundef();
       dense_set(js, doff, (ant_offset_t)idx, v);
       return v;
     }
@@ -8810,6 +8812,27 @@ static ant_value_t object_define_property_coerced(
       }
 
       return obj;
+    }
+  }
+
+  // Dense array elements have ordinary writable/enumerable/configurable
+  // attributes, but their values live outside the shape table. Materialize an
+  // element before applying an explicit descriptor so subsequent writes and
+  // reads observe the same descriptor-backed property instead of a stale dense
+  // value shadowing the new shape slot.
+  if (!sym_key && array_obj_ptr(as_obj)) {
+    unsigned long dense_idx = 0;
+    ant_offset_t dense_off = get_dense_buf(as_obj);
+    ant_offset_t dense_len = dense_off ? dense_iterable_length(js, as_obj) : 0;
+    if (dense_off &&
+        parse_array_index(prop_str, (size_t)prop_len, dense_len, &dense_idx) &&
+        !is_empty_slot(dense_get(dense_off, (ant_offset_t)dense_idx))) {
+      ant_value_t dense_value = dense_get(dense_off, (ant_offset_t)dense_idx);
+      ant_value_t materialized = mkprop(
+        js, as_obj, prop, dense_value, ANT_PROP_ATTR_DEFAULT
+      );
+      if (is_err(materialized)) return materialized;
+      dense_set(js, dense_off, (ant_offset_t)dense_idx, T_EMPTY);
     }
   }
 

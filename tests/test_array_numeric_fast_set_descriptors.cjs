@@ -61,4 +61,34 @@ const appended = [];
 write(appended, 0, 8);
 assert.deepStrictEqual(appended, [8], "ordinary append fallback remains dense");
 
+const redefined = [];
+redefined[0] = 100;
+Object.defineProperty(redefined, "0", {
+  value: 100,
+  writable: true,
+  enumerable: true,
+  configurable: true,
+});
+write(redefined, 0, 101);
+assert.strictEqual(redefined[0], 101, "descriptor-backed dense element remains writable");
+assert.deepStrictEqual(Object.getOwnPropertyDescriptor(redefined, "0"), {
+  value: 101,
+  writable: true,
+  enumerable: true,
+  configurable: true,
+});
+
+const redefinedMany = [];
+redefinedMany[0] = 100;
+Object.defineProperties(redefinedMany, {
+  "0": {
+    value: 100,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  },
+});
+write(redefinedMany, 0, 102);
+assert.strictEqual(redefinedMany[0], 102, "defineProperties materializes a dense element");
+
 console.log("OK: test_array_numeric_fast_set_descriptors");
