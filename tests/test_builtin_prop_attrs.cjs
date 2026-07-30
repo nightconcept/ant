@@ -25,7 +25,18 @@ assert.deepStrictEqual(
   { writable: true, enumerable: false, configurable: true },
   "Math.floor attributes"
 );
+assert.strictEqual(floor.value, Math.floor, "Math.floor descriptor preserves function identity");
 assert.strictEqual(Math.floor(1.7), 1, "Math.floor still works");
+
+const objectToString = Object.getOwnPropertyDescriptor(Object.prototype, "toString");
+assert.strictEqual(
+  objectToString.value,
+  Object.prototype.toString,
+  "Object.prototype.toString descriptor preserves function identity"
+);
+
+const dateUTC = Object.getOwnPropertyDescriptor(Date, "UTC");
+assert.strictEqual(dateUTC.value, Date.UTC, "Date.UTC descriptor preserves function identity");
 
 // A RegExp instance carries nothing enumerable either.
 const re = /ab+c/gi;

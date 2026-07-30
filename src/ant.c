@@ -9820,8 +9820,10 @@ static ant_value_t builtin_object_getOwnPropertyDescriptor(ant_t *js, ant_value_
       has_value_out = true;
     }
     if (has_value_out) {
-      if (vtype(prop_val) == T_CFUNC) prop_val = js_cfunc_promote(js, prop_val);
-      js_setprop(js, result, js_mkstr(js, "value", 5), prop_val);
+      // A descriptor's [[Value]] is the actual stored property value. Keep
+      // lightweight native functions exact: promoting one here allocates a
+      // distinct heap representation and breaks identity with obj[key].
+      js_set_exact(js, result, "value", prop_val);
     }
     js_setprop(js, result, js_mkstr(js, "writable", 8), js_bool(writable));
     js_setprop(js, result, js_mkstr(js, "enumerable", 10), js_bool(enumerable));

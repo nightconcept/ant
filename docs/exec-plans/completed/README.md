@@ -10,6 +10,7 @@ can reuse the decision history.
 
 ## Plans
 
+- [Native Descriptor Value Identity](native-descriptor-value-identity.md)
 - [Tier 2 Compliance to 100%](tier2-compliance-100.md)
 - [Ant Compliance Test Suite Runner Scripts](compliance-suite-runner.md)
 - [IC Accessor Caching + JIT Put-Field Unification](ic-accessor-caching.md)
