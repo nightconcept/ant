@@ -32,12 +32,16 @@
     },
     "2": {
       "categories": {
-        "test_all_modules.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_all_modules.cjs"
-          ],
-          "passed": 0,
+        "test_accessor_ic.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_all_modules.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_all_new.js": {
@@ -59,6 +63,12 @@
           "total": 1
         },
         "test_arguments_async.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_arguments_escaped_coro.js": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -112,6 +122,12 @@
           "passed": 1,
           "total": 1
         },
+        "test_array_numeric_fast_set_descriptors.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
         "test_array_proto_subclassing.cjs": {
           "failed": 0,
           "failing": [],
@@ -160,6 +176,18 @@
           "passed": 1,
           "total": 1
         },
+        "test_assert_bigint.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_assert_exceptions.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
         "test_async.cjs": {
           "failed": 0,
           "failing": [],
@@ -197,6 +225,12 @@
           "total": 1
         },
         "test_async_gc.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_async_gen_leak.mjs": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -299,11 +333,9 @@
           "total": 1
         },
         "test_base64.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_base64.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_bigint.js": {
@@ -372,6 +404,12 @@
           "passed": 1,
           "total": 1
         },
+        "test_builtin_prop_attrs.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
         "test_captured.js": {
           "failed": 0,
           "failing": [],
@@ -391,6 +429,12 @@
           "total": 1
         },
         "test_child_process_execfile_promisify.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_child_process_exit_drain.cjs": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -469,11 +513,9 @@
           "total": 1
         },
         "test_cli_file_arg_precedes_package_script.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_cli_file_arg_precedes_package_script.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_closure.js": {
@@ -626,6 +668,12 @@
           "passed": 1,
           "total": 1
         },
+        "test_dataview_view_value.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
         "test_date.cjs": {
           "failed": 0,
           "failing": [],
@@ -644,14 +692,6 @@
           "passed": 1,
           "total": 1
         },
-        "test_debug_error_trace.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_debug_error_trace.cjs"
-          ],
-          "passed": 0,
-          "total": 1
-        },
         "test_deep_this.cjs": {
           "failed": 0,
           "failing": [],
@@ -665,6 +705,12 @@
           "total": 1
         },
         "test_define_property.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_define_property_descriptor_object.cjs": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -772,6 +818,12 @@
           "passed": 1,
           "total": 1
         },
+        "test_error_diagnostics.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
         "test_es2016_includes_and_strict.cjs": {
           "failed": 0,
           "failing": [],
@@ -784,12 +836,16 @@
           "passed": 1,
           "total": 1
         },
+        "test_esm_package_self_reference.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
         "test_eval.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_eval.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_event_loop_timers.js": {
@@ -858,12 +914,16 @@
           "passed": 1,
           "total": 1
         },
-        "test_ffi_wrappers.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_ffi_wrappers.cjs"
-          ],
-          "passed": 0,
+        "test_ffi_wrappers.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_float16_rounding.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_for_in_closure.js": {
@@ -1053,11 +1113,9 @@
           "total": 1
         },
         "test_gc_stress10.js": {
-          "failed": 1,
-          "failing": [
-            "test_gc_stress10.js"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_gc_stress7.js": {
@@ -1079,6 +1137,12 @@
           "total": 1
         },
         "test_gc_timer.js": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_generator_reentrant_next.cjs": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -1144,6 +1208,12 @@
           "passed": 1,
           "total": 1
         },
+        "test_import_binding_length.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
         "test_import_meta.cjs": {
           "failed": 0,
           "failing": [],
@@ -1175,11 +1245,9 @@
           "total": 1
         },
         "test_inspect_custom.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_inspect_custom.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_instanceof_ic_prototype_guard.cjs": {
@@ -1411,11 +1479,9 @@
           "total": 1
         },
         "test_jit_typed_array_elem_fast.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_jit_typed_array_elem_fast.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_jit_typeof_bailout_arg_resume.cjs": {
@@ -1455,6 +1521,12 @@
           "total": 1
         },
         "test_json_stringify_global_this.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_json_stringify_spec.cjs": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -1563,6 +1635,12 @@
           "total": 1
         },
         "test_module_static_dependency_order.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_named_evaluation.cjs": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -1718,6 +1796,18 @@
           "passed": 1,
           "total": 1
         },
+        "test_object_define_properties_enumerable.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_object_define_properties_symbols.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
         "test_object_define_property_generic_descriptor.cjs": {
           "failed": 0,
           "failing": [],
@@ -1761,11 +1851,9 @@
           "total": 1
         },
         "test_pkg_lifecycle_install_postinstall_order.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_pkg_lifecycle_install_postinstall_order.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_practical_async.cjs": {
@@ -1793,11 +1881,9 @@
           "total": 1
         },
         "test_process_emit_warning.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_process_emit_warning.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_process_env.cjs": {
@@ -1861,6 +1947,12 @@
           "total": 1
         },
         "test_promise_chained_catch_unhandled.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_promise_combinator_resolve_then.cjs": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -1981,11 +2073,9 @@
           "total": 1
         },
         "test_readline_keypress.js": {
-          "failed": 1,
-          "failing": [
-            "test_readline_keypress.js"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_readline_keypress_arrow.cjs": {
@@ -2079,11 +2169,9 @@
           "total": 1
         },
         "test_repl_static_import.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_repl_static_import.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_require_exports_conditions.cjs": {
@@ -2116,12 +2204,10 @@
           "passed": 1,
           "total": 1
         },
-        "test_rpc.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_rpc.cjs"
-          ],
-          "passed": 0,
+        "test_rpc.mjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_sandbox_cpu_limits.js": {
@@ -2419,11 +2505,9 @@
           "total": 1
         },
         "test_throw_stack.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_throw_stack.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_timer_chain_iter.js": {
@@ -2529,6 +2613,24 @@
           "total": 1
         },
         "test_typedarray_apply.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_typedarray_find_last.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_typedarray_index_access.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
+        },
+        "test_typeof_closure_assignment.mjs": {
           "failed": 0,
           "failing": [],
           "passed": 1,
@@ -2709,11 +2811,9 @@
           "total": 1
         },
         "test_with_strict.cjs": {
-          "failed": 1,
-          "failing": [
-            "test_with_strict.cjs"
-          ],
-          "passed": 0,
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
           "total": 1
         },
         "test_without_strict.cjs": {
@@ -2733,26 +2833,32 @@
           "failing": [],
           "passed": 1,
           "total": 1
+        },
+        "test_yield_identifier_non_strict.cjs": {
+          "failed": 0,
+          "failing": [],
+          "passed": 1,
+          "total": 1
         }
       },
       "filter": null,
-      "finished": "2026-07-26T15:31:14",
+      "finished": "2026-07-30T16:03:02.113335+00:00",
       "revision": {
         "branch": "dev",
-        "commit": "0306b7287721af19bca50278af6c38ce3e9a1699",
+        "commit": "d75d49a4a987ed202619d306367cebcaf5613eec",
         "dirty": false,
-        "short": "0306b728",
-        "subject": "docs: update t1 compliance doc"
+        "short": "d75d49a4",
+        "subject": "fix(array): respect indexed descriptors in copy methods"
       },
       "schema_version": 1,
-      "started": "2026-07-26T15:29:30",
+      "started": "2026-07-30T16:02:08.956693+00:00",
       "suite": "Tier 2 - Node.js Compatibility Suite",
       "tier": 2,
       "totals": {
-        "failed": 16,
-        "pass_rate": 96.4,
-        "passed": 429,
-        "total": 445
+        "failed": 0,
+        "pass_rate": 100.0,
+        "passed": 468,
+        "total": 468
       }
     },
     "3": {
@@ -2895,7 +3001,7 @@
           "total": 241
         },
         "Test262: annexB/language": {
-          "failed": 409,
+          "failed": 384,
           "failing": [
             "Test262: annexB/language/eval-code/direct/block-decl-nostrict.js",
             "Test262: annexB/language/eval-code/direct/func-block-decl-eval-func-no-skip-param.js",
@@ -2962,54 +3068,34 @@
             "Test262: annexB/language/eval-code/direct/global-block-decl-eval-global-no-skip-try.js",
             "Test262: annexB/language/eval-code/direct/global-block-decl-eval-global-skip-early-err-try.js",
             "Test262: annexB/language/eval-code/direct/global-block-decl-eval-global-skip-early-err.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-block-scoping.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-block-fn-no-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-block-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-non-enumerable-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-var-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-init.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-no-skip-try.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-block-scoping.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-block-fn-no-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-block-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-non-enumerable-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-var-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-init.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-no-skip-try.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-block-scoping.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-block-fn-no-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-block-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-non-enumerable-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-var-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-init.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-no-skip-try.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-block-scoping.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-block-fn-no-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-block-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-non-enumerable-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-var-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-init.js",
             "Test262: annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-no-skip-try.js",
-            "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-block-scoping.js",
             "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-block-fn-no-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-block-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-non-enumerable-global-init.js",
-            "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-var-update.js",
             "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-init.js",
             "Test262: annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-no-skip-try.js",
             "Test262: annexB/language/eval-code/direct/global-switch-case-eval-global-block-scoping.js",
@@ -3056,7 +3142,6 @@
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-fn-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-non-enumerable-global-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-var-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-var-update.js",
@@ -3071,7 +3156,6 @@
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-fn-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-non-enumerable-global-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-var-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-var-update.js",
@@ -3086,7 +3170,6 @@
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-fn-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-non-enumerable-global-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-var-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-var-update.js",
@@ -3101,7 +3184,6 @@
             "Test262: annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-fn-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-non-enumerable-global-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-var-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-var-update.js",
@@ -3116,7 +3198,6 @@
             "Test262: annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-fn-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-fn-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-global-init.js",
-            "Test262: annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-global-update.js",
             "Test262: annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-non-enumerable-global-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-var-no-init.js",
             "Test262: annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-var-update.js",
@@ -3307,7 +3388,7 @@
             "Test262: annexB/language/statements/function/default-parameters-emulates-undefined.js",
             "Test262: annexB/language/statements/switch/emulates-undefined.js"
           ],
-          "passed": 436,
+          "passed": 461,
           "total": 845
         },
         "Test262: built-ins/AbstractModuleSource": {
@@ -3352,7 +3433,7 @@
           "total": 25
         },
         "Test262: built-ins/Array": {
-          "failed": 963,
+          "failed": 895,
           "failing": [
             "Test262: built-ins/Array/15.4.5.1-5-1.js",
             "Test262: built-ins/Array/S15.4.5.1_A1.2_T2.js",
@@ -3428,7 +3509,6 @@
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_array-like-length-value-of-throws.js",
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_array-like-string-length.js",
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_array-like-to-length-throws.js",
-            "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_sloppy-arguments-throws.js",
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-boolean-wrapper.js",
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-function.js",
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-number-wrapper.js",
@@ -3509,16 +3589,10 @@
             "Test262: built-ins/Array/prototype/every/15.4.4.16-4-8.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-4-9.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-5-1.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-11.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-13.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-14.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-15.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-16.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-2.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-3.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-5.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-7.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-9.js",
             "Test262: built-ins/Array/prototype/every/callbackfn-resize-arraybuffer.js",
             "Test262: built-ins/Array/prototype/every/length.js",
             "Test262: built-ins/Array/prototype/every/not-a-constructor.js",
@@ -3565,16 +3639,10 @@
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-4-15.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-4-8.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-4-9.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-11.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-13.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-14.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-15.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-16.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-2.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-3.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-5.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-7.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-9.js",
             "Test262: built-ins/Array/prototype/filter/callbackfn-resize-arraybuffer.js",
             "Test262: built-ins/Array/prototype/filter/create-ctor-non-object.js",
             "Test262: built-ins/Array/prototype/filter/create-proto-from-ctor-realm-array.js",
@@ -3681,16 +3749,10 @@
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-4-15.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-4-8.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-4-9.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-11.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-13.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-14.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-15.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-16.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-2.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-3.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-5.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-7.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-9.js",
             "Test262: built-ins/Array/prototype/forEach/callbackfn-resize-arraybuffer.js",
             "Test262: built-ins/Array/prototype/forEach/length.js",
             "Test262: built-ins/Array/prototype/forEach/not-a-constructor.js",
@@ -3749,17 +3811,12 @@
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-5-30.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-9.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-1.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-10.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-14.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-16.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-17.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-18.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-19.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-2.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-3.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-5.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-6.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-8.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-b-ii-2.js",
             "Test262: built-ins/Array/prototype/indexOf/coerced-searchelement-fromindex-shrink.js",
             "Test262: built-ins/Array/prototype/indexOf/length-near-integer-limit.js",
@@ -3828,16 +3885,12 @@
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-5-5.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-9.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-1.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-10.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-16.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-17.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-18.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-19.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-2.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-3.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-5.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-6.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-8.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-b-ii-2.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/coerced-position-grow.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/coerced-position-shrink.js",
@@ -3883,15 +3936,9 @@
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-9.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-1.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-10.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-11.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-13.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-14.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-15.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-16.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-2.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-5.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-7.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-9.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-c-i-11.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-c-i-13.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-c-i-15.js",
@@ -3991,24 +4038,12 @@
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-8-c-6.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-8-c-7.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-8-c-8.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-9.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-13.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-14.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-15.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-16.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-18.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-2.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-20.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-22.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-24.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-26.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-27.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-28.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-29.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-3.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-5.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-7.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-9.js",
             "Test262: built-ins/Array/prototype/reduce/length.js",
             "Test262: built-ins/Array/prototype/reduce/not-a-constructor.js",
             "Test262: built-ins/Array/prototype/reduce/resizable-buffer-grow-mid-iteration.js",
@@ -4056,19 +4091,12 @@
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-8-c-6.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-8-c-7.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-8-c-8.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-14.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-15.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-16.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-18.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-2.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-20.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-22.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-27.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-28.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-29.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-3.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-5.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-7.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-c-1.js",
             "Test262: built-ins/Array/prototype/reduceRight/length-near-integer-limit.js",
             "Test262: built-ins/Array/prototype/reduceRight/length.js",
@@ -4155,16 +4183,10 @@
             "Test262: built-ins/Array/prototype/some/15.4.4.17-4-8.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-4-9.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-7-9.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-11.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-13.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-14.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-15.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-16.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-2.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-3.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-5.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-7.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-9.js",
             "Test262: built-ins/Array/prototype/some/callbackfn-resize-arraybuffer.js",
             "Test262: built-ins/Array/prototype/some/length.js",
             "Test262: built-ins/Array/prototype/some/not-a-constructor.js",
@@ -4249,38 +4271,30 @@
             "Test262: built-ins/Array/prototype/toLocaleString/user-provided-tolocalestring-grow.js",
             "Test262: built-ins/Array/prototype/toLocaleString/user-provided-tolocalestring-shrink.js",
             "Test262: built-ins/Array/prototype/toReversed/get-descending-order.js",
-            "Test262: built-ins/Array/prototype/toReversed/holes-not-preserved.js",
             "Test262: built-ins/Array/prototype/toReversed/length-casted-to-zero.js",
             "Test262: built-ins/Array/prototype/toReversed/length-decreased-while-iterating.js",
             "Test262: built-ins/Array/prototype/toReversed/length-exceeding-array-length-limit.js",
             "Test262: built-ins/Array/prototype/toReversed/length-tolength.js",
             "Test262: built-ins/Array/prototype/toReversed/not-a-constructor.js",
-            "Test262: built-ins/Array/prototype/toReversed/property-descriptor.js",
             "Test262: built-ins/Array/prototype/toReversed/this-value-boolean.js",
             "Test262: built-ins/Array/prototype/toSorted/comparefn-called-after-get-elements.js",
             "Test262: built-ins/Array/prototype/toSorted/comparefn-stop-after-error.js",
-            "Test262: built-ins/Array/prototype/toSorted/holes-not-preserved.js",
             "Test262: built-ins/Array/prototype/toSorted/length-casted-to-zero.js",
             "Test262: built-ins/Array/prototype/toSorted/length-decreased-while-iterating.js",
             "Test262: built-ins/Array/prototype/toSorted/length-exceeding-array-length-limit.js",
             "Test262: built-ins/Array/prototype/toSorted/length-tolength.js",
             "Test262: built-ins/Array/prototype/toSorted/length.js",
             "Test262: built-ins/Array/prototype/toSorted/not-a-constructor.js",
-            "Test262: built-ins/Array/prototype/toSorted/property-descriptor.js",
             "Test262: built-ins/Array/prototype/toSorted/this-value-boolean.js",
             "Test262: built-ins/Array/prototype/toSpliced/deleteCount-undefined.js",
             "Test262: built-ins/Array/prototype/toSpliced/discarded-element-not-read.js",
-            "Test262: built-ins/Array/prototype/toSpliced/elements-read-in-order.js",
-            "Test262: built-ins/Array/prototype/toSpliced/holes-not-preserved.js",
             "Test262: built-ins/Array/prototype/toSpliced/length-casted-to-zero.js",
             "Test262: built-ins/Array/prototype/toSpliced/length-clamped-to-2pow53minus1.js",
             "Test262: built-ins/Array/prototype/toSpliced/length-decreased-while-iterating.js",
             "Test262: built-ins/Array/prototype/toSpliced/length-exceeding-array-length-limit.js",
             "Test262: built-ins/Array/prototype/toSpliced/length-tolength.js",
             "Test262: built-ins/Array/prototype/toSpliced/length.js",
-            "Test262: built-ins/Array/prototype/toSpliced/mutate-while-iterating.js",
             "Test262: built-ins/Array/prototype/toSpliced/not-a-constructor.js",
-            "Test262: built-ins/Array/prototype/toSpliced/property-descriptor.js",
             "Test262: built-ins/Array/prototype/toSpliced/start-and-deleteCount-undefineds.js",
             "Test262: built-ins/Array/prototype/toSpliced/this-value-boolean.js",
             "Test262: built-ins/Array/prototype/toString/S15.4.4.2_A1_T4.js",
@@ -4315,14 +4329,13 @@
             "Test262: built-ins/Array/prototype/with/length-tolength.js",
             "Test262: built-ins/Array/prototype/with/length.js",
             "Test262: built-ins/Array/prototype/with/not-a-constructor.js",
-            "Test262: built-ins/Array/prototype/with/property-descriptor.js",
             "Test262: built-ins/Array/prototype/with/this-value-boolean.js"
           ],
-          "passed": 2118,
+          "passed": 2186,
           "total": 3081
         },
         "Test262: built-ins/ArrayBuffer": {
-          "failed": 153,
+          "failed": 152,
           "failing": [
             "Test262: built-ins/ArrayBuffer/Symbol.species/symbol-species-name.js",
             "Test262: built-ins/ArrayBuffer/allocation-limit.js",
@@ -4347,7 +4360,6 @@
             "Test262: built-ins/ArrayBuffer/prop-desc.js",
             "Test262: built-ins/ArrayBuffer/proto-from-ctor-realm.js",
             "Test262: built-ins/ArrayBuffer/prototype-from-newtarget.js",
-            "Test262: built-ins/ArrayBuffer/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/ArrayBuffer/prototype/byteLength/invoked-as-accessor.js",
             "Test262: built-ins/ArrayBuffer/prototype/byteLength/invoked-as-func.js",
             "Test262: built-ins/ArrayBuffer/prototype/byteLength/name.js",
@@ -4478,13 +4490,12 @@
             "Test262: built-ins/ArrayBuffer/return-abrupt-from-length.js",
             "Test262: built-ins/ArrayBuffer/toindex-length.js"
           ],
-          "passed": 68,
+          "passed": 69,
           "total": 221
         },
         "Test262: built-ins/ArrayIteratorPrototype": {
-          "failed": 7,
+          "failed": 6,
           "failing": [
-            "Test262: built-ins/ArrayIteratorPrototype/Symbol.toStringTag/property-descriptor.js",
             "Test262: built-ins/ArrayIteratorPrototype/next/args-mapped-expansion-after-exhaustion.js",
             "Test262: built-ins/ArrayIteratorPrototype/next/args-unmapped-expansion-after-exhaustion.js",
             "Test262: built-ins/ArrayIteratorPrototype/next/detach-typedarray-in-progress.js",
@@ -4492,7 +4503,7 @@
             "Test262: built-ins/ArrayIteratorPrototype/next/non-own-slots.js",
             "Test262: built-ins/ArrayIteratorPrototype/next/property-descriptor.js"
           ],
-          "passed": 20,
+          "passed": 21,
           "total": 27
         },
         "Test262: built-ins/AsyncDisposableStack": {
@@ -4538,39 +4549,36 @@
           "total": 38
         },
         "Test262: built-ins/AsyncFunction": {
-          "failed": 7,
+          "failed": 6,
           "failing": [
             "Test262: built-ins/AsyncFunction/AsyncFunction-construct.js",
             "Test262: built-ins/AsyncFunction/AsyncFunction-is-subclass.js",
             "Test262: built-ins/AsyncFunction/AsyncFunction-name.js",
             "Test262: built-ins/AsyncFunction/AsyncFunction-prototype.js",
             "Test262: built-ins/AsyncFunction/AsyncFunctionPrototype-is-not-callable.js",
-            "Test262: built-ins/AsyncFunction/AsyncFunctionPrototype-to-string.js",
             "Test262: built-ins/AsyncFunction/proto-from-ctor-realm.js"
           ],
-          "passed": 11,
+          "passed": 12,
           "total": 18
         },
         "Test262: built-ins/AsyncGeneratorFunction": {
-          "failed": 9,
+          "failed": 8,
           "failing": [
             "Test262: built-ins/AsyncGeneratorFunction/instance-length.js",
             "Test262: built-ins/AsyncGeneratorFunction/instance-yield-expr-in-param.js",
             "Test262: built-ins/AsyncGeneratorFunction/name.js",
             "Test262: built-ins/AsyncGeneratorFunction/proto-from-ctor-realm-prototype.js",
             "Test262: built-ins/AsyncGeneratorFunction/proto-from-ctor-realm.js",
-            "Test262: built-ins/AsyncGeneratorFunction/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/AsyncGeneratorFunction/prototype/constructor.js",
             "Test262: built-ins/AsyncGeneratorFunction/prototype/not-callable.js",
             "Test262: built-ins/AsyncGeneratorFunction/prototype/prop-desc.js"
           ],
-          "passed": 14,
+          "passed": 15,
           "total": 23
         },
         "Test262: built-ins/AsyncGeneratorPrototype": {
-          "failed": 13,
+          "failed": 12,
           "failing": [
-            "Test262: built-ins/AsyncGeneratorPrototype/Symbol.toStringTag.js",
             "Test262: built-ins/AsyncGeneratorPrototype/next/length.js",
             "Test262: built-ins/AsyncGeneratorPrototype/next/prop-desc.js",
             "Test262: built-ins/AsyncGeneratorPrototype/next/this-val-not-async-generator.js",
@@ -4584,7 +4592,7 @@
             "Test262: built-ins/AsyncGeneratorPrototype/throw/this-val-not-async-generator.js",
             "Test262: built-ins/AsyncGeneratorPrototype/throw/this-val-not-object.js"
           ],
-          "passed": 35,
+          "passed": 36,
           "total": 48
         },
         "Test262: built-ins/AsyncIteratorPrototype": {
@@ -4602,9 +4610,8 @@
           "total": 13
         },
         "Test262: built-ins/Atomics": {
-          "failed": 270,
+          "failed": 269,
           "failing": [
-            "Test262: built-ins/Atomics/Symbol.toStringTag.js",
             "Test262: built-ins/Atomics/add/bad-range.js",
             "Test262: built-ins/Atomics/add/bigint/bad-range.js",
             "Test262: built-ins/Atomics/add/bigint/good-views.js",
@@ -4875,7 +4882,7 @@
             "Test262: built-ins/Atomics/xor/length.js",
             "Test262: built-ins/Atomics/xor/not-a-constructor.js"
           ],
-          "passed": 119,
+          "passed": 120,
           "total": 389
         },
         "Test262: built-ins/BigInt": {
@@ -4957,7 +4964,7 @@
           "total": 51
         },
         "Test262: built-ins/DataView": {
-          "failed": 107,
+          "failed": 106,
           "failing": [
             "Test262: built-ins/DataView/byteOffset-validated-against-initial-buffer-length.js",
             "Test262: built-ins/DataView/custom-proto-access-detaches-buffer.js",
@@ -4975,7 +4982,6 @@
             "Test262: built-ins/DataView/proto-from-ctor-realm-sab.js",
             "Test262: built-ins/DataView/proto-from-ctor-realm.js",
             "Test262: built-ins/DataView/prototype.js",
-            "Test262: built-ins/DataView/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/DataView/prototype/buffer/name.js",
             "Test262: built-ins/DataView/prototype/byteLength/detached-buffer.js",
             "Test262: built-ins/DataView/prototype/byteLength/instance-has-detached-buffer.js",
@@ -5067,7 +5073,7 @@
             "Test262: built-ins/DataView/prototype/setUint8/not-a-constructor.js",
             "Test262: built-ins/DataView/prototype/setUint8/resizable-buffer.js"
           ],
-          "passed": 454,
+          "passed": 455,
           "total": 561
         },
         "Test262: built-ins/Date": {
@@ -5360,7 +5366,7 @@
           "total": 93
         },
         "Test262: built-ins/FinalizationRegistry": {
-          "failed": 24,
+          "failed": 23,
           "failing": [
             "Test262: built-ins/FinalizationRegistry/length.js",
             "Test262: built-ins/FinalizationRegistry/name.js",
@@ -5368,7 +5374,6 @@
             "Test262: built-ins/FinalizationRegistry/proto-from-ctor-realm.js",
             "Test262: built-ins/FinalizationRegistry/prototype-from-newtarget-abrupt.js",
             "Test262: built-ins/FinalizationRegistry/prototype-from-newtarget-custom.js",
-            "Test262: built-ins/FinalizationRegistry/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/FinalizationRegistry/prototype/constructor.js",
             "Test262: built-ins/FinalizationRegistry/prototype/prop-desc.js",
             "Test262: built-ins/FinalizationRegistry/prototype/register/length.js",
@@ -5387,7 +5392,7 @@
             "Test262: built-ins/FinalizationRegistry/prototype/unregister/unregister-symbol-token.js",
             "Test262: built-ins/FinalizationRegistry/undefined-newtarget-throws.js"
           ],
-          "passed": 23,
+          "passed": 24,
           "total": 47
         },
         "Test262: built-ins/Function": {
@@ -5582,7 +5587,7 @@
           "total": 509
         },
         "Test262: built-ins/GeneratorFunction": {
-          "failed": 12,
+          "failed": 11,
           "failing": [
             "Test262: built-ins/GeneratorFunction/instance-length.js",
             "Test262: built-ins/GeneratorFunction/instance-prototype.js",
@@ -5591,19 +5596,17 @@
             "Test262: built-ins/GeneratorFunction/name.js",
             "Test262: built-ins/GeneratorFunction/proto-from-ctor-realm-prototype.js",
             "Test262: built-ins/GeneratorFunction/proto-from-ctor-realm.js",
-            "Test262: built-ins/GeneratorFunction/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/GeneratorFunction/prototype/constructor.js",
             "Test262: built-ins/GeneratorFunction/prototype/not-callable.js",
             "Test262: built-ins/GeneratorFunction/prototype/prop-desc.js",
             "Test262: built-ins/GeneratorFunction/prototype/prototype.js"
           ],
-          "passed": 11,
+          "passed": 12,
           "total": 23
         },
         "Test262: built-ins/GeneratorPrototype": {
-          "failed": 14,
+          "failed": 13,
           "failing": [
-            "Test262: built-ins/GeneratorPrototype/Symbol.toStringTag.js",
             "Test262: built-ins/GeneratorPrototype/constructor.js",
             "Test262: built-ins/GeneratorPrototype/next/length.js",
             "Test262: built-ins/GeneratorPrototype/next/name.js",
@@ -5618,7 +5621,7 @@
             "Test262: built-ins/GeneratorPrototype/throw/not-a-constructor.js",
             "Test262: built-ins/GeneratorPrototype/throw/property-descriptor.js"
           ],
-          "passed": 47,
+          "passed": 48,
           "total": 61
         },
         "Test262: built-ins/Infinity": {
@@ -5631,7 +5634,7 @@
           "total": 6
         },
         "Test262: built-ins/Iterator": {
-          "failed": 308,
+          "failed": 273,
           "failing": [
             "Test262: built-ins/Iterator/concat/arguments-checked-in-order.js",
             "Test262: built-ins/Iterator/concat/fresh-iterator-result.js",
@@ -5667,9 +5670,6 @@
             "Test262: built-ins/Iterator/from/get-return-method-when-call-return.js",
             "Test262: built-ins/Iterator/from/iterable-primitives.js",
             "Test262: built-ins/Iterator/from/iterable-to-iterator-fallback.js",
-            "Test262: built-ins/Iterator/from/length.js",
-            "Test262: built-ins/Iterator/from/prop-desc.js",
-            "Test262: built-ins/Iterator/from/proto.js",
             "Test262: built-ins/Iterator/from/result-proto.js",
             "Test262: built-ins/Iterator/from/return-method-calls-base-return-method.js",
             "Test262: built-ins/Iterator/from/return-method-returns-iterator-result.js",
@@ -5697,7 +5697,6 @@
             "Test262: built-ins/Iterator/prototype/drop/get-next-method-only-once.js",
             "Test262: built-ins/Iterator/prototype/drop/get-next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/drop/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/drop/length.js",
             "Test262: built-ins/Iterator/prototype/drop/limit-greater-than-total.js",
             "Test262: built-ins/Iterator/prototype/drop/limit-rangeerror.js",
             "Test262: built-ins/Iterator/prototype/drop/limit-tonumber-throws.js",
@@ -5705,8 +5704,6 @@
             "Test262: built-ins/Iterator/prototype/drop/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/drop/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/drop/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/drop/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/drop/proto.js",
             "Test262: built-ins/Iterator/prototype/drop/return-is-forwarded.js",
             "Test262: built-ins/Iterator/prototype/drop/return-is-not-forwarded-after-exhaustion.js",
             "Test262: built-ins/Iterator/prototype/drop/this-non-callable-next.js",
@@ -5715,28 +5712,22 @@
             "Test262: built-ins/Iterator/prototype/every/get-next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/every/get-return-method-throws.js",
             "Test262: built-ins/Iterator/prototype/every/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/every/length.js",
             "Test262: built-ins/Iterator/prototype/every/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/every/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/every/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/every/next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/every/predicate-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/every/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/every/proto.js",
             "Test262: built-ins/Iterator/prototype/every/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/filter/argument-validation-failure-closes-underlying.js",
             "Test262: built-ins/Iterator/prototype/filter/get-next-method-only-once.js",
             "Test262: built-ins/Iterator/prototype/filter/get-next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/filter/get-return-method-throws.js",
             "Test262: built-ins/Iterator/prototype/filter/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/filter/length.js",
             "Test262: built-ins/Iterator/prototype/filter/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/filter/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/filter/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/filter/predicate-throws-then-closing-iterator-also-throws.js",
             "Test262: built-ins/Iterator/prototype/filter/predicate-throws.js",
-            "Test262: built-ins/Iterator/prototype/filter/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/filter/proto.js",
             "Test262: built-ins/Iterator/prototype/filter/return-is-forwarded.js",
             "Test262: built-ins/Iterator/prototype/filter/return-is-not-forwarded-after-exhaustion.js",
             "Test262: built-ins/Iterator/prototype/filter/this-non-callable-next.js",
@@ -5746,14 +5737,11 @@
             "Test262: built-ins/Iterator/prototype/find/get-next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/find/get-return-method-throws.js",
             "Test262: built-ins/Iterator/prototype/find/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/find/length.js",
             "Test262: built-ins/Iterator/prototype/find/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/find/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/find/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/find/next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/find/predicate-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/find/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/find/proto.js",
             "Test262: built-ins/Iterator/prototype/find/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/flatMap/argument-validation-failure-closes-underlying.js",
             "Test262: built-ins/Iterator/prototype/flatMap/flattens-iterator.js",
@@ -5763,15 +5751,12 @@
             "Test262: built-ins/Iterator/prototype/flatMap/iterable-primitives-are-not-flattened.js",
             "Test262: built-ins/Iterator/prototype/flatMap/iterable-to-iterator-fallback.js",
             "Test262: built-ins/Iterator/prototype/flatMap/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/length.js",
             "Test262: built-ins/Iterator/prototype/flatMap/mapper-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/flatMap/mapper-throws-then-closing-iterator-also-throws.js",
             "Test262: built-ins/Iterator/prototype/flatMap/mapper-throws.js",
             "Test262: built-ins/Iterator/prototype/flatMap/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/flatMap/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/flatMap/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/proto.js",
             "Test262: built-ins/Iterator/prototype/flatMap/return-is-forwarded-to-mapper-result.js",
             "Test262: built-ins/Iterator/prototype/flatMap/return-is-forwarded-to-underlying-iterator.js",
             "Test262: built-ins/Iterator/prototype/flatMap/return-is-not-forwarded-after-exhaustion.js",
@@ -5782,13 +5767,10 @@
             "Test262: built-ins/Iterator/prototype/forEach/argument-validation-failure-closes-underlying.js",
             "Test262: built-ins/Iterator/prototype/forEach/fn-throws-then-closing-iterator-also-throws.js",
             "Test262: built-ins/Iterator/prototype/forEach/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/forEach/length.js",
             "Test262: built-ins/Iterator/prototype/forEach/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/forEach/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/forEach/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/forEach/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/forEach/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/forEach/proto.js",
             "Test262: built-ins/Iterator/prototype/forEach/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/initial-value.js",
             "Test262: built-ins/Iterator/prototype/map/argument-validation-failure-closes-underlying.js",
@@ -5796,14 +5778,11 @@
             "Test262: built-ins/Iterator/prototype/map/get-next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/map/get-return-method-throws.js",
             "Test262: built-ins/Iterator/prototype/map/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/map/length.js",
             "Test262: built-ins/Iterator/prototype/map/mapper-throws-then-closing-iterator-also-throws.js",
             "Test262: built-ins/Iterator/prototype/map/mapper-throws.js",
             "Test262: built-ins/Iterator/prototype/map/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/map/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/map/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/map/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/map/proto.js",
             "Test262: built-ins/Iterator/prototype/map/return-is-forwarded-to-underlying-iterator.js",
             "Test262: built-ins/Iterator/prototype/map/return-is-not-forwarded-after-exhaustion.js",
             "Test262: built-ins/Iterator/prototype/map/this-non-callable-next.js",
@@ -5812,27 +5791,21 @@
             "Test262: built-ins/Iterator/prototype/reduce/argument-effect-order.js",
             "Test262: built-ins/Iterator/prototype/reduce/argument-validation-failure-closes-underlying.js",
             "Test262: built-ins/Iterator/prototype/reduce/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/reduce/length.js",
             "Test262: built-ins/Iterator/prototype/reduce/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/reduce/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/reduce/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/reduce/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/reduce/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/reduce/proto.js",
             "Test262: built-ins/Iterator/prototype/reduce/reducer-throws-then-closing-iterator-also-throws.js",
             "Test262: built-ins/Iterator/prototype/reduce/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/some/argument-validation-failure-closes-underlying.js",
             "Test262: built-ins/Iterator/prototype/some/get-next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/some/get-return-method-throws.js",
             "Test262: built-ins/Iterator/prototype/some/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/some/length.js",
             "Test262: built-ins/Iterator/prototype/some/next-method-returns-non-object.js",
             "Test262: built-ins/Iterator/prototype/some/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/some/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/some/next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/some/predicate-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/some/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/some/proto.js",
             "Test262: built-ins/Iterator/prototype/some/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/take/argument-effect-order.js",
             "Test262: built-ins/Iterator/prototype/take/argument-validation-failure-closes-underlying.js",
@@ -5840,7 +5813,6 @@
             "Test262: built-ins/Iterator/prototype/take/get-next-method-only-once.js",
             "Test262: built-ins/Iterator/prototype/take/get-next-method-throws.js",
             "Test262: built-ins/Iterator/prototype/take/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/take/length.js",
             "Test262: built-ins/Iterator/prototype/take/limit-greater-than-or-equal-to-total.js",
             "Test262: built-ins/Iterator/prototype/take/limit-rangeerror.js",
             "Test262: built-ins/Iterator/prototype/take/limit-tonumber-throws.js",
@@ -5850,8 +5822,6 @@
             "Test262: built-ins/Iterator/prototype/take/next-method-returns-throwing-value-done.js",
             "Test262: built-ins/Iterator/prototype/take/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/take/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/take/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/take/proto.js",
             "Test262: built-ins/Iterator/prototype/take/return-is-forwarded.js",
             "Test262: built-ins/Iterator/prototype/take/return-is-not-forwarded-after-exhaustion.js",
             "Test262: built-ins/Iterator/prototype/take/this-non-callable-next.js",
@@ -5861,8 +5831,6 @@
             "Test262: built-ins/Iterator/prototype/toArray/next-method-returns-throwing-done.js",
             "Test262: built-ins/Iterator/prototype/toArray/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/toArray/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/toArray/prop-desc.js",
-            "Test262: built-ins/Iterator/prototype/toArray/proto.js",
             "Test262: built-ins/Iterator/prototype/toArray/this-plain-iterator.js",
             "Test262: built-ins/Iterator/zip/basic-longest.js",
             "Test262: built-ins/Iterator/zip/basic-shortest.js",
@@ -5942,14 +5910,13 @@
             "Test262: built-ins/Iterator/zipKeyed/suspended-yield-iterator-close-calls-next.js",
             "Test262: built-ins/Iterator/zipKeyed/suspended-yield-iterator-close-calls-return.js"
           ],
-          "passed": 206,
+          "passed": 241,
           "total": 514
         },
         "Test262: built-ins/JSON": {
-          "failed": 69,
+          "failed": 67,
           "failing": [
             "Test262: built-ins/JSON/15.12-0-4.js",
-            "Test262: built-ins/JSON/Symbol.toStringTag.js",
             "Test262: built-ins/JSON/isRawJSON/basic.js",
             "Test262: built-ins/JSON/isRawJSON/builtin.js",
             "Test262: built-ins/JSON/isRawJSON/length.js",
@@ -5966,7 +5933,6 @@
             "Test262: built-ins/JSON/parse/reviver-array-length-coerce-err.js",
             "Test262: built-ins/JSON/parse/reviver-array-length-get-err.js",
             "Test262: built-ins/JSON/parse/reviver-array-non-configurable-prop-create.js",
-            "Test262: built-ins/JSON/parse/reviver-array-non-configurable-prop-delete.js",
             "Test262: built-ins/JSON/parse/reviver-call-args-after-forward-modification.js",
             "Test262: built-ins/JSON/parse/reviver-context-source-array-literal.js",
             "Test262: built-ins/JSON/parse/reviver-context-source-object-literal.js",
@@ -6018,11 +5984,11 @@
             "Test262: built-ins/JSON/stringify/value-object-proxy.js",
             "Test262: built-ins/JSON/stringify/value-string-escape-ascii.js"
           ],
-          "passed": 96,
+          "passed": 98,
           "total": 165
         },
         "Test262: built-ins/Map": {
-          "failed": 101,
+          "failed": 100,
           "failing": [
             "Test262: built-ins/Map/Symbol.species/symbol-species-name.js",
             "Test262: built-ins/Map/groupBy/invalid-iterable.js",
@@ -6041,7 +6007,6 @@
             "Test262: built-ins/Map/proto-from-ctor-realm.js",
             "Test262: built-ins/Map/prototype/Symbol.iterator.js",
             "Test262: built-ins/Map/prototype/Symbol.iterator/not-a-constructor.js",
-            "Test262: built-ins/Map/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/Map/prototype/clear/clear.js",
             "Test262: built-ins/Map/prototype/clear/context-is-not-map-object.js",
             "Test262: built-ins/Map/prototype/clear/context-is-not-object.js",
@@ -6126,13 +6091,12 @@
             "Test262: built-ins/Map/prototype/values/this-not-object-throw.js",
             "Test262: built-ins/Map/prototype/values/values.js"
           ],
-          "passed": 103,
+          "passed": 104,
           "total": 204
         },
         "Test262: built-ins/MapIteratorPrototype": {
-          "failed": 7,
+          "failed": 6,
           "failing": [
-            "Test262: built-ins/MapIteratorPrototype/Symbol.toStringTag.js",
             "Test262: built-ins/MapIteratorPrototype/next/does-not-have-mapiterator-internal-slots-map.js",
             "Test262: built-ins/MapIteratorPrototype/next/does-not-have-mapiterator-internal-slots.js",
             "Test262: built-ins/MapIteratorPrototype/next/this-not-object-throw-entries.js",
@@ -6140,13 +6104,12 @@
             "Test262: built-ins/MapIteratorPrototype/next/this-not-object-throw-prototype-iterator.js",
             "Test262: built-ins/MapIteratorPrototype/next/this-not-object-throw-values.js"
           ],
-          "passed": 4,
+          "passed": 5,
           "total": 11
         },
         "Test262: built-ins/Math": {
-          "failed": 93,
+          "failed": 92,
           "failing": [
-            "Test262: built-ins/Math/Symbol.toStringTag.js",
             "Test262: built-ins/Math/abs/length.js",
             "Test262: built-ins/Math/abs/not-a-constructor.js",
             "Test262: built-ins/Math/acos/length.js",
@@ -6240,7 +6203,7 @@
             "Test262: built-ins/Math/trunc/length.js",
             "Test262: built-ins/Math/trunc/not-a-constructor.js"
           ],
-          "passed": 234,
+          "passed": 235,
           "total": 327
         },
         "Test262: built-ins/NaN": {
@@ -6426,7 +6389,7 @@
           "total": 340
         },
         "Test262: built-ins/Object": {
-          "failed": 755,
+          "failed": 501,
           "failing": [
             "Test262: built-ins/Object/S15.2.1.1_A1_T1.js",
             "Test262: built-ins/Object/S15.2.1.1_A1_T2.js",
@@ -6489,64 +6452,11 @@
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-175.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-176.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-177.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-178.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-180.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-183.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-184.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-185.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-195.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-197.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-20.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-200.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-204.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-205.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-206.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-207.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-209.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-210.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-211.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-212.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-213.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-214.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-215.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-216.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-217.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-218.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-220.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-222.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-223.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-224.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-225.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-226.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-227.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-228.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-229.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-230.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-231.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-232.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-233.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-234.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-235.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-236.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-237.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-238.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-239.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-240.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-241.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-242.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-247.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-248.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-249.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-250.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-251.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-252.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-253.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-257.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-259.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-26.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-260.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-261.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-262.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-27.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-279.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-281.js",
@@ -6554,18 +6464,8 @@
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-283.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-284.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-285.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-290.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-291.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-292.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-293.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-294.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-295.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-296.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-297.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-314.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-32.js",
             "Test262: built-ins/Object/defineProperties/not-a-constructor.js",
-            "Test262: built-ins/Object/defineProperties/proxy-no-ownkeys-returned-keys-order.js",
             "Test262: built-ins/Object/defineProperties/typedarray-backed-by-resizable-buffer.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-0-2.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-3-147-1.js",
@@ -6606,117 +6506,28 @@
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-184.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-188.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-189.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-190.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-195.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-199.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-201.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-204.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-205.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-206.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-207.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-208.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-209.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-210.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-211.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-213.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-214.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-215.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-216.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-217.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-218.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-219.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-220.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-221.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-222.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-223.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-224.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-225.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-226.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-227.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-228.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-230.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-231.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-232.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-233.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-234.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-235.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-236.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-237.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-240.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-241.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-242-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-242.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-243-1.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-243-2.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-243.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-244.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-245.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-246.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-247.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-248.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-249.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-250.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-251.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-252.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-254.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-255.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-256.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-257.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-258.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-259.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-260.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-261.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-262.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-263.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-264.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-268.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-270.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-271.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-272.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-273.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-290-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-290.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-291-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-291.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-292-1.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-292-2.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-292.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-293-1.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-293-2.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-293-3.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-293-4.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-293.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-294-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-294.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-295-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-295.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-296-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-296.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-297-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-297.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-298-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-298.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-299-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-299.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-300.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-301-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-301.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-302-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-302.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-304.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-305.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-306.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-307.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-308.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-325-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-325.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-332.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-333-11.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-346.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-354-12.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-354-16.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-354-2.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-354-6.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-360-1.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-360-2.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-360-5.js",
@@ -6736,18 +6547,11 @@
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-511.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-520.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-529.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-531-12.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-531-2.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-531-6.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-538-1.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-538-2.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-538-5.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-538-6.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-538.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-540-10.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-540-2.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-540-4.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-540-8.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-547-1.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-547-2.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-547-3.js",
@@ -6755,7 +6559,6 @@
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-547.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-556.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-565.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-579.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-586.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-622.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-623.js",
@@ -6808,21 +6611,7 @@
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-47.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-1.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-10.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-100.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-101.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-102.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-103.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-104.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-105.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-106.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-107.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-108.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-109.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-11.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-110.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-111.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-112.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-113.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-114.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-115.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-117.js",
@@ -6846,7 +6635,6 @@
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-136.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-138.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-139.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-14.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-140.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-141.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-142.js",
@@ -6857,7 +6645,6 @@
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-147.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-148.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-149.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-15.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-150.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-151.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-152.js",
@@ -6867,27 +6654,19 @@
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-157.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-158.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-159.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-16.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-160.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-161.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-162.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-165.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-166.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-167.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-169.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-17.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-176.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-177.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-178.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-179.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-18.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-180.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-182.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-185.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-186.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-187.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-189.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-19.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-190.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-191.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-192.js",
@@ -6898,7 +6677,6 @@
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-197.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-198.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-199.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-20.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-200.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-201.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-202.js",
@@ -6909,7 +6687,6 @@
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-207.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-208.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-209.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-21.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-210.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-211.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-212.js",
@@ -6920,86 +6697,18 @@
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-217.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-218.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-219.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-22.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-220.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-221.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-222.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-23.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-24.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-247.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-249.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-25.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-250.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-26.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-28.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-29.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-30.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-31.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-32.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-33.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-35.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-36.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-37.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-38.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-4.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-40.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-41.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-42.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-43.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-44.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-45.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-46.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-47.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-48.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-49.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-5.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-50.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-51.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-52.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-53.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-54.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-55.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-56.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-57.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-58.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-59.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-6.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-60.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-61.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-63.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-64.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-65.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-66.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-67.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-68.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-69.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-7.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-70.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-71.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-72.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-73.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-75.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-76.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-77.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-78.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-79.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-8.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-80.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-81.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-82.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-85.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-86.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-89.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-9.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-90.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-91.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-92.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-93.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-94.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-96.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-97.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-98.js",
-            "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-99.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/length.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/not-a-constructor.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptors/function-length.js",
@@ -7184,11 +6893,11 @@
             "Test262: built-ins/Object/values/primitive-strings.js",
             "Test262: built-ins/Object/values/return-order.js"
           ],
-          "passed": 2656,
+          "passed": 2910,
           "total": 3411
         },
         "Test262: built-ins/Promise": {
-          "failed": 349,
+          "failed": 347,
           "failing": [
             "Test262: built-ins/Promise/Symbol.species/symbol-species-name.js",
             "Test262: built-ins/Promise/all/S25.4.4.1_A3.1_T1.js",
@@ -7408,7 +7117,6 @@
             "Test262: built-ins/Promise/property-order.js",
             "Test262: built-ins/Promise/proto-from-ctor-realm.js",
             "Test262: built-ins/Promise/prototype/S25.4.5_A3.1_T1.js",
-            "Test262: built-ins/Promise/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/Promise/prototype/catch/S25.4.5.1_A1.1_T1.js",
             "Test262: built-ins/Promise/prototype/catch/S25.4.5.1_A2.1_T1.js",
             "Test262: built-ins/Promise/prototype/catch/invokes-then.js",
@@ -7533,14 +7241,13 @@
             "Test262: built-ins/Promise/try/length.js",
             "Test262: built-ins/Promise/try/not-a-constructor.js",
             "Test262: built-ins/Promise/try/promise.js",
-            "Test262: built-ins/Promise/try/prop-desc.js",
             "Test262: built-ins/Promise/withResolvers/ctx-ctor.js",
             "Test262: built-ins/Promise/withResolvers/ctx-non-ctor.js",
             "Test262: built-ins/Promise/withResolvers/ctx-non-object.js",
             "Test262: built-ins/Promise/withResolvers/promise.js",
             "Test262: built-ins/Promise/withResolvers/resolvers.js"
           ],
-          "passed": 380,
+          "passed": 382,
           "total": 729
         },
         "Test262: built-ins/Proxy": {
@@ -7696,9 +7403,8 @@
           "total": 311
         },
         "Test262: built-ins/Reflect": {
-          "failed": 94,
+          "failed": 93,
           "failing": [
-            "Test262: built-ins/Reflect/Symbol.toStringTag.js",
             "Test262: built-ins/Reflect/apply/apply.js",
             "Test262: built-ins/Reflect/apply/arguments-list-is-not-array-like-but-still-valid.js",
             "Test262: built-ins/Reflect/apply/arguments-list-is-not-array-like.js",
@@ -7793,7 +7499,7 @@
             "Test262: built-ins/Reflect/setPrototypeOf/target-is-not-object-throws.js",
             "Test262: built-ins/Reflect/setPrototypeOf/target-is-symbol-throws.js"
           ],
-          "passed": 59,
+          "passed": 60,
           "total": 153
         },
         "Test262: built-ins/RegExp": {
@@ -8430,7 +8136,7 @@
           "total": 17
         },
         "Test262: built-ins/Set": {
-          "failed": 110,
+          "failed": 108,
           "failing": [
             "Test262: built-ins/Set/Symbol.species/symbol-species-name.js",
             "Test262: built-ins/Set/length.js",
@@ -8438,8 +8144,6 @@
             "Test262: built-ins/Set/proto-from-ctor-realm.js",
             "Test262: built-ins/Set/prototype/Symbol.iterator.js",
             "Test262: built-ins/Set/prototype/Symbol.iterator/not-a-constructor.js",
-            "Test262: built-ins/Set/prototype/Symbol.toStringTag.js",
-            "Test262: built-ins/Set/prototype/Symbol.toStringTag/property-descriptor.js",
             "Test262: built-ins/Set/prototype/add/add.js",
             "Test262: built-ins/Set/prototype/add/not-a-constructor.js",
             "Test262: built-ins/Set/prototype/clear/clear.js",
@@ -8543,13 +8247,12 @@
             "Test262: built-ins/Set/set-iterator-value-failure.js",
             "Test262: built-ins/Set/set.js"
           ],
-          "passed": 273,
+          "passed": 275,
           "total": 383
         },
         "Test262: built-ins/SetIteratorPrototype": {
-          "failed": 7,
+          "failed": 6,
           "failing": [
-            "Test262: built-ins/SetIteratorPrototype/Symbol.toStringTag.js",
             "Test262: built-ins/SetIteratorPrototype/next/does-not-have-mapiterator-internal-slots-set.js",
             "Test262: built-ins/SetIteratorPrototype/next/does-not-have-mapiterator-internal-slots.js",
             "Test262: built-ins/SetIteratorPrototype/next/this-not-object-throw-entries.js",
@@ -8557,7 +8260,7 @@
             "Test262: built-ins/SetIteratorPrototype/next/this-not-object-throw-prototype-iterator.js",
             "Test262: built-ins/SetIteratorPrototype/next/this-not-object-throw-values.js"
           ],
-          "passed": 4,
+          "passed": 5,
           "total": 11
         },
         "Test262: built-ins/ShadowRealm": {
@@ -8632,7 +8335,7 @@
           "total": 64
         },
         "Test262: built-ins/SharedArrayBuffer": {
-          "failed": 81,
+          "failed": 80,
           "failing": [
             "Test262: built-ins/SharedArrayBuffer/allocation-limit.js",
             "Test262: built-ins/SharedArrayBuffer/data-allocation-after-object-creation.js",
@@ -8651,7 +8354,6 @@
             "Test262: built-ins/SharedArrayBuffer/options-non-object.js",
             "Test262: built-ins/SharedArrayBuffer/proto-from-ctor-realm.js",
             "Test262: built-ins/SharedArrayBuffer/prototype-from-newtarget.js",
-            "Test262: built-ins/SharedArrayBuffer/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/SharedArrayBuffer/prototype/byteLength/invoked-as-accessor.js",
             "Test262: built-ins/SharedArrayBuffer/prototype/byteLength/invoked-as-func.js",
             "Test262: built-ins/SharedArrayBuffer/prototype/byteLength/name.js",
@@ -8716,7 +8418,7 @@
             "Test262: built-ins/SharedArrayBuffer/return-abrupt-from-length.js",
             "Test262: built-ins/SharedArrayBuffer/toindex-length.js"
           ],
-          "passed": 23,
+          "passed": 24,
           "total": 104
         },
         "Test262: built-ins/String": {
@@ -9244,13 +8946,12 @@
           "total": 1223
         },
         "Test262: built-ins/StringIteratorPrototype": {
-          "failed": 3,
+          "failed": 2,
           "failing": [
-            "Test262: built-ins/StringIteratorPrototype/Symbol.toStringTag.js",
             "Test262: built-ins/StringIteratorPrototype/next/next-iteration-surrogate-pairs.js",
             "Test262: built-ins/StringIteratorPrototype/next/next-missing-internal-slots.js"
           ],
-          "passed": 4,
+          "passed": 5,
           "total": 7
         },
         "Test262: built-ins/SuppressedError": {
@@ -9276,7 +8977,7 @@
           "total": 22
         },
         "Test262: built-ins/Symbol": {
-          "failed": 64,
+          "failed": 63,
           "failing": [
             "Test262: built-ins/Symbol/asyncDispose/cross-realm.js",
             "Test262: built-ins/Symbol/asyncDispose/prop-desc.js",
@@ -9317,7 +9018,6 @@
             "Test262: built-ins/Symbol/prototype/Symbol.toPrimitive/prop-desc.js",
             "Test262: built-ins/Symbol/prototype/Symbol.toPrimitive/redefined-symbol-wrapper-ordinary-toprimitive.js",
             "Test262: built-ins/Symbol/prototype/Symbol.toPrimitive/removed-symbol-wrapper-ordinary-toprimitive.js",
-            "Test262: built-ins/Symbol/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/Symbol/prototype/constructor.js",
             "Test262: built-ins/Symbol/prototype/intrinsic.js",
             "Test262: built-ins/Symbol/prototype/toString/not-a-constructor.js",
@@ -9343,7 +9043,7 @@
             "Test262: built-ins/Symbol/unscopables/cross-realm.js",
             "Test262: built-ins/Symbol/unscopables/prop-desc.js"
           ],
-          "passed": 34,
+          "passed": 35,
           "total": 98
         },
         "Test262: built-ins/Temporal": {
@@ -15290,7 +14990,7 @@
           "total": 70
         },
         "Test262: built-ins/WeakMap": {
-          "failed": 59,
+          "failed": 58,
           "failing": [
             "Test262: built-ins/WeakMap/iterator-close-after-set-failure.js",
             "Test262: built-ins/WeakMap/iterator-item-first-entry-returns-abrupt.js",
@@ -15300,7 +15000,6 @@
             "Test262: built-ins/WeakMap/length.js",
             "Test262: built-ins/WeakMap/name.js",
             "Test262: built-ins/WeakMap/proto-from-ctor-realm.js",
-            "Test262: built-ins/WeakMap/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/WeakMap/prototype/constructor.js",
             "Test262: built-ins/WeakMap/prototype/delete/delete.js",
             "Test262: built-ins/WeakMap/prototype/delete/does-not-have-weakmapdata-internal-slot-array.js",
@@ -15352,11 +15051,11 @@
             "Test262: built-ins/WeakMap/prototype/set/set.js",
             "Test262: built-ins/WeakMap/weakmap.js"
           ],
-          "passed": 82,
+          "passed": 83,
           "total": 141
         },
         "Test262: built-ins/WeakRef": {
-          "failed": 14,
+          "failed": 13,
           "failing": [
             "Test262: built-ins/WeakRef/length.js",
             "Test262: built-ins/WeakRef/name.js",
@@ -15364,7 +15063,6 @@
             "Test262: built-ins/WeakRef/proto-from-ctor-realm.js",
             "Test262: built-ins/WeakRef/prototype-from-newtarget-abrupt.js",
             "Test262: built-ins/WeakRef/prototype-from-newtarget-custom.js",
-            "Test262: built-ins/WeakRef/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/WeakRef/prototype/deref/not-a-constructor.js",
             "Test262: built-ins/WeakRef/prototype/deref/prop-desc.js",
             "Test262: built-ins/WeakRef/prototype/deref/return-symbol-target.js",
@@ -15373,18 +15071,17 @@
             "Test262: built-ins/WeakRef/prototype/prop-desc.js",
             "Test262: built-ins/WeakRef/undefined-newtarget-throws.js"
           ],
-          "passed": 15,
+          "passed": 16,
           "total": 29
         },
         "Test262: built-ins/WeakSet": {
-          "failed": 27,
+          "failed": 26,
           "failing": [
             "Test262: built-ins/WeakSet/iterator-next-failure.js",
             "Test262: built-ins/WeakSet/iterator-value-failure.js",
             "Test262: built-ins/WeakSet/length.js",
             "Test262: built-ins/WeakSet/name.js",
             "Test262: built-ins/WeakSet/proto-from-ctor-realm.js",
-            "Test262: built-ins/WeakSet/prototype/Symbol.toStringTag.js",
             "Test262: built-ins/WeakSet/prototype/add/add.js",
             "Test262: built-ins/WeakSet/prototype/add/not-a-constructor.js",
             "Test262: built-ins/WeakSet/prototype/constructor/weakset-prototype-constructor-intrinsic.js",
@@ -15407,7 +15104,7 @@
             "Test262: built-ins/WeakSet/prototype/prototype-attributes.js",
             "Test262: built-ins/WeakSet/weakset.js"
           ],
-          "passed": 58,
+          "passed": 59,
           "total": 85
         },
         "Test262: built-ins/decodeURI": {
@@ -16318,7 +16015,7 @@
           "total": 11
         },
         "Test262: intl402/Collator": {
-          "failed": 45,
+          "failed": 44,
           "failing": [
             "Test262: intl402/Collator/constructor-options-throwing-getters.js",
             "Test262: intl402/Collator/ignore-invalid-unicode-ext-values.js",
@@ -16350,7 +16047,6 @@
             "Test262: intl402/Collator/prototype/resolvedOptions/resolved-numeric-unicode-extensions-and-options.js",
             "Test262: intl402/Collator/prototype/this-value-collator-prototype.js",
             "Test262: intl402/Collator/prototype/this-value-not-collator.js",
-            "Test262: intl402/Collator/prototype/toStringTag/toStringTag.js",
             "Test262: intl402/Collator/supportedLocalesOf/basic.js",
             "Test262: intl402/Collator/supportedLocalesOf/builtin.js",
             "Test262: intl402/Collator/supportedLocalesOf/length.js",
@@ -16366,7 +16062,7 @@
             "Test262: intl402/Collator/unicode-ext-value-collation.js",
             "Test262: intl402/Collator/usage-de.js"
           ],
-          "passed": 20,
+          "passed": 21,
           "total": 65
         },
         "Test262: intl402/Date": {
@@ -16382,7 +16078,7 @@
           "total": 12
         },
         "Test262: intl402/DateTimeFormat": {
-          "failed": 205,
+          "failed": 204,
           "failing": [
             "Test262: intl402/DateTimeFormat/canonicalize-calendar.js",
             "Test262: intl402/DateTimeFormat/constructor-calendar-numberingSystem-order.js",
@@ -16574,7 +16270,6 @@
             "Test262: intl402/DateTimeFormat/prototype/resolvedOptions/resolved-numbering-system-unicode-extensions-and-options.js",
             "Test262: intl402/DateTimeFormat/prototype/this-value-datetimeformat-prototype.js",
             "Test262: intl402/DateTimeFormat/prototype/this-value-not-datetimeformat.js",
-            "Test262: intl402/DateTimeFormat/prototype/toStringTag/toStringTag.js",
             "Test262: intl402/DateTimeFormat/required-date-time-formats.js",
             "Test262: intl402/DateTimeFormat/supportedLocalesOf/basic.js",
             "Test262: intl402/DateTimeFormat/supportedLocalesOf/builtin.js",
@@ -16590,7 +16285,7 @@
             "Test262: intl402/DateTimeFormat/timezone-legacy-non-iana.js",
             "Test262: intl402/DateTimeFormat/timezone-utc.js"
           ],
-          "passed": 39,
+          "passed": 40,
           "total": 244
         },
         "Test262: intl402/DisplayNames": {
@@ -16780,7 +16475,7 @@
           "total": 2
         },
         "Test262: intl402/Intl": {
-          "failed": 65,
+          "failed": 64,
           "failing": [
             "Test262: intl402/Intl/builtin.js",
             "Test262: intl402/Intl/getCanonicalLocales/Locale-object.js",
@@ -16845,10 +16540,9 @@
             "Test262: intl402/Intl/supportedValuesOf/timeZones-include-non-continental.js",
             "Test262: intl402/Intl/supportedValuesOf/timeZones.js",
             "Test262: intl402/Intl/supportedValuesOf/units-accepted-by-NumberFormat.js",
-            "Test262: intl402/Intl/supportedValuesOf/units.js",
-            "Test262: intl402/Intl/toStringTag/toStringTag.js"
+            "Test262: intl402/Intl/supportedValuesOf/units.js"
           ],
-          "passed": 1,
+          "passed": 2,
           "total": 66
         },
         "Test262: intl402/ListFormat": {
@@ -17123,7 +16817,7 @@
           "total": 7
         },
         "Test262: intl402/NumberFormat": {
-          "failed": 183,
+          "failed": 182,
           "failing": [
             "Test262: intl402/NumberFormat/constructor-compactDisplay-compact.js",
             "Test262: intl402/NumberFormat/constructor-locales-get-tostring.js",
@@ -17288,7 +16982,6 @@
             "Test262: intl402/NumberFormat/prototype/resolvedOptions/roundingMode.js",
             "Test262: intl402/NumberFormat/prototype/resolvedOptions/this-value-not-numberformat.js",
             "Test262: intl402/NumberFormat/prototype/this-value-numberformat-prototype.js",
-            "Test262: intl402/NumberFormat/prototype/toStringTag/prop-desc.js",
             "Test262: intl402/NumberFormat/significant-digits-options-get-sequence.js",
             "Test262: intl402/NumberFormat/style-unit.js",
             "Test262: intl402/NumberFormat/supportedLocalesOf/basic.js",
@@ -17309,7 +17002,7 @@
             "Test262: intl402/NumberFormat/throws-for-minimumFractionDigits-over-limit.js",
             "Test262: intl402/NumberFormat/throws-for-minimumFractionDigits-under-limit.js"
           ],
-          "passed": 66,
+          "passed": 67,
           "total": 249
         },
         "Test262: intl402/PluralRules": {
@@ -17458,7 +17151,7 @@
           "total": 80
         },
         "Test262: intl402/Segmenter": {
-          "failed": 60,
+          "failed": 58,
           "failing": [
             "Test262: intl402/Segmenter/constructor/constructor/locales-invalid.js",
             "Test262: intl402/Segmenter/constructor/constructor/locales-valid.js",
@@ -17494,7 +17187,6 @@
             "Test262: intl402/Segmenter/constructor/supportedLocalesOf/result-type.js",
             "Test262: intl402/Segmenter/ctor-custom-get-prototype-poison-throws.js",
             "Test262: intl402/Segmenter/proto-from-ctor-realm.js",
-            "Test262: intl402/Segmenter/prototype/Symbol.toStringTag.js",
             "Test262: intl402/Segmenter/prototype/prop-desc.js",
             "Test262: intl402/Segmenter/prototype/resolvedOptions/branding.js",
             "Test262: intl402/Segmenter/prototype/resolvedOptions/prop-desc.js",
@@ -17518,10 +17210,9 @@
             "Test262: intl402/Segmenter/prototype/segment/segment-grapheme-iterable.js",
             "Test262: intl402/Segmenter/prototype/segment/segment-sentence-iterable.js",
             "Test262: intl402/Segmenter/prototype/segment/segment-tostring.js",
-            "Test262: intl402/Segmenter/prototype/segment/segment-word-iterable.js",
-            "Test262: intl402/Segmenter/prototype/toStringTag/toStringTag.js"
+            "Test262: intl402/Segmenter/prototype/segment/segment-word-iterable.js"
           ],
-          "passed": 19,
+          "passed": 21,
           "total": 79
         },
         "Test262: intl402/String": {
@@ -19752,7 +19443,7 @@
           "total": 1
         },
         "Test262: language/arguments-object": {
-          "failed": 62,
+          "failed": 55,
           "failing": [
             "Test262: language/arguments-object/10.5-1-s.js",
             "Test262: language/arguments-object/10.5-7-b-1-s.js",
@@ -19777,24 +19468,17 @@
             "Test262: language/arguments-object/mapped/Symbol.iterator.js",
             "Test262: language/arguments-object/mapped/enumerable-configurable-accessor-descriptor.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-3.js",
-            "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-delete-1.js",
-            "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-delete-2.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-delete-3.js",
-            "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-delete-4.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-nonwritable-1.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-nonwritable-2.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-nonwritable-3.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-nonwritable-4.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-nonwritable-5.js",
-            "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-strict-delete-1.js",
-            "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-strict-delete-2.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-strict-delete-3.js",
-            "Test262: language/arguments-object/mapped/mapped-arguments-nonconfigurable-strict-delete-4.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonwritable-nonconfigurable-1.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonwritable-nonconfigurable-2.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonwritable-nonconfigurable-3.js",
             "Test262: language/arguments-object/mapped/mapped-arguments-nonwritable-nonconfigurable-4.js",
-            "Test262: language/arguments-object/mapped/nonconfigurable-descriptors-basic.js",
             "Test262: language/arguments-object/mapped/nonconfigurable-descriptors-set-value-by-arguments.js",
             "Test262: language/arguments-object/mapped/nonconfigurable-descriptors-set-value-with-define-property.js",
             "Test262: language/arguments-object/mapped/nonconfigurable-descriptors-with-param-assign.js",
@@ -19817,7 +19501,7 @@
             "Test262: language/arguments-object/unmapped/Symbol.iterator.js",
             "Test262: language/arguments-object/unmapped/via-strict.js"
           ],
-          "passed": 201,
+          "passed": 208,
           "total": 263
         },
         "Test262: language/asi": {
@@ -19897,7 +19581,7 @@
           "total": 62
         },
         "Test262: language/eval-code": {
-          "failed": 205,
+          "failed": 203,
           "failing": [
             "Test262: language/eval-code/direct/arrow-fn-a-following-parameter-is-named-arguments-arrow-func-declare-arguments-assign-incl-def-param-arrow-arguments.js",
             "Test262: language/eval-code/direct/arrow-fn-a-following-parameter-is-named-arguments-arrow-func-declare-arguments-assign.js",
@@ -20065,7 +19749,6 @@
             "Test262: language/eval-code/direct/var-env-func-init-global-new.js",
             "Test262: language/eval-code/direct/var-env-func-init-global-update-configurable.js",
             "Test262: language/eval-code/direct/var-env-func-init-local-new-delete.js",
-            "Test262: language/eval-code/direct/var-env-func-init-multi.js",
             "Test262: language/eval-code/direct/var-env-func-non-strict.js",
             "Test262: language/eval-code/direct/var-env-global-lex-non-strict.js",
             "Test262: language/eval-code/direct/var-env-lower-lex-non-strict.js",
@@ -20099,13 +19782,12 @@
             "Test262: language/eval-code/indirect/var-env-func-init-global-update-configurable.js",
             "Test262: language/eval-code/indirect/var-env-func-init-global-update-non-configurable.js",
             "Test262: language/eval-code/indirect/var-env-func-init-multi.js",
-            "Test262: language/eval-code/indirect/var-env-func-non-strict.js",
             "Test262: language/eval-code/indirect/var-env-global-lex-non-strict.js",
             "Test262: language/eval-code/indirect/var-env-var-init-global-exstng.js",
             "Test262: language/eval-code/indirect/var-env-var-init-global-new.js",
             "Test262: language/eval-code/indirect/var-env-var-non-strict.js"
           ],
-          "passed": 142,
+          "passed": 144,
           "total": 347
         },
         "Test262: language/export": {
@@ -21805,7 +21487,7 @@
           "total": 55
         },
         "Test262: language/global-code": {
-          "failed": 21,
+          "failed": 20,
           "failing": [
             "Test262: language/global-code/S10.4.1_A1_T1.js",
             "Test262: language/global-code/S10.4.1_A1_T2.js",
@@ -21814,7 +21496,6 @@
             "Test262: language/global-code/decl-lex-configurable-global.js",
             "Test262: language/global-code/decl-lex-restricted-global.js",
             "Test262: language/global-code/decl-var.js",
-            "Test262: language/global-code/script-decl-func-dups.js",
             "Test262: language/global-code/script-decl-func-err-non-configurable.js",
             "Test262: language/global-code/script-decl-func-err-non-extensible.js",
             "Test262: language/global-code/script-decl-func.js",
@@ -21829,7 +21510,7 @@
             "Test262: language/global-code/script-decl-var.js",
             "Test262: language/global-code/unscopables-ignored.js"
           ],
-          "passed": 21,
+          "passed": 22,
           "total": 42
         },
         "Test262: language/identifier-resolution": {
@@ -22155,7 +21836,7 @@
           "total": 80
         },
         "Test262: language/statements": {
-          "failed": 1097,
+          "failed": 1096,
           "failing": [
             "Test262: language/statements/async-generator/dflt-params-abrupt.js",
             "Test262: language/statements/async-generator/dflt-params-ref-later.js",
@@ -22972,7 +22653,6 @@
             "Test262: language/statements/function/S13_A11_T1.js",
             "Test262: language/statements/function/S13_A12_T1.js",
             "Test262: language/statements/function/S13_A12_T2.js",
-            "Test262: language/statements/function/S13_A14_T1.js",
             "Test262: language/statements/function/S13_A15_T4.js",
             "Test262: language/statements/function/S13_A15_T5.js",
             "Test262: language/statements/function/dstr/ary-init-iter-get-err-array-prototype.js",
@@ -23255,7 +22935,7 @@
             "Test262: language/statements/with/unscopables-inc-dec.js",
             "Test262: language/statements/with/unscopables-prop-get-err.js"
           ],
-          "passed": 8246,
+          "passed": 8247,
           "total": 9343
         },
         "Test262: language/types": {
@@ -23380,7 +23060,7 @@
           "total": 3
         },
         "Test262: staging/sm": {
-          "failed": 806,
+          "failed": 794,
           "failing": [
             "Test262: staging/sm/Array/array-length-set-during-for-in.js",
             "Test262: staging/sm/Array/array-length-set-on-nonarray.js",
@@ -23434,7 +23114,6 @@
             "Test262: staging/sm/Array/to-length.js",
             "Test262: staging/sm/Array/toLocaleString-01.js",
             "Test262: staging/sm/Array/toLocaleString.js",
-            "Test262: staging/sm/Array/toSpliced-dense.js",
             "Test262: staging/sm/Array/unscopables.js",
             "Test262: staging/sm/Array/unshift-01.js",
             "Test262: staging/sm/Array/unshift-with-enumeration.js",
@@ -23467,7 +23146,6 @@
             "Test262: staging/sm/Function/Function-prototype.js",
             "Test262: staging/sm/Function/Function-with-eval.js",
             "Test262: staging/sm/Function/arguments-caller-callee.js",
-            "Test262: staging/sm/Function/arguments-extra-property.js",
             "Test262: staging/sm/Function/arguments-iterator.js",
             "Test262: staging/sm/Function/arguments-parameter-shadowing.js",
             "Test262: staging/sm/Function/arguments-property-attributes.js",
@@ -23502,7 +23180,6 @@
             "Test262: staging/sm/Function/strict-arguments.js",
             "Test262: staging/sm/Function/throw-type-error.js",
             "Test262: staging/sm/Iterator/constructor-throw-when-called-directly.js",
-            "Test262: staging/sm/Iterator/from/Iterator.from-descriptor.js",
             "Test262: staging/sm/Iterator/from/Iterator.from-length.js",
             "Test262: staging/sm/Iterator/from/Iterator.from-name.js",
             "Test262: staging/sm/Iterator/from/call-from-with-different-this.js",
@@ -23524,7 +23201,6 @@
             "Test262: staging/sm/Iterator/prototype/drop/length.js",
             "Test262: staging/sm/Iterator/prototype/drop/name.js",
             "Test262: staging/sm/Iterator/prototype/every/check-fn-after-getting-iterator.js",
-            "Test262: staging/sm/Iterator/prototype/every/descriptor.js",
             "Test262: staging/sm/Iterator/prototype/every/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/every/length.js",
             "Test262: staging/sm/Iterator/prototype/every/name.js",
@@ -23534,7 +23210,6 @@
             "Test262: staging/sm/Iterator/prototype/filter/length.js",
             "Test262: staging/sm/Iterator/prototype/filter/name.js",
             "Test262: staging/sm/Iterator/prototype/find/check-fn-after-getting-iterator.js",
-            "Test262: staging/sm/Iterator/prototype/find/descriptor.js",
             "Test262: staging/sm/Iterator/prototype/find/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/find/length.js",
             "Test262: staging/sm/Iterator/prototype/find/name.js",
@@ -23548,7 +23223,6 @@
             "Test262: staging/sm/Iterator/prototype/flatMap/name.js",
             "Test262: staging/sm/Iterator/prototype/flatMap/throw-when-inner-not-iterable.js",
             "Test262: staging/sm/Iterator/prototype/forEach/check-fn-after-getting-iterator.js",
-            "Test262: staging/sm/Iterator/prototype/forEach/descriptor.js",
             "Test262: staging/sm/Iterator/prototype/forEach/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/forEach/length.js",
             "Test262: staging/sm/Iterator/prototype/forEach/name.js",
@@ -23569,7 +23243,6 @@
             "Test262: staging/sm/Iterator/prototype/lazy-methods-throw-next-not-object.js",
             "Test262: staging/sm/Iterator/prototype/lazy-methods-throw-on-reentry.js",
             "Test262: staging/sm/Iterator/prototype/map/length.js",
-            "Test262: staging/sm/Iterator/prototype/map/map.js",
             "Test262: staging/sm/Iterator/prototype/map/name.js",
             "Test262: staging/sm/Iterator/prototype/map/proxy-abrupt-completion-in-iteratorValue.js",
             "Test262: staging/sm/Iterator/prototype/map/proxy-abrupt-completion-in-yield.js",
@@ -23578,7 +23251,6 @@
             "Test262: staging/sm/Iterator/prototype/map/this-not-iterator-throw.js",
             "Test262: staging/sm/Iterator/prototype/map/throw-when-iterator-returns-non-object.js",
             "Test262: staging/sm/Iterator/prototype/reduce/check-fn-after-getting-iterator.js",
-            "Test262: staging/sm/Iterator/prototype/reduce/descriptor.js",
             "Test262: staging/sm/Iterator/prototype/reduce/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/reduce/iterator-next-return-non-object-throws.js",
             "Test262: staging/sm/Iterator/prototype/reduce/length.js",
@@ -23587,7 +23259,6 @@
             "Test262: staging/sm/Iterator/prototype/reduce/proxy.js",
             "Test262: staging/sm/Iterator/prototype/reduce/value-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/some/check-fn-after-getting-iterator.js",
-            "Test262: staging/sm/Iterator/prototype/some/descriptor.js",
             "Test262: staging/sm/Iterator/prototype/some/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/some/length.js",
             "Test262: staging/sm/Iterator/prototype/some/name.js",
@@ -23601,7 +23272,6 @@
             "Test262: staging/sm/Iterator/prototype/take/name.js",
             "Test262: staging/sm/Iterator/prototype/take/take-more-than-available.js",
             "Test262: staging/sm/Iterator/prototype/toArray/create-in-current-realm.js",
-            "Test262: staging/sm/Iterator/prototype/toArray/descriptor.js",
             "Test262: staging/sm/Iterator/prototype/toArray/length.js",
             "Test262: staging/sm/Iterator/prototype/toArray/name.js",
             "Test262: staging/sm/Iterator/prototype/toArray/next-throws.js",
@@ -23780,7 +23450,6 @@
             "Test262: staging/sm/Symbol/comparisons.js",
             "Test262: staging/sm/Symbol/constructor.js",
             "Test262: staging/sm/Symbol/conversions.js",
-            "Test262: staging/sm/Symbol/enumeration-order.js",
             "Test262: staging/sm/Symbol/for.js",
             "Test262: staging/sm/Symbol/keyFor.js",
             "Test262: staging/sm/Symbol/property-basics.js",
@@ -24106,7 +23775,6 @@
             "Test262: staging/sm/object/values-entries-typedarray.js",
             "Test262: staging/sm/object/values.js",
             "Test262: staging/sm/regress/regress-1383630.js",
-            "Test262: staging/sm/regress/regress-383682.js",
             "Test262: staging/sm/regress/regress-499524.js",
             "Test262: staging/sm/regress/regress-551763-0.js",
             "Test262: staging/sm/regress/regress-551763-2.js",
@@ -24189,7 +23857,7 @@
             "Test262: staging/sm/syntax/syntax-parsed-arrow-then-directive.js",
             "Test262: staging/sm/syntax/yield-as-identifier.js"
           ],
-          "passed": 600,
+          "passed": 612,
           "total": 1406
         },
         "Test262: staging/source-phase-imports": {
@@ -24224,22 +23892,22 @@
         }
       },
       "filter": null,
-      "finished": "2026-07-28T18:17:06",
+      "finished": "2026-07-30T16:01:44.942641+00:00",
       "revision": {
         "branch": "dev",
-        "commit": "76dc93e55bb8d5b9ec837fb42a9fada0d2e84f67",
+        "commit": "d75d49a4a987ed202619d306367cebcaf5613eec",
         "dirty": false,
-        "short": "76dc93e5",
-        "subject": "docs: record the RegExp property-location deviation left after the attrs fix"
+        "short": "d75d49a4",
+        "subject": "fix(array): respect indexed descriptors in copy methods"
       },
       "schema_version": 1,
-      "started": "2026-07-28T18:15:36",
+      "started": "2026-07-30T16:00:13.330571+00:00",
       "suite": "Tier 3 - Full Conformance (Test262 / WPT / Frameworks)",
       "tier": 3,
       "totals": {
-        "failed": 19730,
-        "pass_rate": 63.1,
-        "passed": 33701,
+        "failed": 19292,
+        "pass_rate": 63.9,
+        "passed": 34139,
         "total": 53431
       }
     }
