@@ -3220,9 +3220,11 @@ bool js_arr_try_fast_set(ant_t *js, ant_value_t arr, ant_offset_t idx, ant_value
 
   ant_object_t *ptr = js_obj_ptr(js_as_obj(arr));
   if (!ptr || ptr->flags.is_exotic || ptr->flags.frozen || !ptr->flags.extensible) return false;
+  if (!ptr->shape || ant_shape_count(ptr->shape) != 0) return false;
 
   ant_offset_t doff = get_dense_buf(arr);
   if (!doff || idx >= dense_iterable_length(js, arr)) return false;
+  if (is_empty_slot(dense_get(doff, idx))) return false;
 
   dense_set(js, doff, idx, val);
   return true;
@@ -3827,6 +3829,58 @@ static inline void array_len_set(ant_t *js, ant_value_t obj, ant_offset_t new_le
   else js_mkprop_fast(js, obj, "length", 6, new_len_val);
 }
 
+static bool array_shape_has_indexed_set_hazard(ant_shape_t *shape) {
+  uint32_t count = ant_shape_count(shape);
+  for (uint32_t i = 0; i < count; i++) {
+    const ant_shape_prop_t *prop = ant_shape_prop_at(shape, i);
+    if (!prop || prop->type != ANT_SHAPE_KEY_STRING) continue;
+
+    const char *key = prop->key.interned;
+    unsigned long ignored = 0;
+    if (!key || !parse_array_index(key, strlen(key), (ant_offset_t)UINT32_MAX, &ignored))
+      continue;
+
+    if (prop->has_getter || prop->has_setter ||
+        (prop->attrs & ANT_PROP_ATTR_WRITABLE) == 0)
+      return true;
+  }
+  return false;
+}
+
+static bool standard_array_proto_allows_index_creation(ant_t *js, ant_object_t *receiver) {
+  if (!receiver || receiver->proto != js->sym.array_proto) return false;
+
+  uint32_t epoch = ant_ic_epoch_counter;
+  if (js->runtime_cache.array_index_proto_epoch == epoch)
+    return js->runtime_cache.array_index_proto_safe;
+
+  bool safe = true;
+  ant_value_t cur = js->sym.array_proto;
+  proto_overflow_guard_t guard;
+  proto_overflow_guard_init(&guard);
+  while (is_object_type(cur)) {
+    ant_value_t cur_obj = js_as_obj(cur);
+    ant_object_t *ptr = js_obj_ptr(cur_obj);
+    if (!ptr || ptr->flags.is_exotic ||
+        array_shape_has_indexed_set_hazard(ptr->shape)) {
+      safe = false;
+      break;
+    }
+
+    ant_value_t proto = get_proto(js, cur_obj);
+    if (!is_object_type(proto)) break;
+    cur = proto;
+    if (proto_overflow_guard_hit_cycle(js, &guard, cur)) {
+      safe = false;
+      break;
+    }
+  }
+
+  js->runtime_cache.array_index_proto_safe = safe;
+  js->runtime_cache.array_index_proto_epoch = epoch;
+  return safe;
+}
+
 static ant_value_t js_setprop_array_fast(ant_t *js, ant_value_t obj, ant_value_t k, ant_value_t v, ant_offset_t klen, const char *key) {
   unsigned long idx;
   if (!parse_array_index(key, klen, (ant_offset_t)-1, &idx)) return js_mkundef();
@@ -3835,7 +3889,14 @@ static ant_value_t js_setprop_array_fast(ant_t *js, ant_value_t obj, ant_value_t
   ant_offset_t doff = get_dense_buf(obj);
   if (doff) {
     ant_offset_t dense_len = dense_iterable_length(js, obj);
-    if (idx < dense_len) { dense_set(js, doff, (ant_offset_t)idx, v); return v; }
+    if (idx < dense_len && !is_empty_slot(dense_get(doff, (ant_offset_t)idx))) {
+      if (lkp(js, obj, key, (size_t)klen) != 0) return js_mkundef();
+      dense_set(js, doff, (ant_offset_t)idx, v);
+      return v;
+    }
+
+    if (!standard_array_proto_allows_index_creation(js, array_obj_ptr(obj)))
+      return js_mkundef();
 
     ant_offset_t density_limit = dense_len > 0 ? dense_len * 4 : 64;
     if (idx >= density_limit) goto sparse;
@@ -3850,6 +3911,8 @@ static ant_value_t js_setprop_array_fast(ant_t *js, ant_value_t obj, ant_value_t
   
   sparse:;
   if (idx < cur_len) return js_mkundef();
+  if (!standard_array_proto_allows_index_creation(js, array_obj_ptr(obj)))
+    return js_mkundef();
   
   ant_value_t extensibility_error = check_object_extensibility(js, obj);
   if (is_err(extensibility_error)) return extensibility_error;
@@ -4190,7 +4253,7 @@ ant_value_t js_setprop(ant_t *js, ant_value_t obj, ant_value_t k, ant_value_t v)
       }
 
       ant_value_t proto = get_proto(js, cur_obj);
-      if (vtype(proto) != T_OBJ && vtype(proto) != T_FUNC) break;
+      if (!is_object_type(proto)) break;
       cur = proto;
       on_receiver = false;
       if (proto_overflow_guard_hit_cycle(js, &guard, cur)) break;
