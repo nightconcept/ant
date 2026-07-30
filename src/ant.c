@@ -3854,6 +3854,21 @@ static bool array_shape_has_indexed_set_hazard(ant_shape_t *shape) {
   return false;
 }
 
+static bool array_shape_has_indexed_property(ant_shape_t *shape) {
+  uint32_t count = ant_shape_count(shape);
+  for (uint32_t i = 0; i < count; i++) {
+    const ant_shape_prop_t *prop = ant_shape_prop_at(shape, i);
+    if (!prop || prop->type != ANT_SHAPE_KEY_STRING) continue;
+
+    const char *key = prop->key.interned;
+    unsigned long ignored = 0;
+    if (key &&
+        parse_array_index(key, strlen(key), (ant_offset_t)UINT32_MAX, &ignored))
+      return true;
+  }
+  return false;
+}
+
 static bool standard_array_proto_allows_index_creation(ant_t *js, ant_object_t *receiver) {
   if (!receiver || receiver->proto != js->sym.array_proto) return false;
 
@@ -10409,13 +10424,28 @@ static ant_value_t array_shallow_copy(ant_t *js, ant_value_t arr, ant_offset_t l
   if (is_err(result)) return result;
   
   ant_offset_t doff = get_dense_buf(arr);
-  if (doff) {
+  ant_object_t *arr_ptr = array_obj_ptr(arr);
+  bool dense_copy_safe =
+    doff && arr_ptr && !array_shape_has_indexed_property(arr_ptr->shape) &&
+    len <= dense_capacity(doff);
+  if (dense_copy_safe) {
+    for (ant_offset_t i = 0; i < len; i++) {
+      if (is_empty_slot(dense_get(doff, i))) {
+        dense_copy_safe = false;
+        break;
+      }
+    }
+  }
+
+  if (dense_copy_safe) {
     for (ant_offset_t i = 0; i < len; i++) {
       ant_value_t v = dense_get(doff, i);
       arr_set(js, result, i, v);
     }
     return result;
   }
+
+  if (doff) return array_generic_copy(js, arr, len);
   
   ant_iter_t iter = js_prop_iter_begin(js, arr);
   const char *key;
