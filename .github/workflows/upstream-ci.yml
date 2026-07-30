@@ -47,6 +47,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: upstream
 
       - name: Install build dependencies
         run: |
@@ -102,34 +104,14 @@ jobs:
       - name: Run Tier 2 Compliance Tracking
         run: python3 scripts/run_compliance.py --tier 2 --all --allow-failures --log
 
-      - name: Check tier 2 pass counts against baseline
+      - name: Check tier 2 exact failing set against baseline
         run: |
-          python3 - <<'PYEOF'
-          import json, sys, pathlib
-
-          baseline = json.loads(pathlib.Path("docs/repo/compliance-baseline.json").read_text())["tiers"]
-          logs = sorted(pathlib.Path(".deps/compliance/logs").glob("*.json"))
-
-          failed = False
-          for tier in ("2",):
-              if tier not in baseline:
-                  print(f"Tier {tier}: no baseline seeded yet, skipping regression check")
-                  continue
-              manifest_path = next((p for p in logs if f"tier{tier}_" in p.name), None)
-              if manifest_path is None:
-                  print(f"::error::Tier {tier}: no manifest produced by this run")
-                  failed = True
-                  continue
-              manifest = json.loads(manifest_path.read_text())
-              base_passed = baseline[tier]["totals"]["passed"]
-              cur_passed = manifest["totals"]["passed"]
-              print(f"Tier {tier}: baseline passed={base_passed}, current passed={cur_passed}")
-              if cur_passed < base_passed:
-                  print(f"::error::Tier {tier} regressed: {cur_passed} passed vs baseline {base_passed}")
-                  failed = True
-
-          sys.exit(1 if failed else 0)
-          PYEOF
+          python3 scripts/compliance_baseline.py diff \
+            .deps/compliance/logs/tier2-latest.json \
+            --require-baseline \
+            --require-full \
+            --expect-commit "${{ github.sha }}" \
+            --expect-branch upstream
 
       # The benchmark threshold gate is deliberately not run here. It diffs
       # absolute milliseconds against docs/repo/bench-baseline.json, which is
