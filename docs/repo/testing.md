@@ -1,7 +1,7 @@
 # Testing Guide
 
 Status: active
-Last reviewed: 2026-04-09
+Last reviewed: 2026-07-30
 Owner: theMackabu
 
 This guide keeps validation proportional to the change while still protecting runtime behavior.
@@ -56,8 +56,10 @@ runs), so a single push fires exactly one of them.
   changed-file structure checks).
 - **`.github/workflows/main-ci.yml`** (branch `main`): everything in
   `dev-ci.yml`, plus `compliance-tier2` — Tier 2 metric collection
-  (`--allow-failures --log`) with a regression check against
-  `docs/repo/compliance-baseline.json` (fails if the passed-test count drops).
+  (`--allow-failures --log`) followed by an exact failing-test-set comparison
+  with that branch's `docs/repo/compliance-baseline.json`. The gate fails
+  closed if the baseline or full manifest is absent or invalid, the manifest
+  identifies a different source revision, or any covered test newly fails.
   All jobs gate merges to `main`. Tier 1 is already gated inside
   `build-platform.yml`, so a push is checked against tiers 1 and 2.
 - **`.github/workflows/upstream-ci.yml`** (branch `upstream`): identical job
@@ -66,8 +68,11 @@ runs), so a single push fires exactly one of them.
   that record stops building — not to clear anything for submission.
 - **`.github/workflows/tier3-weekly.yml`** (schedule): tier 3 is ~50k
   Test262/WPT tests, too slow to sit in front of a push, so it runs weekly
-  (Mondays 04:00 UTC) plus on demand, with the same baseline regression check
-  and the manifest uploaded as an artifact.
+  (Mondays 04:00 UTC) plus on demand. A two-entry matrix explicitly checks out
+  `main` and `dev`; each independently builds that ref, runs the full suite,
+  compares exact failing-test names with that branch's checked-in baseline,
+  and uploads `tier3-compliance-main` or `tier3-compliance-dev`. Branch-aware
+  concurrency prevents the two jobs from cancelling one another.
 
 **No performance gate runs in CI.** The bench threshold assertion compared
 absolute milliseconds against a baseline recorded on a developer machine, which
@@ -77,7 +82,9 @@ measurements are in [../exec-plans/tech-debt.md](../exec-plans/tech-debt.md);
 speed and memory are checked locally with `just bench-fast-diff`.
 
 Compare tiers as failing-test *sets*, not percentages: a net-positive rate can
-still hide a newly failing test, and only the sets separate the two.
+still hide a newly failing test, and only the sets separate the two. Baselines
+belong to the branch that checks them in; do not reuse a manifest or baseline
+refresh from another branch merely because its aggregate totals match.
 
 Reusable/utility workflows are not part of any branch's automatic signal —
 they're `workflow_call` targets or `workflow_dispatch`-only:

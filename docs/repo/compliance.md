@@ -1,7 +1,7 @@
 # Compliance Work Guide
 
 Status: active
-Last reviewed: 2026-07-26
+Last reviewed: 2026-07-30
 Owner: theMackabu
 
 This guide covers work whose goal is moving Ant's conformance numbers: Test262,
@@ -13,8 +13,8 @@ WPT, and Node.js compatibility. For ordinary validation scope, read
 | Tier | Suite | Bar |
 | ---- | ----- | --- |
 | 1 | WinterTC / edge baseline | **Must be 100%.** A tier 1 failure is a release blocker and outranks any other compliance work. |
-| 2 | Node.js compatibility | Pass rate must not drop. Increases are desirable. |
-| 3 | Test262 / WPT / frameworks | Pass rate must not drop. Increases are the point of the work. |
+| 2 | Node.js compatibility | No previously passing test may newly fail. Increases are desirable. |
+| 3 | Test262 / WPT / frameworks | No previously passing test may newly fail. Increases are the point of the work. |
 
 ## Running The Suites
 
@@ -54,9 +54,9 @@ them.
 A compliance change is done when all of the following hold.
 
 1. **Tier 1 is at 100%.** No exceptions, no "pre-existing" excuses.
-2. **No tier 2 or tier 3 percentage regression** measured on the final state of
-   the change. A net gain that hides a regression in one area is not done —
-   diff the failing-test *lists*, not just the totals (see below).
+2. **No tier 2 or tier 3 failing-set regression** measured on the final state
+   of the change. A net gain that hides a regression in one area is not done —
+   diff the failing-test *lists*, not just totals or percentages (see below).
 3. **The change is small and upstreamable.** This is the bar for landing on
    `main`, not something deferred to the `upstream` branch. Prefer one root cause per commit,
    expressed the way the surrounding subsystem already expresses things. If a
@@ -131,10 +131,14 @@ makes per-category diffing across runs cheap and precise.
 
 `docs/repo/compliance-baseline.json` holds the most recent full-run manifest
 per tier, keyed by tier number: `{"schema_version": 1, "tiers": {"1": {...},
-"2": {...}}}`. **The tier 3 entry is not seeded** — a full tier 3 run is too
-expensive to run casually, so `diff` (below) treats a missing tier baseline as
-"nothing to compare", prints that, and exits 0. Seed it with
-`just compliance-update-t3` once a full tier 3 pass has been run and reviewed.
+"2": {...}}}`. Each long-lived branch owns its checked-in copy; a baseline
+refresh made on `dev` is not automatically a `main` baseline.
+
+For interactive use, `diff` treats a missing tier baseline as "nothing to
+compare", prints that, and exits 0. Seed a missing Tier 3 entry with
+`just compliance-update-t3` only after reviewing a clean full run. CI instead
+passes `--require-baseline` and fails closed when the expected entry is absent
+or malformed.
 
 `scripts/compliance_baseline.py` has two subcommands (wrapped by the
 `compliance-update-t*` / `compliance-diff-t*` just recipes above for the full-run
@@ -150,6 +154,15 @@ case; call the script directly for a manifest from an ad-hoc or filtered run):
   (capped, with exact counts) and exits non-zero if any covered category
   regressed. Pass `--allow-regressions` to report without failing the exit
   code.
+
+CI adds `--require-baseline --require-full --expect-commit <sha>
+--expect-branch <branch>`. Together these require a valid clean full-run
+baseline, reject a filtered or stale current manifest, verify that its revision
+matches the exact checkout, and make missing inputs fatal. The `main` and
+`upstream` push workflows apply this gate to Tier 2. The scheduled and manually
+dispatched Tier 3 workflow runs separate `main` and `dev` matrix jobs every
+Monday at 04:00 UTC; each job uses its branch's baseline and uploads a
+branch-qualified artifact.
 
 ## Compliance Vs Other Runtimes
 
