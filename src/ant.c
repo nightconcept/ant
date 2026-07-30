@@ -2941,7 +2941,14 @@ ant_value_t js_create_arguments_object(
 
   if (is_strict) js_set_slot(arr, SLOT_STRICT_ARGS, js_true);
   else if (vtype(callee) == T_FUNC) setprop_cstr(js, arr, "callee", 6, callee);
-  js_set_sym(js, arr, get_toStringTag_sym(), js_mkstr(js, "Arguments", 9));
+  // Arguments uses an own tag to model Object.prototype.toString's built-in
+  // "Arguments" classification. Unlike standard built-in prototype tags,
+  // this compatibility property must not block an ordinary instance
+  // assignment from overriding @@toStringTag.
+  js_set_sym_desc(
+    js, arr, get_toStringTag_sym(), js_mkstr(js, "Arguments", 9),
+    JS_DESC_W | JS_DESC_C
+  );
   
   if (is_object_type(js->sym.array_proto)) {
     ant_value_t iter_fn = js_get_sym(js, js->sym.array_proto, get_iterator_sym());
