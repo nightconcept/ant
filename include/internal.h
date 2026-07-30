@@ -342,6 +342,8 @@ struct ant_isolate_t {
 
     uint32_t with_no_unscopables_epoch;
     uint32_t function_proto_epoch;
+    uint32_t array_index_proto_epoch;
+    bool array_index_proto_safe;
   } runtime_cache;
 
   struct {
