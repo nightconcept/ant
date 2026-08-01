@@ -3407,6 +3407,10 @@ double js_to_number(ant_t *js, ant_value_t arg) {
   if (vtype(arg) == T_NUM) return tod(arg);
   if (vtype(arg) == T_BOOL) return vdata(arg) ? 1.0 : 0.0;
   if (vtype(arg) == T_BIGINT) return bigint_to_double(js, arg);
+  if (vtype(arg) == T_SYMBOL) {
+    js_mkerr_typed(js, JS_ERR_TYPE, "Cannot convert a Symbol value to a number");
+    return JS_NAN;
+  }
 
   if (vtype(arg) == T_STR) {
     ant_flat_string_t *flat = ant_str_flat_ptr(arg);
@@ -11293,6 +11297,31 @@ static ant_value_t builtin_array_at(ant_t *js, ant_value_t *args, int nargs) {
   return array_method_get_index(js, arr, (ant_offset_t)idx);
 }
 
+static ant_value_t array_relative_index(
+  ant_t *js, ant_value_t value, ant_offset_t len, ant_offset_t *out
+) {
+  double number = js_to_number(js, value);
+  if (js->thrown_exists) return mkval(T_ERR, 0);
+
+  if (isnan(number) || number == 0.0 || (isinf(number) && signbit(number))) {
+    *out = 0;
+    return js_mkundef();
+  }
+  if (isinf(number)) {
+    *out = len;
+    return js_mkundef();
+  }
+
+  number = trunc(number);
+  if (number < 0.0) {
+    double relative = (double)len + number;
+    *out = relative > 0.0 ? (ant_offset_t)relative : 0;
+  } else {
+    *out = number < (double)len ? (ant_offset_t)number : len;
+  }
+  return js_mkundef();
+}
+
 static ant_value_t builtin_array_fill(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t arr = js->this_val;
   ARRAY_METHOD_THIS_OR_RETURN(arr, "fill");
@@ -11302,21 +11331,14 @@ static ant_value_t builtin_array_fill(ant_t *js, ant_value_t *args, int nargs) {
   PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
   
   ant_offset_t start = 0, end = len;
-  if (nargs >= 2 && vtype(args[1]) == T_NUM) {
-    int s = (int) tod(args[1]);
-    if (s < 0) s = (int)len + s;
-    if (s < 0) s = 0;
-    start = (ant_offset_t) s;
+  if (nargs >= 2) {
+    ant_value_t converted = array_relative_index(js, args[1], len, &start);
+    if (is_err(converted)) return converted;
   }
-  if (nargs >= 3 && vtype(args[2]) == T_NUM) {
-    int e = (int) tod(args[2]);
-    if (e < 0) e = (int)len + e;
-    if (e < 0) e = 0;
-    end = (ant_offset_t) e;
+  if (nargs >= 3 && vtype(args[2]) != T_UNDEF) {
+    ant_value_t converted = array_relative_index(js, args[2], len, &end);
+    if (is_err(converted)) return converted;
   }
-  if (start > len) start = len;
-  if (end > len) end = len;
-
   if (end > start) {
     ant_value_t rejected = array_method_reject_index_write(js, arr, start);
     if (is_err(rejected)) return rejected;
@@ -12122,24 +12144,23 @@ static ant_value_t builtin_array_copyWithin(ant_t *js, ant_value_t *args, int na
   PROXY_AWARE_LENGTH_OR_RETURN(arr, len);
   ant_value_t read_from = is_proxy(arr) ? proxy_read_target(js, arr) : arr;
 
-  int target = 0, start = 0, end = (int)len;
-  if (nargs >= 1 && vtype(args[0]) == T_NUM) {
-    target = (int) tod(args[0]);
-    if (target < 0) target = (int)len + target;
-    if (target < 0) target = 0;
+  ant_offset_t target_off = 0, start_off = 0, end_off = len;
+  if (nargs >= 1) {
+    ant_value_t converted = array_relative_index(js, args[0], len, &target_off);
+    if (is_err(converted)) return converted;
   }
-  if (nargs >= 2 && vtype(args[1]) == T_NUM) {
-    start = (int) tod(args[1]);
-    if (start < 0) start = (int)len + start;
-    if (start < 0) start = 0;
+  if (nargs >= 2) {
+    ant_value_t converted = array_relative_index(js, args[1], len, &start_off);
+    if (is_err(converted)) return converted;
   }
-  if (nargs >= 3 && vtype(args[2]) == T_NUM) {
-    end = (int) tod(args[2]);
-    if (end < 0) end = (int)len + end;
-    if (end < 0) end = 0;
+  if (nargs >= 3 && vtype(args[2]) != T_UNDEF) {
+    ant_value_t converted = array_relative_index(js, args[2], len, &end_off);
+    if (is_err(converted)) return converted;
   }
-  
-  if (end > (int)len) end = (int)len;
+
+  int target = (int)target_off;
+  int start = (int)start_off;
+  int end = (int)end_off;
   int count = end - start;
   if (count > (int)len - target) count = (int)len - target;
   if (count <= 0) return arr;
@@ -16468,7 +16489,11 @@ static ant_value_t proxy_aware_length(ant_t *js, ant_value_t obj, ant_offset_t *
   if (is_proxy(obj)) {
     ant_value_t len_val = proxy_get(js, obj, "length", 6);
     if (is_err(len_val)) return len_val;
-    if (vtype(len_val) == T_NUM) *out_len = (ant_offset_t)tod(len_val);
+    double len_num = js_to_number(js, len_val);
+    if (js->thrown_exists) return mkval(T_ERR, 0);
+    if (len_num > 0.0)
+      *out_len = isfinite(len_num) && len_num < (double)UINT32_MAX
+        ? (ant_offset_t)floor(len_num) : UINT32_MAX;
     return js_mkundef();
   }
   if (obj_type == T_ARR) {
@@ -16483,13 +16508,21 @@ static ant_value_t proxy_aware_length(ant_t *js, ant_value_t obj, ant_offset_t *
   ant_value_t exotic_len;
   if (obj_type == T_OBJ &&
       js_try_get_string_own_exotic(js, obj, "length", 6, &exotic_len, NULL)) {
-    if (vtype(exotic_len) == T_NUM) *out_len = (ant_offset_t)tod(exotic_len);
+    double len_num = js_to_number(js, exotic_len);
+    if (js->thrown_exists) return mkval(T_ERR, 0);
+    if (len_num > 0.0)
+      *out_len = isfinite(len_num) && len_num < (double)UINT32_MAX
+        ? (ant_offset_t)floor(len_num) : UINT32_MAX;
     return js_mkundef();
   }
   ant_prop_loc_t off = lkp_interned(obj, js->intern.length);
   if (!off.obj) return js_mkundef();
   ant_value_t len_val = js_prop_load(off);
-  if (vtype(len_val) == T_NUM) *out_len = (ant_offset_t)tod(len_val);
+  double len_num = js_to_number(js, len_val);
+  if (js->thrown_exists) return mkval(T_ERR, 0);
+  if (len_num > 0.0)
+    *out_len = isfinite(len_num) && len_num < (double)UINT32_MAX
+      ? (ant_offset_t)floor(len_num) : UINT32_MAX;
   return js_mkundef();
 }
 

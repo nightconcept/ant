@@ -16,9 +16,10 @@ function step() {
 
 function verify() {
   assert.strictEqual(checksum, 20000);
-  assert(
-    Ant.stats().alloc.propRefs < 1024 * 1024,
-    'microtask property-reference storage should remain bounded',
+  assert.strictEqual(
+    Object.prototype.hasOwnProperty.call(Ant.stats().alloc, 'propRefs'),
+    false,
+    'operation-local property locations require no retained handle storage',
   );
   console.log('microtask property-reference recycling tests passed');
 }
