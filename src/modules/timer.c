@@ -771,6 +771,12 @@ void queue_promise_trigger(ant_t *js, ant_value_t promise) {
 static inline void process_microtask_entry(ant_t *js, microtask_entry_t *entry) {
   if (!entry) return;
 
+  /* Property-reference handles are operation-local and never escape a
+     completed VM call. Promise-heavy workloads may not execute a bytecode
+     backedge for a long time, so recycle the handle table at the same job
+     boundary the language uses for microtasks. */
+  js->prop_refs_len = 0;
+
   if (entry->kind == MT_PROMISE_TRIGGER) {
     GC_ROOT_SAVE(root_mark, js);
     ant_value_t promise = entry->u.promise;
