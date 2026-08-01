@@ -33,6 +33,7 @@ jobs:
     with:
       platform: ${{ matrix.platform }}
       build_timestamp: ${{ needs.prepare.outputs.timestamp }}
+      source_revision: ${{ github.sha }}
 
   sandbox-x64:
     needs: build-musl

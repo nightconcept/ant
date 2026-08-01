@@ -35,6 +35,7 @@ jobs:
     with:
       platform: ${{ inputs.platform }}
       build_timestamp: ${{ needs.prepare.outputs.timestamp }}
+      source_revision: ${{ github.sha }}
 
   nanos:
     needs: [build]

@@ -10,6 +10,10 @@ on:
       build_timestamp:
         required: true
         type: string
+      source_revision:
+        description: 'Immutable source revision to build'
+        required: true
+        type: string
     outputs:
       version:
         description: Build version
@@ -121,6 +125,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
+          ref: ${{ inputs.source_revision }}
           submodules: recursive
 
       # === LOAD TARGET CONFIG ===

@@ -39,6 +39,7 @@ jobs:
     with:
       platform: ${{ matrix.platform }}
       build_timestamp: ${{ needs.prepare.outputs.timestamp }}
+      source_revision: ${{ github.sha }}
 
   compliance-tier2:
     name: Compliance (Tier 2, Gate)

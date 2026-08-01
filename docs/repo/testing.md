@@ -85,6 +85,22 @@ they're `workflow_call` targets or `workflow_dispatch`-only:
 `build-nanos.yml`, `build-musl-sandboxes.yml`, `build-single.yml` (manual
 sandbox/single-platform builds).
 
+## Cutting a Release
+
+Use the **Release** workflow and select the `main` branch in GitHub's **Use
+workflow from** selector. Enter the `vMAJOR.MINOR.PATCH` tag matching
+`meson/ant.version` (currently `v12.3.0`). Leave **revision** blank to build
+the `main` head captured when the workflow starts. To rebuild an earlier main
+commit, enter its full 40-character SHA; the workflow rejects any SHA not
+reachable from `main`. Set **prerelease** only for an intentionally
+pre-release publication.
+
+The workflow runs Tier 1 through the platform build, plus Tier 2 and Tier 3
+exact-failing-set gates, before it creates a Git tag or GitHub Release. It
+builds every asset from the resolved SHA, then attaches target archives,
+`SHA256SUMS`, and `provenance.json`. Normal pushes to `main` never publish a
+release.
+
 Platform builds cache downloaded vendor sources, npm downloads, Zig build
 outputs, and up to 200 MB of compiler outputs per platform. Compiler and Zig
 caches rotate weekly and restore the previous compatible entry. Full Meson

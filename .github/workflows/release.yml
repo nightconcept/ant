@@ -1,0 +1,270 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag, for example v12.3.0 (must match meson/ant.version)'
+        required: true
+        type: string
+      revision:
+        description: 'Optional full 40-character SHA already reachable from main; blank releases current main HEAD'
+        required: false
+        default: ''
+        type: string
+      prerelease:
+        description: 'Mark the GitHub Release as a prerelease'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate release source
+    runs-on: ubuntu-latest
+    outputs:
+      revision: ${{ steps.source.outputs.revision }}
+      timestamp: ${{ steps.source.outputs.timestamp }}
+      version: ${{ steps.source.outputs.version }}
+    steps:
+      - name: Reject dispatches outside main
+        if: github.ref_name != 'main'
+        run: |
+          echo '::error::Run this workflow with the main branch selected.'
+          exit 1
+
+      - name: Checkout main
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve and validate source
+        id: source
+        env:
+          REQUESTED_REVISION: ${{ inputs.revision }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          git fetch --force origin main --tags
+
+          if [[ ! "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must have the form vMAJOR.MINOR.PATCH"
+            exit 1
+          fi
+
+          if [[ -n "$REQUESTED_REVISION" && ! "$REQUESTED_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo '::error::revision must be blank or a full 40-character commit SHA.'
+            exit 1
+          fi
+          revision="${REQUESTED_REVISION:-$(git rev-parse origin/main)}"
+          revision=$(git rev-parse --verify "${revision}^{commit}")
+          if ! git merge-base --is-ancestor "$revision" origin/main; then
+            echo "::error::$revision is not reachable from origin/main."
+            exit 1
+          fi
+          expected_version="v$(git show "$revision:meson/ant.version" | awk -F= '$1 == "major" { major=$2 } $1 == "minor" { minor=$2 } $1 == "patch" { patch=$2 } END { print major "." minor "." patch }')"
+          if [[ "$REQUESTED_VERSION" != "$expected_version" ]]; then
+            echo "::error::version must be $expected_version for revision $revision, got $REQUESTED_VERSION"
+            exit 1
+          fi
+          if git rev-parse --verify --quiet "refs/tags/$REQUESTED_VERSION" >/dev/null; then
+            echo "::error::tag $REQUESTED_VERSION already exists."
+            exit 1
+          fi
+
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date -u +%s)" >> "$GITHUB_OUTPUT"
+          echo "version=$REQUESTED_VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo '## Release source'
+            echo
+            echo "- Tag: \`$REQUESTED_VERSION\`"
+            echo "- Revision: \`$revision\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build-and-test:
+    name: Build and Test (${{ matrix.platform }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux-glibc-x64
+          - linux-glibc-aarch64
+          - linux-musl-x64
+          - linux-musl-aarch64
+          - macos-x64
+          - macos-aarch64
+          - windows-x64
+    uses: ./.github/workflows/build-platform.yml
+    with:
+      platform: ${{ matrix.platform }}
+      build_timestamp: ${{ needs.prepare.outputs.timestamp }}
+      source_revision: ${{ needs.prepare.outputs.revision }}
+
+  compliance-tier2:
+    name: Compliance (Tier 2, Release Gate)
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release source as main
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+      - name: Record main branch identity
+        run: git switch --force-create main "${{ needs.prepare.outputs.revision }}"
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build ccache jq
+          pip install --break-system-packages -U meson
+      - name: Resolve pinned tool versions
+        id: config
+        run: |
+          echo "llvm_version=$(jq -r '.tools.llvm' .github/versions.json)" >> "$GITHUB_OUTPUT"
+      - name: Setup LLVM
+        id: llvm
+        uses: ./.github/actions/setup-llvm
+        with:
+          version: ${{ steps.config.outputs.llvm_version }}
+          os_type: linux-glibc
+      - name: Setup Zig
+        uses: ./.github/actions/setup-zig
+        with:
+          version: '0.16.0'
+      - name: Setup build caches
+        uses: ./.github/actions/setup-build-caches
+        with:
+          platform: release-compliance-linux-x64
+          compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
+          zig_version: '0.16.0'
+      - name: Configure and compile Ant
+        env:
+          CC: ccache ${{ steps.llvm.outputs.cc }}
+          CXX: ccache ${{ steps.llvm.outputs.cxx }}
+        run: |
+          meson setup build -Dbuildtype=release
+          meson compile -C build
+      - name: Run and verify Tier 2
+        run: |
+          python3 scripts/run_compliance.py --tier 2 --all --allow-failures --log
+          python3 scripts/compliance_baseline.py diff \
+            .deps/compliance/logs/tier2-latest.json \
+            --require-baseline --require-full \
+            --expect-commit "${{ needs.prepare.outputs.revision }}" \
+            --expect-branch main
+
+  compliance-tier3:
+    name: Compliance (Tier 3, Release Gate)
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release source as main
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+      - name: Record main branch identity
+        run: git switch --force-create main "${{ needs.prepare.outputs.revision }}"
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build ccache jq
+          pip install --break-system-packages -U meson
+      - name: Resolve pinned tool versions
+        id: config
+        run: |
+          echo "llvm_version=$(jq -r '.tools.llvm' .github/versions.json)" >> "$GITHUB_OUTPUT"
+      - name: Setup LLVM
+        id: llvm
+        uses: ./.github/actions/setup-llvm
+        with:
+          version: ${{ steps.config.outputs.llvm_version }}
+          os_type: linux-glibc
+      - name: Setup Zig
+        uses: ./.github/actions/setup-zig
+        with:
+          version: '0.16.0'
+      - name: Setup build caches
+        uses: ./.github/actions/setup-build-caches
+        with:
+          platform: release-tier3-linux-x64
+          compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
+          zig_version: '0.16.0'
+      - name: Configure and compile Ant
+        env:
+          CC: ccache ${{ steps.llvm.outputs.cc }}
+          CXX: ccache ${{ steps.llvm.outputs.cxx }}
+        run: |
+          meson setup build -Dbuildtype=release
+          meson compile -C build
+      - name: Run and verify Tier 3
+        run: |
+          python3 scripts/run_compliance.py --tier 3 --all --allow-failures --log
+          python3 scripts/compliance_baseline.py diff \
+            .deps/compliance/logs/tier3-latest.json \
+            --require-baseline --require-full \
+            --expect-commit "${{ needs.prepare.outputs.revision }}" \
+            --expect-branch main
+      - name: Upload Tier 3 manifest and log
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: tier3-compliance-release
+          path: .deps/compliance/logs/tier3_*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: [prepare, build-and-test, compliance-tier2, compliance-tier3]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download platform artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: ant-*
+          path: release-assets
+          merge-multiple: false
+      - name: Package artifacts and write provenance
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_REVISION: ${{ needs.prepare.outputs.revision }}
+          RELEASE_TIMESTAMP: ${{ needs.prepare.outputs.timestamp }}
+        run: |
+          set -euo pipefail
+          mkdir dist
+          for artifact in ant-linux-x64 ant-linux-aarch64 ant-linux-x64-musl ant-linux-aarch64-musl ant-darwin-x64 ant-darwin-aarch64; do
+            tar -C "release-assets/$artifact" -czf "dist/$artifact.tar.gz" .
+          done
+          (cd "release-assets/ant-windows-x64" && zip -r "../../dist/ant-windows-x64.zip" .)
+          sha256sum dist/* > dist/SHA256SUMS
+          cat > dist/provenance.json <<EOF
+          {
+            "version": "$RELEASE_VERSION",
+            "revision": "$RELEASE_REVISION",
+            "repository": "$GITHUB_REPOSITORY",
+            "workflow_run_id": "$GITHUB_RUN_ID",
+            "build_timestamp": "$RELEASE_TIMESTAMP"
+          }
+          EOF
+      - name: Create tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_REVISION: ${{ needs.prepare.outputs.revision }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+          args=(release create "$RELEASE_VERSION" dist/* --target "$RELEASE_REVISION" --title "$RELEASE_VERSION" --generate-notes)
+          if [[ "$PRERELEASE" == true ]]; then args+=(--prerelease); fi
+          gh "${args[@]}"

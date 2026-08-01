@@ -39,6 +39,7 @@ jobs:
     with:
       platform: ${{ matrix.platform }}
       build_timestamp: ${{ needs.prepare.outputs.timestamp }}
+      source_revision: ${{ github.sha }}
 
   repo-knowledge:
     name: Repo Knowledge
