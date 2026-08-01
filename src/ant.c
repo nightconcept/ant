@@ -2747,9 +2747,6 @@ static ant_offset_t dense_grow(ant_t *js, ant_value_t arr, ant_offset_t needed) 
 
 // TODO: make get and set dry
 static inline ant_value_t arr_get(ant_t *js, ant_value_t arr, ant_offset_t idx) {
-  ant_offset_t semantic_len = get_array_length(js, arr);
-  
-  if (idx >= semantic_len) return js_mkundef();
   ant_offset_t doff = get_dense_buf(arr);
   
   if (doff) {
@@ -2839,8 +2836,6 @@ static inline void arr_set(ant_t *js, ant_value_t arr, ant_offset_t idx, ant_val
 }
 
 static inline bool arr_has(ant_t *js, ant_value_t arr, ant_offset_t idx) {
-  ant_offset_t semantic_len = get_array_length(js, arr);
-  if (idx >= semantic_len) return false;
   ant_offset_t doff = get_dense_buf(arr);
   
   if (doff) {
@@ -3836,7 +3831,51 @@ static inline void array_len_set(ant_t *js, ant_value_t obj, ant_offset_t new_le
   else js_mkprop_fast(js, obj, "length", 6, new_len_val);
 }
 
+// Array indices that are too sparse for the dense backing store live as
+// ordinary shape properties. ArraySetLength must still remove them, in
+// descending index order, when `length` shrinks.
+static ant_value_t array_delete_sparse_indices_from(
+  ant_t *js, ant_value_t obj, ant_offset_t new_len, ant_offset_t *effective_len
+) {
+  ant_object_t *ptr = array_obj_ptr(obj);
+  *effective_len = new_len;
+  if (!ptr || !ant_shape_may_have_indexed_property(ptr->shape)) return js_true;
+
+  for (;;) {
+    const char *highest_key = NULL;
+    unsigned long highest_idx = 0;
+    uint8_t highest_attrs = 0;
+    uint32_t count = ant_shape_count(ptr->shape);
+
+    for (uint32_t i = 0; i < count; i++) {
+      const ant_shape_prop_t *prop = ant_shape_prop_at(ptr->shape, i);
+      if (!prop || prop->type != ANT_SHAPE_KEY_STRING || !prop->key.interned) continue;
+
+      const char *key = prop->key.interned;
+      unsigned long idx = 0;
+      if (!parse_array_index(key, strlen(key), (ant_offset_t)UINT32_MAX, &idx) ||
+          (ant_offset_t)idx < new_len)
+        continue;
+      if (!highest_key || idx > highest_idx) {
+        highest_key = key;
+        highest_idx = idx;
+        highest_attrs = prop->attrs;
+      }
+    }
+
+    if (!highest_key) return js_true;
+    if ((highest_attrs & ANT_PROP_ATTR_CONFIGURABLE) == 0) {
+      *effective_len = (ant_offset_t)highest_idx + 1;
+      return js_false;
+    }
+
+    ant_value_t deleted = js_delete_prop(js, obj, highest_key, strlen(highest_key));
+    if (is_err(deleted) || deleted == js_false) return deleted;
+  }
+}
+
 static bool array_shape_has_indexed_set_hazard(ant_shape_t *shape) {
+  if (!ant_shape_may_have_indexed_property(shape)) return false;
   uint32_t count = ant_shape_count(shape);
   for (uint32_t i = 0; i < count; i++) {
     const ant_shape_prop_t *prop = ant_shape_prop_at(shape, i);
@@ -3855,6 +3894,7 @@ static bool array_shape_has_indexed_set_hazard(ant_shape_t *shape) {
 }
 
 static bool array_shape_has_indexed_property(ant_shape_t *shape) {
+  if (!ant_shape_may_have_indexed_property(shape)) return false;
   uint32_t count = ant_shape_count(shape);
   for (uint32_t i = 0; i < count; i++) {
     const ant_shape_prop_t *prop = ant_shape_prop_at(shape, i);
@@ -3872,7 +3912,7 @@ static bool array_shape_has_indexed_property(ant_shape_t *shape) {
 static bool standard_array_proto_allows_index_creation(ant_t *js, ant_object_t *receiver) {
   if (!receiver || receiver->proto != js->sym.array_proto) return false;
 
-  uint32_t epoch = ant_ic_epoch_counter;
+  uint32_t epoch = ant_indexed_property_epoch_counter;
   if (js->runtime_cache.array_index_proto_epoch == epoch)
     return js->runtime_cache.array_index_proto_safe;
 
@@ -3913,7 +3953,10 @@ static ant_value_t js_setprop_array_fast(ant_t *js, ant_value_t obj, ant_value_t
     ant_offset_t dense_len = dense_iterable_length(js, obj);
     // An explicit numeric shape property owns the index even when its former
     // dense slot is now empty. Let ordinary [[Set]] enforce that descriptor.
-    if (lkp(js, obj, key, (size_t)klen) != 0) return js_mkundef();
+    ant_object_t *arr_ptr = array_obj_ptr(obj);
+    if (arr_ptr && ant_shape_may_have_indexed_property(arr_ptr->shape) &&
+        lkp(js, obj, key, (size_t)klen) != 0)
+      return js_mkundef();
     if (idx < dense_len && !is_empty_slot(dense_get(doff, (ant_offset_t)idx))) {
       dense_set(js, doff, (ant_offset_t)idx, v);
       return v;
@@ -4195,19 +4238,27 @@ ant_value_t js_setprop(ant_t *js, ant_value_t obj, ant_value_t k, ant_value_t v)
     ant_value_t err = validate_array_length(js, v);
     if (is_err(err)) return err;
     
-    ant_offset_t doff = get_dense_buf(obj);
     ant_offset_t cur_len = get_array_length(js, obj);
     ant_offset_t new_len_val = (ant_offset_t) tod(v);
+    ant_offset_t effective_len = new_len_val;
+    ant_value_t sparse_result = array_delete_sparse_indices_from(
+      js, obj, new_len_val, &effective_len
+    );
+    if (is_err(sparse_result)) return sparse_result;
+
+    ant_offset_t doff = get_dense_buf(obj);
     
     if (doff) {
       ant_offset_t cap = dense_capacity(doff);
       ant_offset_t clear_to = (cur_len < cap) ? cur_len : cap;
-      if (new_len_val < clear_to) 
-        for (ant_offset_t i = new_len_val; i < clear_to; i++) dense_set(js, doff, i, T_EMPTY);
+      if (effective_len < clear_to)
+        for (ant_offset_t i = effective_len; i < clear_to; i++) dense_set(js, doff, i, T_EMPTY);
     }
     
     if (new_len_val > cur_len) array_mark_may_have_holes(obj);
-    array_len_set(js, obj, new_len_val);
+    array_len_set(js, obj, effective_len);
+    if (sparse_result == js_false && sv_is_strict_context(js))
+      return js_mkerr_typed(js, JS_ERR_TYPE, "cannot delete non-configurable array element");
     
     return v;
   }
@@ -4767,6 +4818,7 @@ void js_set_proto(ant_t *js, ant_value_t obj, ant_value_t proto) {
 
   ptr->proto = proto;
   ant_ic_epoch_bump();
+  ant_indexed_property_epoch_bump();
 }
 
 void js_set_proto_init(ant_value_t obj, ant_value_t proto) {
@@ -8786,18 +8838,26 @@ static ant_value_t object_define_property_coerced(
       new_len = (ant_offset_t)tod(value);
     }
 
+    ant_offset_t effective_len = new_len;
+    ant_value_t sparse_result = array_delete_sparse_indices_from(
+      js, as_obj, new_len, &effective_len
+    );
+    if (is_err(sparse_result)) return sparse_result;
+
     ant_offset_t doff = get_dense_buf(as_obj);
     if (doff) {
       ant_offset_t cap = dense_capacity(doff);
       ant_offset_t cur_len = get_array_length(js, as_obj);
       ant_offset_t clear_to = (cur_len < cap) ? cur_len : cap;
-      if (new_len < clear_to) {
-        for (ant_offset_t i = new_len; i < clear_to; i++) dense_set(js, doff, i, T_EMPTY);
+      if (effective_len < clear_to) {
+        for (ant_offset_t i = effective_len; i < clear_to; i++) dense_set(js, doff, i, T_EMPTY);
       }
     }
     
     if (new_len > get_array_length(js, as_obj)) array_mark_may_have_holes(as_obj);
-    array_len_set(js, as_obj, new_len);
+    array_len_set(js, as_obj, effective_len);
+    if (sparse_result == js_false)
+      return js_mkerr_typed(js, JS_ERR_TYPE, "cannot delete non-configurable array element");
     
     return obj;
   }
@@ -18892,9 +18952,7 @@ static bool js_try_get(ant_t *js, ant_value_t obj, const char *key, ant_value_t 
     }
     
     unsigned long idx;
-    ant_offset_t arr_len = get_array_length(js, obj);
-    
-    if (parse_array_index(key, key_len, arr_len, &idx)) {
+    if (parse_array_index(key, key_len, (ant_offset_t)UINT32_MAX, &idx)) {
       if (js_arguments_state(obj)) {
         *out = js_arguments_getter(js, obj, key, key_len);
         return true;

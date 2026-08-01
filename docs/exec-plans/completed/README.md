@@ -1,7 +1,7 @@
 # Completed Plans
 
 Status: active
-Last reviewed: 2026-04-09
+Last reviewed: 2026-07-31
 Owner: theMackabu
 
 Move finished execution plans here once the associated work has landed. Keep
@@ -10,6 +10,7 @@ can reuse the decision history.
 
 ## Plans
 
+- [Performance, Memory, and Compliance Cycle (2026-07-31)](performance-memory-compliance-cycle-2026-07-31.md)
 - [Native Descriptor Value Identity](native-descriptor-value-identity.md)
 - [Tier 2 Compliance to 100%](tier2-compliance-100.md)
 - [Ant Compliance Test Suite Runner Scripts](compliance-suite-runner.md)

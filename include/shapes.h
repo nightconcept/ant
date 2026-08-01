@@ -60,6 +60,7 @@ bool ant_shape_remove_slot(ant_shape_t *shape, uint32_t slot, uint32_t *swapped_
 
 uint32_t ant_shape_count(const ant_shape_t *shape);
 uint8_t ant_shape_get_attrs(const ant_shape_t *shape, uint32_t slot);
+bool ant_shape_may_have_indexed_property(const ant_shape_t *shape);
 
 const ant_shape_prop_t *ant_shape_prop_at(const ant_shape_t *shape, uint32_t slot);
 ant_shape_prop_t *ant_shape_prop_mut_at(ant_shape_t *shape, uint32_t slot);
@@ -74,10 +75,17 @@ bool ant_gc_shapes_sweep(void);
 
 size_t ant_shape_total_bytes(void);
 extern uint32_t ant_ic_epoch_counter;
+extern uint32_t ant_indexed_property_epoch_counter;
 
 static inline void ant_ic_epoch_bump(void) {
   ant_ic_epoch_counter++;
   if (ant_ic_epoch_counter == 0) ant_ic_epoch_counter = 1;
+}
+
+static inline void ant_indexed_property_epoch_bump(void) {
+  ant_indexed_property_epoch_counter++;
+  if (ant_indexed_property_epoch_counter == 0)
+    ant_indexed_property_epoch_counter = 1;
 }
 
 #endif
