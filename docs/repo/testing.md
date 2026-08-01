@@ -95,16 +95,18 @@ sandbox/single-platform builds).
 ## Cutting a Release
 
 Use the **Release** workflow and select the `main` branch in GitHub's **Use
-workflow from** selector. Enter the `vMAJOR.MINOR.PATCH` tag matching
-`meson/ant.version` (currently `v12.3.0`). Leave **revision** blank to build
+workflow from** selector. Enter the `MAJOR.MINOR.PATCH` release version
+(currently `12.3.0`); an optional `v` prefix is accepted and the created tag
+is always `vMAJOR.MINOR.PATCH`. Leave **revision** blank to build
 the `main` head captured when the workflow starts. To rebuild an earlier main
 commit, enter its full 40-character SHA; the workflow rejects any SHA not
 reachable from `main`. Set **prerelease** only for an intentionally
 pre-release publication.
 
-The workflow runs Tier 1 through the platform build, plus Tier 2 and Tier 3
-exact-failing-set gates, before it creates a Git tag or GitHub Release. It
-builds every asset from the resolved SHA, then attaches target archives,
+The workflow runs Tier 1 through the Linux x64 platform build and a Tier 2
+exact-failing-set gate before it creates a Git tag or GitHub Release. Tier 3
+remains the scheduled/on-demand regression suite rather than a release gate.
+It builds every asset from the resolved SHA, then attaches target archives,
 `SHA256SUMS`, and `provenance.json`. Normal pushes to `main` never publish a
 release.
 

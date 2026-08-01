@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release tag, for example v12.3.0 (must match meson/ant.version)'
+        description: 'Release version, for example 12.3.0 or v12.3.0 (must match meson/ant.version)'
         required: true
         type: string
       revision:
@@ -56,8 +56,9 @@ jobs:
           set -euo pipefail
           git fetch --force origin main --tags
 
-          if [[ ! "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::version must have the form vMAJOR.MINOR.PATCH"
+          normalized_version="v${REQUESTED_VERSION#v}"
+          if [[ ! "$normalized_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must have the form MAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH"
             exit 1
           fi
 
@@ -72,22 +73,22 @@ jobs:
             exit 1
           fi
           expected_version="v$(git show "$revision:meson/ant.version" | awk -F= '$1 == "major" { major=$2 } $1 == "minor" { minor=$2 } $1 == "patch" { patch=$2 } END { print major "." minor "." patch }')"
-          if [[ "$REQUESTED_VERSION" != "$expected_version" ]]; then
+          if [[ "$normalized_version" != "$expected_version" ]]; then
             echo "::error::version must be $expected_version for revision $revision, got $REQUESTED_VERSION"
             exit 1
           fi
-          if git rev-parse --verify --quiet "refs/tags/$REQUESTED_VERSION" >/dev/null; then
-            echo "::error::tag $REQUESTED_VERSION already exists."
+          if git rev-parse --verify --quiet "refs/tags/$normalized_version" >/dev/null; then
+            echo "::error::tag $normalized_version already exists."
             exit 1
           fi
 
           echo "revision=$revision" >> "$GITHUB_OUTPUT"
           echo "timestamp=$(date -u +%s)" >> "$GITHUB_OUTPUT"
-          echo "version=$REQUESTED_VERSION" >> "$GITHUB_OUTPUT"
+          echo "version=$normalized_version" >> "$GITHUB_OUTPUT"
           {
             echo '## Release source'
             echo
-            echo "- Tag: \`$REQUESTED_VERSION\`"
+            echo "- Tag: \`$normalized_version\`"
             echo "- Revision: \`$revision\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -163,68 +164,9 @@ jobs:
             --expect-commit "${{ needs.prepare.outputs.revision }}" \
             --expect-branch main
 
-  compliance-tier3:
-    name: Compliance (Tier 3, Release Gate)
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout release source as main
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
-        with:
-          ref: ${{ needs.prepare.outputs.revision }}
-      - name: Record main branch identity
-        run: git switch --force-create main "${{ needs.prepare.outputs.revision }}"
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build ccache jq
-          pip install --break-system-packages -U meson
-      - name: Resolve pinned tool versions
-        id: config
-        run: |
-          echo "llvm_version=$(jq -r '.tools.llvm' .github/versions.json)" >> "$GITHUB_OUTPUT"
-      - name: Setup LLVM
-        id: llvm
-        uses: ./.github/actions/setup-llvm
-        with:
-          version: ${{ steps.config.outputs.llvm_version }}
-          os_type: linux-glibc
-      - name: Setup Zig
-        uses: ./.github/actions/setup-zig
-        with:
-          version: '0.16.0'
-      - name: Setup build caches
-        uses: ./.github/actions/setup-build-caches
-        with:
-          platform: release-tier3-linux-x64
-          compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
-          zig_version: '0.16.0'
-      - name: Configure and compile Ant
-        env:
-          CC: ccache ${{ steps.llvm.outputs.cc }}
-          CXX: ccache ${{ steps.llvm.outputs.cxx }}
-        run: |
-          meson setup build -Dbuildtype=release
-          meson compile -C build
-      - name: Run and verify Tier 3
-        run: |
-          python3 scripts/run_compliance.py --tier 3 --all --allow-failures --log
-          python3 scripts/compliance_baseline.py diff \
-            .deps/compliance/logs/tier3-latest.json \
-            --require-baseline --require-full \
-            --expect-commit "${{ needs.prepare.outputs.revision }}" \
-            --expect-branch main
-      - name: Upload Tier 3 manifest and log
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        with:
-          name: tier3-compliance-release
-          path: .deps/compliance/logs/tier3_*
-          if-no-files-found: error
-
   publish:
     name: Publish GitHub Release
-    needs: [prepare, build-and-test, compliance-tier2, compliance-tier3]
+    needs: [prepare, build-and-test, compliance-tier2]
     runs-on: ubuntu-latest
     permissions:
       contents: write
