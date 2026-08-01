@@ -5,6 +5,7 @@
 #include <uthash.h>
 
 uint32_t ant_ic_epoch_counter = 1;
+uint32_t ant_indexed_property_epoch_counter = 1;
 
 #define SHAPE_ENTRY_SIZE     sizeof(shape_index_entry_t)
 #define SHAPE_ENTRY_POOL_MAX 1024
@@ -66,6 +67,7 @@ struct ant_shape {
   uint32_t count;
   uint32_t cap;
   uint8_t inobj_limit;
+  uint8_t may_have_indexed_property;
   uint16_t gc_mark;
   
   ant_shape_prop_t *props;
@@ -83,6 +85,15 @@ static inline uint8_t shape_clamp_inobj_limit(uint8_t limit) {
 
 static uint64_t shape_key_interned(const char *interned) {
   return ((uint64_t)(uintptr_t)interned << 1);
+}
+
+// Canonical array-index strings always start with an ASCII digit. This flag is
+// deliberately conservative: false means an indexed property is impossible,
+// while true asks the caller to perform the exact parse. Keeping it in the
+// existing struct padding makes the common named-property case O(1) without
+// increasing the size of every shape.
+static inline bool shape_key_may_be_indexed(const char *interned) {
+  return interned && interned[0] >= '0' && interned[0] <= '9';
 }
 
 static uint64_t shape_key_symbol(ant_offset_t sym_off) {
@@ -160,6 +171,10 @@ static bool shape_add_key(
   shape_index_entry_t *found = shape_lookup(shape, key);
   if (found) {
     shape->props[found->slot].attrs = attrs;
+    if (type == ANT_SHAPE_KEY_STRING && shape_key_may_be_indexed(interned)) {
+      shape->may_have_indexed_property = 1;
+      ant_indexed_property_epoch_bump();
+    }
     ant_ic_epoch_bump();
     if (out_slot) *out_slot = found->slot;
     return true;
@@ -177,7 +192,13 @@ static bool shape_add_key(
   prop->setter = 0;
   
   if (type == ANT_SHAPE_KEY_SYMBOL) prop->key.sym_off = sym_off;
-  else prop->key.interned = interned;
+  else {
+    prop->key.interned = interned;
+    if (shape_key_may_be_indexed(interned)) {
+      shape->may_have_indexed_property = 1;
+      ant_indexed_property_epoch_bump();
+    }
+  }
 
   shape_index_entry_t *idx = shape_entry_alloc();
   if (!idx) return false;
@@ -233,6 +254,8 @@ bool ant_shape_add_interned_tr(ant_shape_t **shape_pp, const char *interned, uin
   if (child) {
     int32_t slot = ant_shape_lookup_interned(child, interned);
     if (slot >= 0) {
+      if (shape_key_may_be_indexed(interned))
+        ant_indexed_property_epoch_bump();
       if (out_slot) *out_slot = (uint32_t)slot;
       ant_shape_retain(child); ant_shape_release(shape);
       *shape_pp = child; return true;
@@ -327,6 +350,7 @@ ant_shape_t *ant_shape_clone(const ant_shape_t *shape) {
   g_shape_bytes += sizeof(*copy);
   copy->ref_count = 1;
   copy->inobj_limit = shape_clamp_inobj_limit(shape->inobj_limit);
+  copy->may_have_indexed_property = shape->may_have_indexed_property;
 
   if (shape->count > 0) {
   if (!shape_ensure_capacity(copy, shape->count)) {
@@ -461,6 +485,9 @@ bool ant_shape_remove_slot(ant_shape_t *shape, uint32_t slot, uint32_t *swapped_
   if (swapped_from) *swapped_from = slot;
 
   const ant_shape_prop_t *dp = &shape->props[slot];
+  if (dp->type == ANT_SHAPE_KEY_STRING &&
+      shape_key_may_be_indexed(dp->key.interned))
+    ant_indexed_property_epoch_bump();
   uint64_t del_key = (dp->type == ANT_SHAPE_KEY_SYMBOL)
     ? shape_key_symbol(dp->key.sym_off)
     : shape_key_interned(dp->key.interned);
@@ -497,6 +524,10 @@ uint32_t ant_shape_count(const ant_shape_t *shape) {
   return shape ? shape->count : 0;
 }
 
+bool ant_shape_may_have_indexed_property(const ant_shape_t *shape) {
+  return shape && shape->may_have_indexed_property;
+}
+
 const ant_shape_prop_t *ant_shape_prop_at(const ant_shape_t *shape, uint32_t slot) {
   if (!shape || slot >= shape->count) return NULL;
   return &shape->props[slot];
@@ -504,13 +535,19 @@ const ant_shape_prop_t *ant_shape_prop_at(const ant_shape_t *shape, uint32_t slo
 
 ant_shape_prop_t *ant_shape_prop_mut_at(ant_shape_t *shape, uint32_t slot) {
   if (!shape || slot >= shape->count) return NULL;
-  return &shape->props[slot];
+  ant_shape_prop_t *prop = &shape->props[slot];
+  if (prop->type == ANT_SHAPE_KEY_STRING &&
+      shape_key_may_be_indexed(prop->key.interned))
+    ant_indexed_property_epoch_bump();
+  return prop;
 }
 
 bool ant_shape_set_attrs_interned(ant_shape_t *shape, const char *interned, uint8_t attrs) {
   int32_t slot = ant_shape_lookup_interned(shape, interned);
   if (slot < 0) return false;
   shape->props[(uint32_t)slot].attrs = attrs;
+  if (shape_key_may_be_indexed(interned))
+    ant_indexed_property_epoch_bump();
   ant_ic_epoch_bump();
   return true;
 }

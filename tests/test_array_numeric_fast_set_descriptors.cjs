@@ -100,4 +100,52 @@ Object.defineProperty(copySource, "0", {
 });
 assert.deepStrictEqual(copySource.toReversed(), [3, 0, 5]);
 
+let inheritedArrayProtoSetter = 0;
+Object.defineProperty(Array.prototype, "0", {
+  set(value) { inheritedArrayProtoSetter = value; },
+  configurable: true,
+});
+const inheritedFromArrayProto = [];
+write(inheritedFromArrayProto, 0, 103);
+assert.strictEqual(inheritedArrayProtoSetter, 103, "Array.prototype indexed setter invalidates the append cache");
+assert.strictEqual(
+  Object.prototype.hasOwnProperty.call(inheritedFromArrayProto, "0"),
+  false,
+  "inherited indexed setter prevents own element creation"
+);
+delete Array.prototype[0];
+
+const appendAfterDelete = [];
+write(appendAfterDelete, 0, 104);
+assert.deepStrictEqual(appendAfterDelete, [104], "deleting an indexed prototype property restores dense appends");
+
+Object.defineProperty(Array.prototype, "0", {
+  value: 105,
+  writable: true,
+  configurable: true,
+});
+const writableInherited = [];
+write(writableInherited, 0, 106);
+assert.deepStrictEqual(writableInherited, [106], "writable inherited data property permits own element creation");
+
+Object.defineProperty(Array.prototype, "0", { writable: false });
+const readonlyAfterRedefine = [];
+write(readonlyAfterRedefine, 0, 107);
+assert.strictEqual(Array.prototype[0], 105, "indexed descriptor change preserves the inherited value");
+assert.strictEqual(readonlyAfterRedefine[0], 105, "a hole reads an inherited index beyond the array length");
+assert.strictEqual(0 in readonlyAfterRedefine, true, "HasProperty finds an inherited index beyond the array length");
+assert.strictEqual(
+  Object.prototype.hasOwnProperty.call(readonlyAfterRedefine, "0"),
+  false,
+  "indexed descriptor changes invalidate the cache and prevent own element creation"
+);
+delete Array.prototype[0];
+
+const hugeSparse = [0, 1, 2];
+hugeSparse[4294967294] = 4294967294;
+assert.strictEqual(hugeSparse.length, 4294967295);
+hugeSparse.length = 2;
+assert.strictEqual(hugeSparse[2], undefined);
+assert.strictEqual(hugeSparse[4294967294], undefined);
+
 console.log("OK: test_array_numeric_fast_set_descriptors");
