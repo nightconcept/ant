@@ -16,7 +16,6 @@ Store in-progress execution plans here.
 - [Nanos Sandbox](nanos-sandbox.md)
 - [Platform Toolchains](platform-toolchains.md)
 - [Silver Recursive JIT Performance](silver-recursive-jit-perf.md)
-- [Trunk PR Gates and Iterator Pilot](trunk-pr-gates-and-iterator-pilot.md)
 - [WICG Observable Migration](wicg-observable.md)
 
 Recommended sections:

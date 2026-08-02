@@ -1,6 +1,6 @@
 # Trunk PR Gates and Iterator Pilot
 
-Status: ready for review
+Status: completed
 Last reviewed: 2026-08-01
 Owner: Core Engineering
 
@@ -424,7 +424,7 @@ Every remaining `dev` reference must be intentional historical context.
 Move this plan to `docs/exec-plans/completed/` after recording workflow run
 URLs, manifests, the release URL, the archive tag, and the Iterator PR result.
 
-Status: [~] cleanup PR pending; archive tag is published
+Status: [x] complete
 
 ## Testing Strategy
 
@@ -549,3 +549,16 @@ Status: [~] cleanup PR pending; archive tag is published
   final `dev` tip `e7c38d90`. No open pull requests target `dev`. Started the
   protected cleanup change to remove the obsolete workflow and branch-facing
   instructions; branch deletion remains after that cleanup lands.
+- 2026-08-01: Cleanup PR #2 passed adaptive run `30728964477` and merged
+  through the protected route as `48c6f0bc`. Removed `dev-ci.yml`, made weekly
+  Tier 3 main-only, and updated current repository guidance. Deleted remote
+  `dev` after verifying the default branch, exact branch tip, archive tag, and
+  open-PR state. The deleted branch is recoverable from
+  `archive/dev-20260801`.
+- 2026-08-01: Post-merge CI run `30728871270` passed on the exact landed
+  Iterator SHA `cc8c269a`. A stable-host `just bench-nightly` run produced
+  manifest `bench_20260801_194536.json`: Generators & Iterators measured
+  319.7 ms and 43.5 MB peak RSS. The runner rewrote tracked
+  `bench/versions.json` before stamping the manifest, so the history correctly
+  marks this run dirty; retain it as indicative evidence, not a clean baseline
+  promotion. The checked-in baseline was not changed.
