@@ -12,6 +12,7 @@ BUILD_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "build-platform.yml"
 MAIN_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "main-ci.yml"
 RELEASE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "release.yml"
 UPSTREAM_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "upstream-ci.yml"
+COMPLIANCE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "compliance-gate.yml"
 
 
 BASE_ENV = {
@@ -107,6 +108,12 @@ class PullRequestGateTests(unittest.TestCase):
         self.assertIn("suite: wintertc", release)
         self.assertIn("compliance-wintertc", release)
         self.assertIn("suite: wintertc", UPSTREAM_WORKFLOW.read_text())
+
+    def test_schema_two_migration_baseline_is_content_pinned(self):
+        workflow = COMPLIANCE_WORKFLOW.read_text()
+        self.assertIn("Bootstrap schema 2", workflow)
+        self.assertIn("9c7ae9e96cab4e2b489266b8aeebd65251f73cdb", workflow)
+        self.assertIn("git hash-object docs/repo/compliance-baseline.json", workflow)
 
 
 if __name__ == "__main__":

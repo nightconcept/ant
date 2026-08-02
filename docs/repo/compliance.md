@@ -108,9 +108,11 @@ CI uses these options for exact revision checks:
 --expect-branch <branch>
 ```
 
-The baseline tool has a temporary read-only bridge for the old schema. Old
-Regression and Test262 baselines can support a migration pull request. The old
-numeric WinterTC label has no mapping because it did not run WPT.
+The baseline tool has a temporary read-only bridge for old local commands. The
+first migration pull request uses a content-pinned schema 2 baseline because
+the old corpora are not comparable. Remove the CI bootstrap block after the
+named baseline lands on `main`. The old numeric WinterTC label has no mapping
+because it did not run WPT.
 
 ## WinterTC Harness Rules
 

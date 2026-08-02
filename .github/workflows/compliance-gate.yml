@@ -58,6 +58,22 @@ jobs:
           git switch --force-create "$LOGICAL_BRANCH" "$SOURCE_REVISION"
           git show "$BASELINE_REVISION:docs/repo/compliance-baseline.json" \
             > "$RUNNER_TEMP/trusted-compliance-baseline.json"
+          schema_version=$(python3 -c \
+            'import json,sys; print(json.load(open(sys.argv[1]))["schema_version"])' \
+            "$RUNNER_TEMP/trusted-compliance-baseline.json")
+          if [[ "$schema_version" == 1 ]]; then
+            # Bootstrap schema 2 for the one migration PR. Remove this block
+            # after the named baseline lands on main. The content pin prevents
+            # an arbitrary candidate baseline from approving itself.
+            expected_blob=9c7ae9e96cab4e2b489266b8aeebd65251f73cdb
+            actual_blob=$(git hash-object docs/repo/compliance-baseline.json)
+            if [[ "$actual_blob" != "$expected_blob" ]]; then
+              echo "schema-2 bootstrap baseline has unexpected content" >&2
+              exit 1
+            fi
+            cp docs/repo/compliance-baseline.json \
+              "$RUNNER_TEMP/trusted-compliance-baseline.json"
+          fi
 
       - name: Install build dependencies
         run: |
