@@ -1,0 +1,129 @@
+name: Compliance Gate
+
+on:
+  workflow_call:
+    inputs:
+      tier:
+        description: Compliance tier to run (2 or 3)
+        required: true
+        type: number
+      source_revision:
+        description: Immutable candidate revision to build and test
+        required: true
+        type: string
+      logical_branch:
+        description: Branch identity recorded in the compliance manifest
+        required: true
+        type: string
+      baseline_revision:
+        description: Trusted revision from which to read the baseline
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  compliance:
+    name: Tier ${{ inputs.tier }} Exact Set
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate inputs
+        env:
+          COMPLIANCE_TIER: ${{ inputs.tier }}
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+          BASELINE_REVISION: ${{ inputs.baseline_revision }}
+          LOGICAL_BRANCH: ${{ inputs.logical_branch }}
+        run: |
+          set -euo pipefail
+          case "$COMPLIANCE_TIER" in 2|3) ;; *) exit 2 ;; esac
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]
+          [[ "$BASELINE_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]
+          [[ "$LOGICAL_BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]]
+
+      - name: Checkout candidate
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ inputs.source_revision }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Record logical branch and trusted baseline
+        env:
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+          BASELINE_REVISION: ${{ inputs.baseline_revision }}
+          LOGICAL_BRANCH: ${{ inputs.logical_branch }}
+        run: |
+          set -euo pipefail
+          git switch --force-create "$LOGICAL_BRANCH" "$SOURCE_REVISION"
+          git show "$BASELINE_REVISION:docs/repo/compliance-baseline.json" \
+            > "$RUNNER_TEMP/trusted-compliance-baseline.json"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build ccache jq
+          pip install --break-system-packages -U meson
+
+      - name: Resolve pinned tool versions
+        id: config
+        run: |
+          echo "llvm_version=$(jq -r '.tools.llvm' .github/versions.json)" >> "$GITHUB_OUTPUT"
+          echo "zig_version=$(jq -r '.tools.zig' .github/versions.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Setup LLVM
+        id: llvm
+        uses: ./.github/actions/setup-llvm
+        with:
+          version: ${{ steps.config.outputs.llvm_version }}
+          os_type: linux-glibc
+
+      - name: Setup Zig
+        uses: ./.github/actions/setup-zig
+        with:
+          version: ${{ steps.config.outputs.zig_version }}
+
+      - name: Setup build caches
+        uses: ./.github/actions/setup-build-caches
+        with:
+          platform: pr-compliance-tier${{ inputs.tier }}-linux-x64
+          compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
+          zig_version: ${{ steps.config.outputs.zig_version }}
+
+      - name: Configure and compile Ant
+        env:
+          CC: ccache ${{ steps.llvm.outputs.cc }}
+          CXX: ccache ${{ steps.llvm.outputs.cxx }}
+        run: |
+          meson setup build -Dbuildtype=release
+          meson compile -C build
+
+      - name: Report compiler cache statistics
+        if: always()
+        run: ccache --show-stats
+
+      - name: Run and verify compliance
+        env:
+          COMPLIANCE_TIER: ${{ inputs.tier }}
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+          LOGICAL_BRANCH: ${{ inputs.logical_branch }}
+        run: |
+          set -euo pipefail
+          python3 scripts/run_compliance.py \
+            --tier "$COMPLIANCE_TIER" --all --allow-failures --log
+          python3 scripts/compliance_baseline.py diff \
+            ".deps/compliance/logs/tier${COMPLIANCE_TIER}-latest.json" \
+            --baseline "$RUNNER_TEMP/trusted-compliance-baseline.json" \
+            --require-baseline \
+            --require-full \
+            --expect-commit "$SOURCE_REVISION" \
+            --expect-branch "$LOGICAL_BRANCH"
+
+      - name: Upload compliance evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: pr-tier${{ inputs.tier }}-${{ inputs.source_revision }}
+          path: .deps/compliance/logs/tier${{ inputs.tier }}_*
+          if-no-files-found: warn
+

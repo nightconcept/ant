@@ -18,13 +18,34 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       timestamp: ${{ steps.timestamp.outputs.value }}
+      build_changed: ${{ steps.classifier.outputs.build_changed }}
+      workflow_changed: ${{ steps.classifier.outputs.workflow_changed }}
     steps:
+      - name: Checkout landed revision
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          fetch-depth: 0
+      - name: Resolve changed files
+        env:
+          BEFORE_REVISION: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          before_revision=${BEFORE_REVISION:-}
+          if [[ ! "$before_revision" =~ ^[0-9a-fA-F]{40}$ ]] || \
+             [[ "$before_revision" == 0000000000000000000000000000000000000000 ]]; then
+            before_revision=$(git rev-parse HEAD^)
+          fi
+          git diff --name-only "$before_revision" "$GITHUB_SHA" > .changed-files
+      - name: Classify change
+        id: classifier
+        run: node .github/agents/classify_changes.js --files-from .changed-files >> "$GITHUB_OUTPUT"
       - id: timestamp
         run: echo "value=$(date +%s)" >> "$GITHUB_OUTPUT"
 
   build-and-test:
     name: Build and Test (${{ matrix.platform }})
     needs: prepare
+    if: needs.prepare.outputs.build_changed == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -43,89 +64,34 @@ jobs:
 
   compliance-tier2:
     name: Compliance (Tier 2, Gate)
+    needs: prepare
+    if: needs.prepare.outputs.build_changed == 'true'
+    uses: ./.github/workflows/compliance-gate.yml
+    with:
+      tier: 2
+      source_revision: ${{ github.sha }}
+      logical_branch: main
+      baseline_revision: ${{ github.sha }}
+
+  workflow-lint:
+    name: Workflow Lint
+    needs: prepare
+    if: needs.prepare.outputs.workflow_changed == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build ccache jq
-          pip install --break-system-packages -U meson
-
-      # The compliance job builds Ant itself, so it needs the same pinned
-      # toolchain as the platform builds. The runner's default clang is older
-      # than the C23 the engine now requires (`constexpr` in include/internal.h,
-      # from upstream's "improve async ops"), and fails to compile src/ant.c.
-      - name: Resolve pinned tool versions
-        id: config
-        run: |
-          TOOLS=$(jq -r '.tools' .github/versions.json)
-          echo "llvm_version=$(echo $TOOLS | jq -r '.llvm')" >> $GITHUB_OUTPUT
-
-      - name: Setup LLVM
-        id: llvm
-        uses: ./.github/actions/setup-llvm
-        with:
-          version: ${{ steps.config.outputs.llvm_version }}
-          os_type: linux-glibc
-
-      - name: Setup Zig
-        uses: ./.github/actions/setup-zig
-        with:
-          version: "0.16.0"
-
-      - name: Setup build caches
-        uses: ./.github/actions/setup-build-caches
-        with:
-          platform: compliance-linux-x64
-          compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
-          zig_version: "0.16.0"
-
-      - name: Configure build
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+      - name: Install actionlint
         env:
-          CC: ccache ${{ steps.llvm.outputs.cc }}
-          CXX: ccache ${{ steps.llvm.outputs.cxx }}
-        run: meson setup build -Dbuildtype=release
-
-      - name: Compile Ant
-        env:
-          CC: ccache ${{ steps.llvm.outputs.cc }}
-          CXX: ccache ${{ steps.llvm.outputs.cxx }}
-        run: meson compile -C build
-
-      - name: Report compiler cache statistics
-        if: always()
-        run: ccache --show-stats
-
-      - name: Run Tier 2 Compliance Tracking
-        run: python3 scripts/run_compliance.py --tier 2 --all --allow-failures --log
-
-      - name: Check tier 2 exact failing set against baseline
+          ACTIONLINT_VERSION: v1.7.7
         run: |
-          python3 scripts/compliance_baseline.py diff \
-            .deps/compliance/logs/tier2-latest.json \
-            --require-baseline \
-            --require-full \
-            --expect-commit "${{ github.sha }}" \
-            --expect-branch main
-
-      # The benchmark threshold gate is deliberately not run here. It diffs
-      # absolute milliseconds against docs/repo/bench-baseline.json, which is
-      # recorded on a developer machine, so on a runner every benchmark reads as
-      # 15-47% slower and the gate fails without a code change. Gating on the
-      # ratio to node instead does not work either: measured between two runs of
-      # identical code on one machine, node drifts up to 15% (28% once its
-      # startup floor is subtracted) against Ant's own 5%, so the reference is
-      # noisier than the subject. Tracked in
-      # docs/exec-plans/tech-debt.md; performance is gated locally via
-      # `just bench-fast-diff` in the meantime.
+          go install "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Validate workflows
+        run: actionlint -ignore SC2086 -ignore SC2129 .github/workflows/*.yml
 
   repo-knowledge:
     name: Repo Knowledge
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -1,0 +1,181 @@
+name: Pull Request Gate
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  classify:
+    name: PR Classify
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.timestamp.outputs.value }}
+      baseline_revision: ${{ steps.changes.outputs.baseline_revision }}
+      docs_only: ${{ steps.classifier.outputs.docs_only }}
+      workflow_changed: ${{ steps.classifier.outputs.workflow_changed }}
+      build_changed: ${{ steps.classifier.outputs.build_changed }}
+      runtime_changed: ${{ steps.classifier.outputs.runtime_changed }}
+      performance_sensitive: ${{ steps.classifier.outputs.performance_sensitive }}
+    steps:
+      - name: Checkout merge candidate
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Resolve changed files
+        id: changes
+        env:
+          PR_BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+          QUEUE_BASE_REVISION: ${{ github.event.merge_group.base_sha }}
+        run: |
+          set -euo pipefail
+          baseline_revision="${PR_BASE_REVISION:-${QUEUE_BASE_REVISION:-}}"
+          if [[ -z "$baseline_revision" ]]; then
+            baseline_revision=$(git rev-parse HEAD^)
+          fi
+          [[ "$baseline_revision" =~ ^[0-9a-fA-F]{40}$ ]]
+          git diff --name-only "$baseline_revision" "$GITHUB_SHA" > .changed-files
+          echo "baseline_revision=$baseline_revision" >> "$GITHUB_OUTPUT"
+
+      - name: Classify change
+        id: classifier
+        run: node .github/agents/classify_changes.js --files-from .changed-files >> "$GITHUB_OUTPUT"
+
+      - name: Record build timestamp
+        id: timestamp
+        run: echo "value=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize classification
+        run: |
+          {
+            echo '## PR classification'
+            echo
+            echo '```'
+            cat .changed-files
+            echo '```'
+            echo
+            node .github/agents/classify_changes.js --files-from .changed-files
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  repo-knowledge:
+    name: PR Repository Checks
+    needs: classify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merge candidate
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Collect changed files
+        env:
+          BASELINE_REVISION: ${{ needs.classify.outputs.baseline_revision }}
+        run: git diff --name-only "$BASELINE_REVISION" "$GITHUB_SHA" > .changed-files
+      - name: Validate repository knowledge
+        run: node .github/agents/check_repo_knowledge.js
+      - name: Validate changed-file structure
+        run: node .github/agents/check_repo_structure.js --files-from .changed-files
+      - name: Report recommended validation
+        run: node .github/agents/route_validation.js --files-from .changed-files
+
+  workflow-lint:
+    name: PR Workflow Lint
+    needs: classify
+    if: needs.classify.outputs.workflow_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merge candidate
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.sha }}
+      - name: Install actionlint
+        env:
+          ACTIONLINT_VERSION: v1.7.7
+        run: |
+          go install "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Validate workflows
+        # SC2086 and SC2129 are existing style findings in legacy workflows;
+        # syntax, expression, and all other shell diagnostics remain enabled.
+        run: actionlint -ignore SC2086 -ignore SC2129 .github/workflows/*.yml
+
+  build-and-test:
+    name: PR Build and Test (${{ matrix.platform }})
+    needs: classify
+    if: needs.classify.outputs.build_changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux-glibc-x64
+          - linux-glibc-aarch64
+          - linux-musl-x64
+          - linux-musl-aarch64
+          - macos-aarch64
+          - windows-x64
+    uses: ./.github/workflows/build-platform.yml
+    with:
+      platform: ${{ matrix.platform }}
+      build_timestamp: ${{ needs.classify.outputs.timestamp }}
+      source_revision: ${{ github.sha }}
+
+  compliance-tier2:
+    name: PR Compliance Tier 2
+    needs: classify
+    if: needs.classify.outputs.build_changed == 'true'
+    uses: ./.github/workflows/compliance-gate.yml
+    with:
+      tier: 2
+      source_revision: ${{ github.sha }}
+      logical_branch: main
+      baseline_revision: ${{ needs.classify.outputs.baseline_revision }}
+
+  compliance-tier3:
+    name: PR Compliance Tier 3
+    needs: classify
+    if: needs.classify.outputs.runtime_changed == 'true' || github.event_name == 'merge_group'
+    uses: ./.github/workflows/compliance-gate.yml
+    with:
+      tier: 3
+      source_revision: ${{ github.sha }}
+      logical_branch: main
+      baseline_revision: ${{ needs.classify.outputs.baseline_revision }}
+
+  pr-gate:
+    name: PR Gate
+    if: always()
+    needs:
+      - classify
+      - repo-knowledge
+      - workflow-lint
+      - build-and-test
+      - compliance-tier2
+      - compliance-tier3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce classified jobs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DOCS_ONLY: ${{ needs.classify.outputs.docs_only }}
+          WORKFLOW_CHANGED: ${{ needs.classify.outputs.workflow_changed }}
+          BUILD_CHANGED: ${{ needs.classify.outputs.build_changed }}
+          RUNTIME_CHANGED: ${{ needs.classify.outputs.runtime_changed }}
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          REPO_RESULT: ${{ needs.repo-knowledge.result }}
+          WORKFLOW_RESULT: ${{ needs.workflow-lint.result }}
+          BUILD_RESULT: ${{ needs.build-and-test.result }}
+          TIER2_RESULT: ${{ needs.compliance-tier2.result }}
+          TIER3_RESULT: ${{ needs.compliance-tier3.result }}
+        run: node .github/agents/check_pr_gate.js

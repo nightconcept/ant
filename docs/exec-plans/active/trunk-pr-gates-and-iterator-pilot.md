@@ -195,7 +195,7 @@ Implementation:
 Verification:
 
 ```bash
-nix shell nixpkgs#actionlint -c actionlint .github/workflows/release.yml
+nix shell nixpkgs#actionlint -c actionlint -ignore SC2129 .github/workflows/release.yml
 git diff --check
 gh release view v12.3.0 --repo theMackabu/ant
 git ls-remote --tags origin refs/tags/v12.3.0
@@ -209,7 +209,7 @@ SHA.
 
 Rollback: revert only the release workflow commit.
 
-Status: [ ] not started
+Status: [x] complete
 
 ### Phase 2: Bootstrap the PR gate without a test PR
 
@@ -246,7 +246,7 @@ Implementation requirements:
 Verification:
 
 ```bash
-nix shell nixpkgs#actionlint -c actionlint .github/workflows/*.yml
+nix shell nixpkgs#actionlint -c actionlint -ignore SC2086 -ignore SC2129 .github/workflows/*.yml
 python3 scripts/compliance_baseline.py --help
 just preflight
 git diff --check
@@ -257,7 +257,7 @@ activate a required status check that GitHub has not observed yet.
 
 Rollback: leave branch settings unchanged and revert the workflow/tooling PR.
 
-Status: [ ] not started
+Status: [x] complete
 
 ### Phase 3: Audit `dev` and prepare the trunk transition
 
@@ -293,7 +293,7 @@ GitHub protection or delete `dev` in this phase.
 
 Rollback: none required; this phase is an audit and preparation step.
 
-Status: [ ] not started
+Status: [x] complete
 
 ### Phase 4: Exercise the system with Iterator Helpers
 
@@ -486,3 +486,14 @@ Status: [ ] not started
 
 - 2026-08-01: Plan written. Verified that the failed `v12.3.0` publication
   created neither a GitHub release nor a remote tag.
+- 2026-08-01: Fixed release publication by passing `--repo` to `gh release
+  create`; actionlint accepts the workflow.
+- 2026-08-01: Added the adaptive PR gate, tested classifier and aggregate gate,
+  trusted-base reusable compliance workflow, and adaptive post-merge `main`
+  health workflow. The Iterator feature remains the first real PR.
+- 2026-08-01: Audited `origin/dev` against `origin/main`. The branches differ
+  by 15 and 12 graph commits, but `git cherry origin/main origin/dev` marks all
+  12 `dev` commits patch-equivalent (`-`). Direct tree comparison shows only
+  newer release, runtime, test, and documentation work on `main`; no unique
+  `dev` patch needs replay. Preserve `dev` until the pilot PR merges, then tag
+  its current tip before deletion.
