@@ -207,6 +207,6 @@ jobs:
           PRERELEASE: ${{ inputs.prerelease }}
         run: |
           set -euo pipefail
-          args=(release create "$RELEASE_VERSION" dist/* --target "$RELEASE_REVISION" --title "$RELEASE_VERSION" --generate-notes)
+          args=(release create "$RELEASE_VERSION" dist/* --repo "$GITHUB_REPOSITORY" --target "$RELEASE_REVISION" --title "$RELEASE_VERSION" --generate-notes)
           if [[ "$PRERELEASE" == true ]]; then args+=(--prerelease); fi
           gh "${args[@]}"
