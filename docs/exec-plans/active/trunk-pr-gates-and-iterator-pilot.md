@@ -512,8 +512,9 @@ Status: [ ] not started
   Fast benchmark manifest `bench_20260801_174627.json` and full manifest
   `bench_20260801_175534.json` cross no gates. Generators & Iterators improves
   from 325.0 ms to 312.6 ms (-3.8%), with flat RSS and +0.2% binary size.
-  This dirty filtered run was preliminary evidence; rerun it after the final
-  feature commit before opening the PR. Source-path inspection confirms that
+  This dirty filtered run was preliminary evidence. The final commit-stamped
+  manifest `tier3_20260801_181317_6de01d2a.json` passes 368/514, with 127 newly
+  passing and zero newly failing tests. Source-path inspection confirms that
   helper `next()` no longer allocates its result object before it knows that it
   will return one, and result keys use the runtime's interned symbols. The RSS
   measurement is flat, so do not claim a measured peak-memory reduction.
