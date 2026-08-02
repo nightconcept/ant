@@ -18,6 +18,7 @@ Store in-progress execution plans here.
 - [Platform Toolchains](platform-toolchains.md)
 - [Post-Audit Correctness and Compliance Gates](post-audit-correctness-and-compliance-gates.md)
 - [Silver Recursive JIT Performance](silver-recursive-jit-perf.md)
+- [Trunk PR Gates and Iterator Pilot](trunk-pr-gates-and-iterator-pilot.md)
 - [WICG Observable Migration](wicg-observable.md)
 
 Recommended sections:
