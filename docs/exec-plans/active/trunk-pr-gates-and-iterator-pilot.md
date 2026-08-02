@@ -529,3 +529,8 @@ Status: [ ] not started
   regressions. Pinned Test262 to baseline corpus commit `07dbcbca04c5` in the
   shared compliance runner; the suite pin must move only with an intentional
   full baseline refresh.
+- 2026-08-01: The corpus-pinned rerun correctly found one genuine regression:
+  the Iterator Helper prototype's `return` method accepted an unbranded
+  generator receiver. Added an internal Iterator Helper brand, checked it in
+  `next` and `return`, and added a focused regression test. The exact staging
+  test `iterator-helper-methods-throw-on-generators.js` now passes locally.

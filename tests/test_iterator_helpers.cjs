@@ -238,4 +238,15 @@ for (const name of ["every", "some", "find", "forEach", "reduce"]) {
   same(closes, 0, "drop exhaustion does not close the source");
 }
 
+{
+  const helperPrototype = Object.getPrototypeOf([].values().map(value => value));
+  function* values() { yield 1; }
+
+  for (const name of ["next", "return", "throw"]) {
+    let typeError = false;
+    try { helperPrototype[name].call(values()); } catch (error) { typeError = error instanceof TypeError; }
+    assert(typeError, `iterator helper ${name} rejects an unbranded generator`);
+  }
+}
+
 console.log("iterator helper direct-record tests passed");

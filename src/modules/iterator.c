@@ -35,6 +35,7 @@ enum {
 static ant_value_t g_wrap_iter_proto = 0;
 static ant_value_t g_async_wrap_iter_proto = 0;
 
+enum { ITERATOR_HELPER_NATIVE_TAG = 0x49544850u }; // ITHP
 enum { ASYNC_TERMINAL_STATE_TAG = 0x41544954u }; // ATIT 
 
 typedef struct {
@@ -160,6 +161,8 @@ static ant_value_t close_wrap_source(
 
 static ant_value_t wrap_iter_next(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t self = js->this_val;
+  if (!is_object_type(self) || !js_check_native_tag(self, ITERATOR_HELPER_NATIVE_TAG))
+    return js_mkerr_typed(js, JS_ERR_TYPE, "incompatible Iterator Helper receiver");
   if (js_get_slot(self, SLOT_SETTLED) == js_true)
     return set_iter_result(js, js_mkundef(), true);
 
@@ -302,6 +305,8 @@ static ant_value_t wrap_iter_next(ant_t *js, ant_value_t *args, int nargs) {
 
 static ant_value_t wrap_iter_return(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t self = js->this_val;
+  if (!is_object_type(self) || !js_check_native_tag(self, ITERATOR_HELPER_NATIVE_TAG))
+    return js_mkerr_typed(js, JS_ERR_TYPE, "incompatible Iterator Helper receiver");
   ant_value_t value = nargs > 0 ? args[0] : js_mkundef();
   if (js_get_slot(self, SLOT_SETTLED) != js_true) {
     ant_value_t closed = close_wrap_source(js, self, js_mkundef(), false);
@@ -316,6 +321,7 @@ static ant_value_t make_wrap_iter(
   ant_value_t iter = js_mkobj(js);
   
   js_set_proto_init(iter, g_wrap_iter_proto);
+  js_set_native(iter, NULL, ITERATOR_HELPER_NATIVE_TAG);
   js_set_slot_wb(js, iter, SLOT_DATA, source);
   js_set_slot_wb(js, iter, SLOT_AUX, next);
   js_set_slot(iter, SLOT_ITER_STATE, js_mknum((double)ITER_STATE_PACK(kind, 0)));
