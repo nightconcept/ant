@@ -513,7 +513,7 @@ Status: [ ] not started
   `bench_20260801_175534.json` cross no gates. Generators & Iterators improves
   from 325.0 ms to 312.6 ms (-3.8%), with flat RSS and +0.2% binary size.
   This dirty filtered run was preliminary evidence. The final commit-stamped
-  manifest `tier3_20260801_181317_6de01d2a.json` passes 368/514, with 127 newly
+  manifest `tier3_20260801_181824_7fb474f9.json` passes 373/514, with 132 newly
   passing and zero newly failing tests. Source-path inspection confirms that
   helper `next()` no longer allocates its result object before it knows that it
   will return one, and result keys use the runtime's interned symbols. The RSS
