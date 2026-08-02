@@ -32,7 +32,7 @@ $ ls -lh ant
 | Cold start          | **~8.7 ms**| **~8.6 ms**    | ~38 ms  | ~20 ms | ~30 ms |
 | Engine              | Ant Silver | Ant Silver     | V8      | JSC    | V8     |
 | JIT                 | ✓          | ✓              | ✓       | ✓      | ✓      |
-| WinterTC conformant | ✓          | ✓              | partial | ✓      | ✓      |
+| Regression suite     | ✓          | ✓              | —       | —      | —      |
 
 Ant is designed for environments where size and startup time matter: serverless functions, edge computing, embedded systems, CLI tools, and anywhere you'd want JavaScript but can't afford a 50MB+ runtime.
 
@@ -46,12 +46,14 @@ curl -fsSL https://antjs.org/install | bash
 
 ## Spec conformance
 
-Ant targets the [WinterTC Minimum Common API](https://min-common-api.proposal.wintertc.org/) specification, the standard for server-side JavaScript interoperability developed by Ecma TC55.
+Ant validates runtime changes with the complete Ant Regression suite and a
+pinned Test262 corpus. Regression runs must pass completely; Test262 runs must
+not gain failures or lose tests.
 
 | Suite        | Pass rate | Notes                                      |
 | ------------ | --------- | ------------------------------------------ |
-| compat-table | **100%**  | 1511/1511 (ES1–ES5, ES6, ES2016+, ESNext)  |
-| test262      | ~64%      | Improving; focus is on real-world coverage |
+| Ant Regression | **100%** | 569/569 (runtime tests and spec examples) |
+| Test262        | ~64%     | Changes must not reduce the existing result |
 
 ## Benchmarks
 

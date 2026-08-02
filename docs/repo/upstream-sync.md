@@ -121,7 +121,7 @@ only the failing-test *sets* can.
 
 ### 6. Land it through the protected route
 
-Ant Regression must pass. WinterTC and Test262 must show no failure that
+Ant Regression must pass. Test262 must show no failure that
 `attribute` blames on us. Inherited upstream regressions are a judgement call —
 they are usually worth accepting to stay close to upstream, but list them
 explicitly in the merge commit or PR so they are not discovered later as ours.

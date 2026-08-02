@@ -36,7 +36,7 @@ jobs:
           LOGICAL_BRANCH: ${{ inputs.logical_branch }}
         run: |
           set -euo pipefail
-          case "$COMPLIANCE_SUITE" in wintertc|regression|test262) ;; *) exit 2 ;; esac
+          case "$COMPLIANCE_SUITE" in regression|test262) ;; *) exit 2 ;; esac
           [[ "$SOURCE_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]
           [[ "$BASELINE_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]
           [[ "$LOGICAL_BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]]
@@ -65,7 +65,7 @@ jobs:
             # Bootstrap schema 2 for the one migration PR. Remove this block
             # after the named baseline lands on main. The content pin prevents
             # an arbitrary candidate baseline from approving itself.
-            expected_blob=9c7ae9e96cab4e2b489266b8aeebd65251f73cdb
+            expected_blob=ffecbd42ea1a76957de35c18a280885b1b0333a8
             actual_blob=$(git hash-object docs/repo/compliance-baseline.json)
             if [[ "$actual_blob" != "$expected_blob" ]]; then
               echo "schema-2 bootstrap baseline has unexpected content" >&2

@@ -1,6 +1,6 @@
 ---
 name: compliance-failures
-description: Analyze Ant WinterTC, Regression, or Test262 failures and rank actionable failure groups from large logs.
+description: Analyze Ant Regression or Test262 failures and rank actionable failure groups from large logs.
 ---
 
 # Compliance Failure Analysis
@@ -12,7 +12,7 @@ Ant writes one log and one JSON manifest for each named suite:
 .deps/compliance/logs/<suite>_<timestamp>_<revision>.json
 ```
 
-The suite IDs are `wintertc`, `regression`, and `test262`.
+The suite IDs are `regression` and `test262`.
 
 ## Start With the Manifest
 
@@ -55,7 +55,7 @@ python3 .agents/skills/compliance-failures/parse_failures.py --suite test262 --g
 List filtered failures:
 
 ```bash
-python3 .agents/skills/compliance-failures/parse_failures.py --suite wintertc --filter streams
+python3 .agents/skills/compliance-failures/parse_failures.py --suite test262 --filter built-ins/Array
 python3 .agents/skills/compliance-failures/parse_failures.py --suite regression --list
 ```
 
@@ -76,7 +76,7 @@ absent completion marker, or an unsupported host global can inflate failures.
 Group repeated error messages before you select runtime work. One root cause
 can affect many tests.
 
-Keep required WinterTC behavior visible. Do not classify an Ant behavior failure
+Keep required external behavior visible. Do not classify an Ant behavior failure
 as an exclusion.
 
 Add an Ant Regression test for each corrected external conformance failure.

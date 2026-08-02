@@ -161,6 +161,28 @@ class ComplianceBaselineTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("dirty working tree", result.stderr)
 
+    def test_test262_update_refuses_new_failures(self):
+        baseline = manifest(suite_id="test262", failing=["old-failure"])
+        self.seed(baseline)
+        candidate = manifest(suite_id="test262", failing=["new-failure"])
+        self.write_json(self.manifest_path, candidate)
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "update",
+                str(self.manifest_path),
+                "--baseline",
+                str(self.baseline_path),
+            ],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("newly failing", result.stderr)
+
     def test_missing_manifest_fails_closed(self):
         result = subprocess.run(
             [
@@ -182,9 +204,9 @@ class ComplianceBaselineTests(unittest.TestCase):
 
     def test_manifest_cannot_diff_against_another_suite(self):
         self.seed(manifest(suite_id="regression"))
-        result = self.run_diff(manifest(suite_id="wintertc"), "--require-baseline")
+        result = self.run_diff(manifest(suite_id="test262"), "--require-baseline")
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("wintertc", result.stderr)
+        self.assertIn("test262", result.stderr)
 
     def test_legacy_base_branch_baseline_maps_tier_two_to_regression(self):
         legacy = manifest()
@@ -197,19 +219,6 @@ class ComplianceBaselineTests(unittest.TestCase):
         )
         result = self.run_diff(manifest(), "--require-baseline")
         self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_legacy_tier_one_is_not_accepted_as_wintertc(self):
-        legacy = manifest(suite_id="wintertc")
-        legacy["schema_version"] = 1
-        legacy["tier"] = 1
-        legacy.pop("suite_id")
-        self.write_json(
-            self.baseline_path,
-            {"schema_version": 1, "tiers": {"1": legacy}},
-        )
-        result = self.run_diff(manifest(suite_id="wintertc"), "--require-baseline")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("no baseline recorded", result.stderr)
 
 
 if __name__ == "__main__":

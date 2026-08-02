@@ -10,11 +10,10 @@ def main():
     parser = argparse.ArgumentParser(description="Ant Compliance Test Suite Orchestrator")
     parser.add_argument(
         "--suite",
-        choices=["wintertc", "regression", "test262", "all"],
-        default="wintertc",
-        help="Select suite to execute (default: wintertc)",
+        choices=["regression", "test262", "all"],
+        default="regression",
+        help="Select suite to execute (default: regression)",
     )
-    parser.add_argument("--smoke", action="store_true", help="Run pulled official online smoke test subset instead of the full local suite")
     parser.add_argument("--all", action="store_true", help="Run full local test suite (default behavior)")
     parser.add_argument("-f", "--filter", type=str, help="Filter test name by substring")
     parser.add_argument("-m", "--module", type=str, help="Filter Ant Regression tests by module name")
@@ -24,7 +23,7 @@ def main():
     parser.add_argument("--allow-failures", action="store_true", help="Exit with 0 even if some tests fail")
     args = parser.parse_args()
 
-    mode_flag = "--smoke" if args.smoke else "--all"
+    mode_flag = "--all"
     extra_flags = []
     if args.filter:
         extra_flags.extend(["--filter", args.filter])
@@ -38,8 +37,6 @@ def main():
         extra_flags.append("--log-fail")
 
     suites_to_run = []
-    if args.suite in ("wintertc", "all"):
-        suites_to_run.append(("WinterTC", REPO_ROOT / "run_compliance_wintertc.py"))
     if args.suite in ("regression", "all"):
         suites_to_run.append(("Ant Regression", REPO_ROOT / "run_compliance_regression.py"))
     if args.suite in ("test262", "all"):

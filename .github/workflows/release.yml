@@ -164,19 +164,19 @@ jobs:
             --expect-commit "${{ needs.prepare.outputs.revision }}" \
             --expect-branch main
 
-  compliance-wintertc:
-    name: WinterTC Release Gate
+  compliance-test262:
+    name: Test262 Non-Regression Release Gate
     needs: prepare
     uses: ./.github/workflows/compliance-gate.yml
     with:
-      suite: wintertc
+      suite: test262
       source_revision: ${{ needs.prepare.outputs.revision }}
       logical_branch: main
       baseline_revision: ${{ needs.prepare.outputs.revision }}
 
   publish:
     name: Publish GitHub Release
-    needs: [prepare, build-and-test, compliance-regression, compliance-wintertc]
+    needs: [prepare, build-and-test, compliance-regression, compliance-test262]
     runs-on: ubuntu-latest
     permissions:
       contents: write

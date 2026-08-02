@@ -17,7 +17,6 @@ from compliance_common import (
     RESET,
     REPO_ROOT
 )
-from compliance_wintertc import run_wintertc
 from compliance_regression import run_regression
 from compliance_test262 import run_test262
 
@@ -44,7 +43,7 @@ def draw_compliance_header_box(runtimes: list[dict], mode_name: str, width: int 
         f"{BOLD}{MAGENTA}JS/TS RUNTIME COMPLIANCE BENCHMARK SUITE{RESET}",
         f"{DIM}Target Runtimes: {r_names}{RESET}",
         f"{DIM}Execution Mode: {mode_name}{RESET}",
-        f"{DIM}Suites: WinterTC, Ant Regression, Test262{RESET}"
+        f"{DIM}Suites: Ant Regression, Test262{RESET}"
     ]
     box = []
     box.append("╔" + "═" * (width - 2) + "╗")
@@ -175,7 +174,7 @@ def save_compliance_json_and_baseline(runtimes: list[dict], suite_results: dict,
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-Runtime Compliance Benchmark Orchestrator")
-    parser.add_argument("--suite", choices=["wintertc", "regression", "test262", "all"], default="all", help="Select suite to execute (default: all)")
+    parser.add_argument("--suite", choices=["regression", "test262", "all"], default="all", help="Select suite to execute (default: all)")
     parser.add_argument("--all", action="store_true", help="Run full local test suite (default)")
     parser.add_argument("-f", "--filter", type=str, help="Filter test name by substring")
     parser.add_argument("--runtimes", type=str, help="Comma-separated runtime IDs to run (e.g. 'ant,tjs,node,deno,bun')")
@@ -207,12 +206,6 @@ def main():
 
     suite_results = {}
     overall_exit_code = 0
-
-    if args.suite in ("wintertc", "all"):
-        stats = run_wintertc(runtimes, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)
-        suite_results["WinterTC"] = stats
-        if any(st["failed"] > 0 for st in stats.values()):
-            overall_exit_code = 1
 
     if args.suite in ("regression", "all"):
         stats = run_regression(runtimes, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)

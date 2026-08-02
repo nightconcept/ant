@@ -146,11 +146,6 @@ compliance +args="":
     meson compile -C build
     python3 scripts/run_compliance.py {{args}}
 
-# Run the pinned WinterTC/WPT suite.
-compliance-wintertc:
-    meson compile -C build
-    -python3 scripts/run_compliance.py --suite wintertc --all --log-fail
-
 # Run all Ant-owned regression tests.
 compliance-regression:
     meson compile -C build
@@ -161,18 +156,6 @@ compliance-test262:
     @echo "Running the full Test262 suite (~50k tests) - this takes a while."
     meson compile -C build
     -python3 scripts/run_compliance.py --suite test262 --all --log-fail
-
-# Full clean WinterTC run, then promote its manifest to the checked-in baseline
-compliance-update-wintertc:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ -n "$(git status --porcelain)" ]; then
-        echo "error: working tree is dirty - refusing to update the WinterTC baseline from an unreproducible run." >&2
-        exit 1
-    fi
-    meson compile -C build
-    python3 scripts/run_compliance.py --suite wintertc --all --allow-failures --log-fail
-    python3 scripts/compliance_baseline.py update .deps/compliance/logs/wintertc-latest.json
 
 # Full clean Ant Regression run, then promote its manifest to the checked-in baseline
 compliance-update-regression:
@@ -198,12 +181,6 @@ compliance-update-test262:
     meson compile -C build
     python3 scripts/run_compliance.py --suite test262 --all --allow-failures --log-fail
     python3 scripts/compliance_baseline.py update .deps/compliance/logs/test262-latest.json
-
-# Run WinterTC and diff the resulting manifest against the checked-in baseline
-compliance-diff-wintertc:
-    meson compile -C build
-    -python3 scripts/run_compliance.py --suite wintertc --all --log-fail
-    python3 scripts/compliance_baseline.py diff .deps/compliance/logs/wintertc-latest.json
 
 # Run Ant Regression and diff the resulting manifest against the checked-in baseline
 compliance-diff-regression:

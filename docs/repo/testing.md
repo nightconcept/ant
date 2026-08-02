@@ -52,24 +52,24 @@ pushes and deletion of `main`.
 
 - **`.github/workflows/pr-ci.yml`** (pull requests to `main`): always runs
   classification and repository checks. It runs workflow lint for CI changes.
-  Build changes run all platform builds, WinterTC, and Ant Regression. Runtime
-  changes and merge groups also run a full Test262 exact-set comparison. The
+  Build changes run all platform builds, Ant Regression, and Test262
+  non-regression checks. The
   final `PR Gate` fails unless every job required by the classification passes.
   Docs-only changes still produce the same required aggregate status.
 - **`.github/workflows/main-ci.yml`** (push to `main`): validates the exact
   landed SHA and produces post-merge evidence. It adapts by changed-file class:
   repository checks always run; workflow lint runs for automation changes;
-  code/build changes run all six platform builds, WinterTC, and Ant Regression. This is a
+  code/build changes run all six platform builds, Ant Regression, and Test262
+  non-regression checks. This is a
   post-merge alarm, not a substitute for the pull-request gate.
-- **`.github/workflows/upstream-ci.yml`** (branch `upstream`): identical job
-  set and bar to `main-ci.yml`. `upstream` is a record of `theMackabu/ant`'s
-  work kept for history and inspection, so this workflow exists to tell us when
-  that record stops building — not to clear anything for submission.
+- **`.github/workflows/upstream-ci.yml`** (branch `upstream`): builds the
+  upstream record and runs Ant Regression. `upstream` is kept for history and
+  inspection, so this workflow exists to tell us when that record stops
+  building — not to clear anything for submission.
 - **`.github/workflows/test262-weekly.yml`** (schedule): Test262 has approximately
-  50,000 tests, so it is too slow to sit in front of each push. It runs weekly
-  (Mondays 04:00 UTC) plus on demand. It checks out `main`, runs the full pinned
-  corpus, compares exact failing-test names with the trusted baseline, and
-  uploads `test262-compliance-main`.
+  50,000 tests, so it also runs weekly (Mondays 04:00 UTC) plus on demand. It
+  checks out `main`, runs the full pinned corpus, compares exact failing-test
+  names with the trusted baseline, and uploads `test262-compliance-main`.
 
 **No performance gate runs in CI.** The bench threshold assertion compared
 absolute milliseconds against a baseline recorded on a developer machine, which
@@ -100,9 +100,8 @@ commit, enter its full 40-character SHA; the workflow rejects any SHA not
 reachable from `main`. Set **prerelease** only for an intentionally
 pre-release publication.
 
-The workflow runs separate WinterTC and Ant Regression exact-set gates before
-it creates a tag or release. Test262 remains the scheduled and on-demand
-conformance suite.
+The workflow runs Ant Regression and Test262 non-regression gates before it
+creates a tag or release.
 It builds every asset from the resolved SHA, then attaches target archives,
 `SHA256SUMS`, and `provenance.json`. Normal pushes to `main` never publish a
 release.

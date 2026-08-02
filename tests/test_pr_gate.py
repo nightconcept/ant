@@ -24,7 +24,6 @@ BASE_ENV = {
     "REPO_RESULT": "success",
     "WORKFLOW_RESULT": "skipped",
     "BUILD_RESULT": "skipped",
-    "WINTERTC_RESULT": "skipped",
     "REGRESSION_RESULT": "skipped",
     "TEST262_RESULT": "skipped",
 }
@@ -47,36 +46,34 @@ class PullRequestGateTests(unittest.TestCase):
     def test_docs_only_gate_accepts_optional_skips(self):
         self.assertEqual(self.run_gate().returncode, 0)
 
-    def test_runtime_gate_requires_build_wintertc_regression_and_test262(self):
+    def test_build_gate_requires_regression_and_test262(self):
         result = self.run_gate(
             BUILD_CHANGED=True,
             RUNTIME_CHANGED=True,
             BUILD_RESULT="success",
-            WINTERTC_RESULT="success",
             REGRESSION_RESULT="success",
             TEST262_RESULT="success",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_runtime_gate_rejects_skipped_test262(self):
+    def test_build_gate_rejects_skipped_test262(self):
         result = self.run_gate(
             BUILD_CHANGED=True,
             RUNTIME_CHANGED=True,
             BUILD_RESULT="success",
-            WINTERTC_RESULT="success",
             REGRESSION_RESULT="success",
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("test262", result.stderr)
 
-    def test_build_gate_rejects_skipped_wintertc(self):
+    def test_build_gate_rejects_skipped_regression(self):
         result = self.run_gate(
             BUILD_CHANGED=True,
             BUILD_RESULT="success",
-            REGRESSION_RESULT="success",
+            TEST262_RESULT="success",
         )
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("wintertc", result.stderr)
+        self.assertIn("regression", result.stderr)
 
     def test_workflow_gate_rejects_failed_lint(self):
         result = self.run_gate(WORKFLOW_CHANGED=True, WORKFLOW_RESULT="failure")
@@ -94,25 +91,23 @@ class PullRequestGateTests(unittest.TestCase):
         execute = aggregate_job.index("run: node .github/agents/check_pr_gate.js")
         self.assertLess(checkout, execute)
 
-    def test_wintertc_uses_exact_set_gate_not_platform_raw_exit(self):
+    def test_compliance_uses_exact_set_gate(self):
         workflow = WORKFLOW.read_text()
-        self.assertIn("suite: wintertc", workflow)
-        self.assertNotIn(
-            "scripts/run_compliance.py --suite wintertc",
-            BUILD_WORKFLOW.read_text(),
-        )
+        self.assertIn("suite: regression", workflow)
+        self.assertIn("suite: test262", workflow)
+        self.assertNotIn("wintertc", workflow.lower())
 
-    def test_main_and_release_gate_wintertc(self):
-        self.assertIn("suite: wintertc", MAIN_WORKFLOW.read_text())
+    def test_main_and_release_gate_test262(self):
+        self.assertIn("suite: test262", MAIN_WORKFLOW.read_text())
         release = RELEASE_WORKFLOW.read_text()
-        self.assertIn("suite: wintertc", release)
-        self.assertIn("compliance-wintertc", release)
-        self.assertIn("suite: wintertc", UPSTREAM_WORKFLOW.read_text())
+        self.assertIn("suite: test262", release)
+        self.assertIn("compliance-test262", release)
+        self.assertNotIn("wintertc", UPSTREAM_WORKFLOW.read_text().lower())
 
     def test_schema_two_migration_baseline_is_content_pinned(self):
         workflow = COMPLIANCE_WORKFLOW.read_text()
         self.assertIn("Bootstrap schema 2", workflow)
-        self.assertIn("9c7ae9e96cab4e2b489266b8aeebd65251f73cdb", workflow)
+        self.assertIn("ffecbd42ea1a76957de35c18a280885b1b0333a8", workflow)
         self.assertIn("git hash-object docs/repo/compliance-baseline.json", workflow)
 
 

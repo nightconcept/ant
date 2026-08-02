@@ -5,10 +5,8 @@ import re
 import json
 import time
 import subprocess
-import fnmatch
 from pathlib import Path
 from datetime import datetime, timezone
-from dataclasses import dataclass
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEPS_DIR = REPO_ROOT / ".deps" / "compliance"
@@ -148,13 +146,6 @@ def pinned_test262_revision() -> str:
     return revision.lower()
 
 
-def pinned_wpt_revision() -> str:
-    revision = json.loads(VERSIONS_FILE.read_text())["dependencies"]["wpt"]
-    if not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
-        raise RuntimeError(".github/versions.json must pin WPT to a full commit SHA")
-    return revision.lower()
-
-
 def checkout_test262_revision(test262_dir: Path, revision: str) -> None:
     current = subprocess.run(
         ["git", "-C", str(test262_dir), "rev-parse", "HEAD"],
@@ -212,175 +203,6 @@ def ensure_test262_repo() -> Path:
     )
     return deps_t262
 
-
-def ensure_wpt_repo() -> Path:
-    """Ensure the canonical WPT repository is at the configured commit."""
-    revision = pinned_wpt_revision()
-    wpt_dir = DEPS_DIR / "wpt"
-    if not (wpt_dir / ".git").exists():
-        print(f"{CYAN}Cloning pinned web-platform-tests/wpt into {wpt_dir}...{RESET}")
-        wpt_dir.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            [
-                "git", "clone", "--filter=blob:none", "--no-checkout",
-                "https://github.com/web-platform-tests/wpt.git", str(wpt_dir),
-            ],
-            check=True,
-        )
-    current = subprocess.run(
-        ["git", "-C", str(wpt_dir), "rev-parse", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip().lower()
-    if current != revision:
-        print(f"{CYAN}Checking out pinned WPT revision {revision[:12]}...{RESET}")
-        subprocess.run(
-            ["git", "-C", str(wpt_dir), "fetch", "--depth", "1", "origin", revision],
-            check=True,
-        )
-        subprocess.run(
-            ["git", "-C", str(wpt_dir), "checkout", "--detach", revision],
-            check=True,
-        )
-    elif not (wpt_dir / "resources" / "testharness.js").is_file():
-        subprocess.run(
-            ["git", "-C", str(wpt_dir), "checkout", "--detach", "--force", revision],
-            check=True,
-        )
-    return wpt_dir
-
-
-class WPTManifestError(ValueError):
-    pass
-
-
-@dataclass(frozen=True)
-class WPTTest:
-    path: Path
-    category: str
-
-
-WPT_EXCLUSION_REASONS = {
-    "window-only",
-    "server-required",
-    "unsupported-harness",
-    "outside-wintertc",
-}
-WPT_COMPLETION_MARKER = "__ANT_WPT_COMPLETE__"
-WPT_SHELL_SHIM = (
-    "if (typeof globalThis.self === 'undefined') globalThis.self = globalThis;\n"
-    "if (typeof globalThis.GLOBAL === 'undefined') {\n"
-    "  globalThis.GLOBAL = {\n"
-    "    isWindow: function() { return false; },\n"
-    "    isWorker: function() { return true; },\n"
-    "    isShadowRealm: function() { return false; }\n"
-    "  };\n"
-    "}\n"
-    "if (typeof globalThis.location === 'undefined') {\n"
-    "  globalThis.location = { search: '', href: 'file:///wpt-shell' };\n"
-    "}"
-)
-
-
-def discover_wpt_tests(wpt_dir: Path, manifest_path: Path) -> list[WPTTest]:
-    """Resolve the checked-in WinterTC allowlist against a pinned WPT tree."""
-    try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise WPTManifestError(f"cannot read WPT manifest {manifest_path}: {exc}") from exc
-    if manifest.get("schema_version") != 1:
-        raise WPTManifestError("WPT manifest must have schema_version 1")
-
-    excludes = []
-    for item in manifest.get("excludes", []):
-        pattern = item.get("pattern") if isinstance(item, dict) else None
-        reason = item.get("reason") if isinstance(item, dict) else None
-        if not pattern or reason not in WPT_EXCLUSION_REASONS:
-            raise WPTManifestError(
-                "every WPT exclusion needs a pattern and a supported reason"
-            )
-        excludes.append(pattern)
-
-    selected: dict[str, WPTTest] = {}
-    includes = manifest.get("includes")
-    if not isinstance(includes, list) or not includes:
-        raise WPTManifestError("WPT manifest must contain at least one include")
-    for item in includes:
-        pattern = item.get("pattern") if isinstance(item, dict) else None
-        category = item.get("category") if isinstance(item, dict) else None
-        if not pattern or not category or not pattern.endswith(".any.js"):
-            raise WPTManifestError(
-                "every WPT include needs a category and an .any.js pattern"
-            )
-        matches = sorted(path for path in wpt_dir.glob(pattern) if path.is_file())
-        if not matches:
-            raise WPTManifestError(f"WPT include pattern {pattern!r} matched no files")
-        for path in matches:
-            rel = path.relative_to(wpt_dir).as_posix()
-            if any(fnmatch.fnmatch(rel, excluded) for excluded in excludes):
-                continue
-            content = path.read_text(encoding="utf-8", errors="replace")
-            declared_globals = re.findall(
-                r"^\s*//\s*META:\s*global=(\S+)", content, re.MULTILINE
-            )
-            if declared_globals and all(
-                "worker" not in value and "jsshell" not in value
-                for value in declared_globals
-            ):
-                raise WPTManifestError(
-                    f"WPT test {rel} declares global=window and needs a window-only exclusion"
-                )
-            previous = selected.get(rel)
-            if previous and previous.category != category:
-                raise WPTManifestError(
-                    f"WPT test {rel} has conflicting categories "
-                    f"{previous.category!r} and {category!r}"
-                )
-            selected[rel] = WPTTest(path=path, category=category)
-    if not selected:
-        raise WPTManifestError("WPT manifest selected no runnable tests")
-    return [selected[name] for name in sorted(selected)]
-
-
-_WPT_META_SCRIPT_RE = re.compile(r"^\s*//\s*META:\s*script=(\S+)\s*$", re.MULTILINE)
-
-
-def prepare_wpt_code(test_file: Path, wpt_dir: Path) -> str:
-    """Build one shell-compatible WPT program and require harness completion."""
-    harness_path = wpt_dir / "resources" / "testharness.js"
-    if not harness_path.is_file():
-        raise WPTManifestError(f"WPT testharness is missing: {harness_path}")
-    content = test_file.read_text(encoding="utf-8", errors="replace")
-    parts = [
-        WPT_SHELL_SHIM,
-        harness_path.read_text(encoding="utf-8", errors="replace"),
-    ]
-    root = wpt_dir.resolve()
-    for reference in _WPT_META_SCRIPT_RE.findall(content):
-        dependency = (
-            wpt_dir / reference.lstrip("/")
-            if reference.startswith("/")
-            else test_file.parent / reference
-        ).resolve()
-        if not dependency.is_relative_to(root) or not dependency.is_file():
-            raise WPTManifestError(
-                f"WPT META script {reference!r} for {test_file} is missing or unsafe"
-            )
-        parts.append(dependency.read_text(encoding="utf-8", errors="replace"))
-    parts.append(
-        "add_completion_callback(function(tests, status) {\n"
-        "  var failures = [];\n"
-        "  for (var i = 0; i < tests.length; i++) {\n"
-        "    if (tests[i].status !== 0) failures.push(tests[i].name + ': ' + tests[i].message);\n"
-        "  }\n"
-        "  if (status && status.status !== 0) failures.push(status.message || 'harness failure');\n"
-        "  if (failures.length) throw new Error('WPT Test Failure\\n' + failures.join('\\n'));\n"
-        f"  console.log('{WPT_COMPLETION_MARKER}');\n"
-        "});"
-    )
-    parts.append(content)
-    return "\n".join(parts)
 
 def parse_test262_frontmatter(content: str) -> dict:
     frontmatter = {"includes": [], "flags": [], "negative": None}
@@ -461,48 +283,6 @@ def run_js_test(ant_bin: Path, test_path: Path, timeout_sec: float = 15.0) -> tu
         duration_ms = (time.perf_counter() - start) * 1000.0
         return False, duration_ms, str(e)
 
-
-WPT_TMP_PREFIX = "ant_wpt_tmp_"
-
-
-def run_wpt_test(
-    ant_bin: Path,
-    wpt_dir: Path,
-    test_file: Path,
-    sequence: int,
-    timeout_sec: float = 15.0,
-) -> tuple[bool, float, str]:
-    """Execute one prepared WPT source and require testharness completion."""
-    scratch = test_file.parent / f"{WPT_TMP_PREFIX}{sequence}_{test_file.name}"
-    return execute_prepared_wpt(
-        wpt_dir,
-        test_file,
-        scratch,
-        lambda path: run_js_test(ant_bin, path, timeout_sec=timeout_sec),
-    )
-
-
-def execute_prepared_wpt(
-    wpt_dir: Path,
-    test_file: Path,
-    scratch: Path,
-    execute,
-) -> tuple[bool, float, str]:
-    """Prepare and execute one WPT with a runtime-specific callback."""
-    try:
-        scratch.write_text(
-            prepare_wpt_code(test_file, wpt_dir), encoding="utf-8"
-        )
-        process_passed, duration_ms, output = execute(scratch)
-        completed = WPT_COMPLETION_MARKER in output
-        if process_passed and not completed:
-            output = (output.rstrip() + "\nWPT harness did not report completion").lstrip()
-        return process_passed and completed, duration_ms, output
-    finally:
-        try:
-            scratch.unlink()
-        except FileNotFoundError:
-            pass
 
 def make_log_path(label: str) -> Path:
     """Return a revision-tagged, timestamped log path under .deps/compliance/logs/.

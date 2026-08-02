@@ -14,7 +14,6 @@ workflow. Start with the smallest document that answers the task at hand.
 - Build instructions: [../../BUILDING.md](../../BUILDING.md)
 - Test selection guide: [testing.md](testing.md)
 - Conformance work guide: [compliance.md](compliance.md)
-- WinterTC coverage matrix: [wintertc-coverage.md](wintertc-coverage.md)
 - Upstream sync playbook: [upstream-sync.md](upstream-sync.md)
 - Performance tracking: [benchmarking.md](benchmarking.md)
 - Execution plans and tech debt: [../exec-plans/index.md](../exec-plans/index.md)

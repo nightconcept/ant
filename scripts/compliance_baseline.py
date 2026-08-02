@@ -44,7 +44,8 @@ def load_baseline(path: Path) -> dict:
         return baseline
 
     # One-way, read-only migration bridge for a PR whose base branch still has
-    # the numeric schema. Schema-1 suite ID 1 was not WinterTC and is not mapped.
+    # the numeric schema. Schema-1 suite ID 1 was an obsolete aggregate and is
+    # not mapped to either active suite.
     legacy_map = {"2": "regression", "3": "test262"}
     suites = {}
     for tier, suite_id in legacy_map.items():
@@ -171,6 +172,41 @@ def cmd_update(args) -> int:
     baseline["schema_version"] = 2
     baseline.setdefault("suites", {})
     baseline.pop("tiers", None)
+
+    if suite_id == "test262" and suite_id in baseline["suites"]:
+        previous = baseline["suites"][suite_id]
+        previous_categories = previous.get("categories", {})
+        current_categories = manifest.get("categories", {})
+        missing = sorted(set(previous_categories) - set(current_categories))
+        shrunken = [
+            name for name in previous_categories.keys() & current_categories.keys()
+            if current_categories[name].get("total", 0) < previous_categories[name].get("total", 0)
+        ]
+        previous_failures = {
+            test
+            for category in previous_categories.values()
+            for test in category.get("failing", [])
+        }
+        current_failures = {
+            test
+            for category in current_categories.values()
+            for test in category.get("failing", [])
+        }
+        newly_failing = sorted(current_failures - previous_failures)
+        if missing or shrunken or newly_failing:
+            print(
+                "error: refusing to reduce Test262 coverage or add failures; "
+                "compare the full run with the existing baseline first.",
+                file=sys.stderr,
+            )
+            if missing:
+                print(f"  missing categories: {', '.join(missing)}", file=sys.stderr)
+            if shrunken:
+                print(f"  shrunken categories: {', '.join(sorted(shrunken))}", file=sys.stderr)
+            if newly_failing:
+                print(f"  newly failing tests: {len(newly_failing)}", file=sys.stderr)
+            return 1
+
     baseline["suites"][suite_id] = manifest
     save_baseline(baseline, baseline_path)
 

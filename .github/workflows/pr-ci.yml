@@ -142,21 +142,10 @@ jobs:
       logical_branch: main
       baseline_revision: ${{ needs.classify.outputs.baseline_revision }}
 
-  compliance-wintertc:
-    name: PR WinterTC
-    needs: classify
-    if: needs.classify.outputs.build_changed == 'true'
-    uses: ./.github/workflows/compliance-gate.yml
-    with:
-      suite: wintertc
-      source_revision: ${{ github.sha }}
-      logical_branch: main
-      baseline_revision: ${{ needs.classify.outputs.baseline_revision }}
-
   compliance-test262:
     name: PR Test262
     needs: classify
-    if: needs.classify.outputs.runtime_changed == 'true' || github.event_name == 'merge_group'
+    if: needs.classify.outputs.build_changed == 'true' || github.event_name == 'merge_group'
     uses: ./.github/workflows/compliance-gate.yml
     with:
       suite: test262
@@ -172,7 +161,6 @@ jobs:
       - repo-knowledge
       - workflow-lint
       - build-and-test
-      - compliance-wintertc
       - compliance-regression
       - compliance-test262
     runs-on: ubuntu-latest
@@ -193,7 +181,6 @@ jobs:
           REPO_RESULT: ${{ needs.repo-knowledge.result }}
           WORKFLOW_RESULT: ${{ needs.workflow-lint.result }}
           BUILD_RESULT: ${{ needs.build-and-test.result }}
-          WINTERTC_RESULT: ${{ needs.compliance-wintertc.result }}
           REGRESSION_RESULT: ${{ needs.compliance-regression.result }}
           TEST262_RESULT: ${{ needs.compliance-test262.result }}
         run: node .github/agents/check_pr_gate.js

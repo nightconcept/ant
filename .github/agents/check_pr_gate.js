@@ -28,15 +28,13 @@ if (env.WORKFLOW_CHANGED === "true") {
 
 if (env.BUILD_CHANGED === "true") {
   requireSuccess("build-and-test", env.BUILD_RESULT);
-  requireSuccess("wintertc", env.WINTERTC_RESULT);
   requireSuccess("regression", env.REGRESSION_RESULT);
 } else {
   requireSkippedOrSuccess("build-and-test", env.BUILD_RESULT);
-  requireSkippedOrSuccess("wintertc", env.WINTERTC_RESULT);
   requireSkippedOrSuccess("regression", env.REGRESSION_RESULT);
 }
 
-if (env.RUNTIME_CHANGED === "true" || env.EVENT_NAME === "merge_group") {
+if (env.BUILD_CHANGED === "true" || env.EVENT_NAME === "merge_group") {
   requireSuccess("test262", env.TEST262_RESULT);
 } else {
   requireSkippedOrSuccess("test262", env.TEST262_RESULT);

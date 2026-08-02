@@ -8,7 +8,6 @@ Store in-progress execution plans here.
 
 ## Active
 
-- [Compliance Suite Realignment](compliance-suite-realignment.md)
 - [Dynamic Property Performance](dynamic-property-perf.md)
   - [Dynamic Property Performance Extras](dynamic-property-perf-extras.md)
 - [GC Pool-Pressure Retest](gc-pool-pressure-retest.md)

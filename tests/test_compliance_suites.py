@@ -16,7 +16,7 @@ class NamedManifestTests(unittest.TestCase):
     def test_summary_tracker_writes_named_schema_two_manifest(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            log_path = root / "wintertc_run.log"
+            log_path = root / "regression_run.log"
             revision = {
                 "commit": "a" * 40,
                 "short": "aaaaaaaa",
@@ -29,18 +29,18 @@ class NamedManifestTests(unittest.TestCase):
                 mock.patch.object(compliance_common, "git_revision", return_value=revision),
             ):
                 tracker = compliance_common.SummaryTracker(
-                    "wintertc", "WinterTC", log_path=log_path
+                    "regression", "Ant Regression", log_path=log_path
                 )
-                tracker.add("WPT: url/example.any.js", True, 1.0)
+                tracker.add("examples/spec/arrays.js", True, 1.0)
                 self.assertEqual(tracker.print_summary(), 0)
 
             manifest = json.loads(log_path.with_suffix(".json").read_text())
             self.assertEqual(manifest["schema_version"], 2)
-            self.assertEqual(manifest["suite_id"], "wintertc")
-            self.assertEqual(manifest["suite"], "WinterTC")
+            self.assertEqual(manifest["suite_id"], "regression")
+            self.assertEqual(manifest["suite"], "Ant Regression")
             self.assertNotIn("tier", manifest)
             self.assertEqual(
-                (root / "wintertc-latest.json").resolve(),
+                (root / "regression-latest.json").resolve(),
                 log_path.with_suffix(".json"),
             )
 
@@ -54,9 +54,9 @@ class NamedManifestTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("--suite", result.stdout)
-        self.assertIn("wintertc", result.stdout)
         self.assertIn("regression", result.stdout)
         self.assertIn("test262", result.stdout)
+        self.assertNotIn("wintertc", result.stdout)
         self.assertNotIn("--" + "tier", result.stdout)
 
     def test_failure_parser_exposes_named_suites_only(self):
@@ -85,8 +85,8 @@ class NamedManifestTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("--suite", result.stdout)
-        self.assertIn("wintertc", result.stdout)
         self.assertNotIn("--smoke", result.stdout)
+        self.assertNotIn("wintertc", result.stdout)
 
     def test_regression_baseline_recipe_requires_a_passing_run(self):
         justfile = (Path(__file__).resolve().parent.parent / "justfile").read_text()

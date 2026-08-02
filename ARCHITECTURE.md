@@ -55,8 +55,7 @@ meant to answer "where should this change live?" before anyone starts editing.
 
 - `tests/` contains focused runtime tests.
 - `examples/spec/` is the main spec regression suite.
-- `.deps/compliance/test262` and `.deps/compliance/wpt` hold pinned external
-  corpora. `tests/wintertc/wpt-manifest.json` selects WinterTC tests.
+- `.deps/compliance/test262` holds the pinned external Test262 corpus.
 - See [docs/repo/testing.md](docs/repo/testing.md) for the recommended command
   set by change type.
 

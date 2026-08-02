@@ -57,7 +57,7 @@ HEADER_COMMIT_RE = re.compile(r"^Commit\s*:\s*([0-9a-fA-F]+)", re.MULTILINE)
 HEADER_BRANCH_RE = re.compile(r"^Branch\s*:\s*(.+)$", re.MULTILINE)
 HEADER_TREE_RE = re.compile(r"^Tree\s*:\s*(\w+)", re.MULTILINE)
 FILENAME_SHA_RE = re.compile(
-    r"^(?:wintertc|regression|test262|tier\d+)_\d{8}_\d{6}_"
+    r"^(?:regression|test262|tier\d+)_\d{8}_\d{6}_"
     r"([0-9a-fA-F]{6,40})(-dirty)?\.log$"
 )
 
@@ -237,7 +237,7 @@ def load(suite=None, log=None):
         text = open(log, errors="replace").read()
         results[os.path.basename(log)] = (log, parse_summary(text), parse_log(log), _staleness_entry(log, text))
         return results
-    suites = [suite] if suite else ["wintertc", "regression", "test262"]
+    suites = [suite] if suite else ["regression", "test262"]
     for suite_id in suites:
         path = latest_log(suite_id)
         if not path:
@@ -315,7 +315,7 @@ def cmd_list(results, filt):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--suite", choices=["wintertc", "regression", "test262"])
+    ap.add_argument("--suite", choices=["regression", "test262"])
     ap.add_argument("--log", help="parse a specific log file")
     ap.add_argument("--list", action="store_true", help="list every failing test")
     ap.add_argument("--group", choices=["category", "message", "type"])
