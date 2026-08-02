@@ -197,7 +197,7 @@ Verification:
 ```bash
 nix shell nixpkgs#actionlint -c actionlint -ignore SC2129 .github/workflows/release.yml
 git diff --check
-gh release view v12.3.0 --repo theMackabu/ant
+gh release view v12.3.0 --repo nightconcept/ant
 git ls-remote --tags origin refs/tags/v12.3.0
 ```
 
@@ -370,10 +370,11 @@ Performance acceptance:
 - if performance is flat, keep only changes justified by correctness and
   maintainability.
 
-Rollback: revert the two commits independently; the PR infrastructure remains
-in place.
+Rollback: revert the atomic Iterator runtime commit; the PR infrastructure
+remains in place. The implementation combined the planned result-path and
+direct-record commits because they edit the same constructor call sites.
 
-Status: [ ] not started
+Status: [~] implementation and local validation complete; pilot PR pending
 
 ### Phase 5: Retire `dev` and confirm post-merge behavior
 
@@ -487,7 +488,9 @@ Status: [ ] not started
 - 2026-08-01: Plan written. Verified that the failed `v12.3.0` publication
   created neither a GitHub release nor a remote tag.
 - 2026-08-01: Fixed release publication by passing `--repo` to `gh release
-  create`; actionlint accepts the workflow.
+  create`; actionlint accepts the workflow. Redispatched Release run
+  `30725514247`; it published `v12.3.0` at commit `51c501d7` with seven
+  platform archives, `SHA256SUMS`, and build provenance.
 - 2026-08-01: Added the adaptive PR gate, tested classifier and aggregate gate,
   trusted-base reusable compliance workflow, and adaptive post-merge `main`
   health workflow. The Iterator feature remains the first real PR.
@@ -497,3 +500,24 @@ Status: [ ] not started
   newer release, runtime, test, and documentation work on `main`; no unique
   `dev` patch needs replay. Preserve `dev` until the pilot PR merges, then tag
   its current tip before deletion.
+- 2026-08-01: The bootstrap `main` run `30725500593` passed all six platform
+  builds, Tier 1, Tier 2 exact-set comparison, and repository checks. Workflow
+  lint alone failed because actionlint v1.7.7 did not support the existing
+  `case()` expression. The Iterator branch updates both callers to v1.7.12.
+- 2026-08-01: Completed the Iterator direct-record implementation and local
+  validation before opening its PR. Focused tests pass; the full spec suite
+  passes 3,672/3,672 across 98 files; Tier 2 passes 471/471. Filtered Test262
+  manifest `tier3_20260801_175735_51c501d7-dirty.json` passes 367/514, with
+  126 newly passing and zero newly failing tests against the trusted baseline.
+  Fast benchmark manifest `bench_20260801_174627.json` and full manifest
+  `bench_20260801_175534.json` cross no gates. Generators & Iterators improves
+  from 325.0 ms to 312.6 ms (-3.8%), with flat RSS and +0.2% binary size.
+  This dirty filtered run was preliminary evidence; rerun it after the final
+  feature commit before opening the PR. Source-path inspection confirms that
+  helper `next()` no longer allocates its result object before it knows that it
+  will return one, and result keys use the runtime's interned symbols. The RSS
+  measurement is flat, so do not claim a measured peak-memory reduction.
+- 2026-08-01: Kept the result-allocation and direct-record changes in one
+  runtime commit. They modify the same helper-result control-flow hunks, so an
+  independent revert would leave mismatched constructors and call sites. Revert
+  the atomic Iterator commit if rollback is required.

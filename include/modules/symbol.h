@@ -69,16 +69,15 @@ static inline ant_value_t sym_this_cb(ant_t *js, ant_value_t *args, int nargs) {
  * because it is observable through Object.keys on the result. The result is a
  * freshly allocated (young) object, so no write barrier is required.
  */
-static inline ant_value_t js_iter_result(ant_t *js, bool has_value, ant_value_t value) {
+static inline ant_value_t js_iter_result_done(ant_t *js, ant_value_t value, bool done) {
   ant_value_t result = js_mkobj(js);
-  if (__builtin_expect(has_value, 1)) {
-    mkprop_interned(js, result, js->intern.done, js_false, 0);
-    mkprop_interned(js, result, js->intern.value, value, 0);
-  } else {
-    mkprop_interned(js, result, js->intern.done, js_true, 0);
-    mkprop_interned(js, result, js->intern.value, js_mkundef(), 0);
-  }
+  mkprop_interned(js, result, js->intern.done, done ? js_true : js_false, 0);
+  mkprop_interned(js, result, js->intern.value, value, 0);
   return result;
+}
+
+static inline ant_value_t js_iter_result(ant_t *js, bool has_value, ant_value_t value) {
+  return js_iter_result_done(js, has_value ? value : js_mkundef(), !has_value);
 }
 
 static inline ant_value_t js_iter_next_result(ant_t *js, js_iter_advance_fn advance) {
