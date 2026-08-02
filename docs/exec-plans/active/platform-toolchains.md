@@ -207,7 +207,8 @@ just structure
   in `flake.nix`; any future cache change needs explicit review.
 - Building all four Unix architecture combinations belongs in CI after local
   validation. Restoring the old master-only cache workflow unchanged would not
-  match this fork's `dev`, `main`, and `upstream` branch gates.
+  match this fork's protected `main` pull-request gate and `upstream` record
+  workflow.
 - mise's Windows downloads and MSYS2 CLANG64 packages can overlap.
   Documentation should name which installation owns each executable to avoid
   mixed PATHs.

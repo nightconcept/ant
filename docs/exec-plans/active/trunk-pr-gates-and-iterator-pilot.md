@@ -374,7 +374,7 @@ Rollback: revert the atomic Iterator runtime commit; the PR infrastructure
 remains in place. The implementation combined the planned result-path and
 direct-record commits because they edit the same constructor call sites.
 
-Status: [~] implementation and local validation complete; pilot PR pending
+Status: [x] complete
 
 ### Phase 5: Retire `dev` and confirm post-merge behavior
 
@@ -424,7 +424,7 @@ Every remaining `dev` reference must be intentional historical context.
 Move this plan to `docs/exec-plans/completed/` after recording workflow run
 URLs, manifests, the release URL, the archive tag, and the Iterator PR result.
 
-Status: [ ] not started
+Status: [~] cleanup PR pending; archive tag is published
 
 ## Testing Strategy
 
@@ -539,3 +539,13 @@ Status: [ ] not started
   because the aggregate job had not checked out `check_pr_gate.js`. Added a
   read-only merge-candidate checkout to `PR Gate` and a structural regression
   test that requires checkout before script execution.
+- 2026-08-01: Pilot run `30728524874` passed the aggregate `PR Gate` after all
+  six platform builds, Tier 2, and the pinned full Tier 3 exact-set comparison
+  passed. Activated repository ruleset `20214907`, requiring pull requests,
+  strict current-with-base `PR Gate`, resolved conversations, squash merges,
+  and main deletion/force-push protection. PR #1 merged through the protected
+  route as `cc8c269a`.
+- 2026-08-01: Published annotated tag `archive/dev-20260801` at the audited
+  final `dev` tip `e7c38d90`. No open pull requests target `dev`. Started the
+  protected cleanup change to remove the obsolete workflow and branch-facing
+  instructions; branch deletion remains after that cleanup lands.

@@ -1,7 +1,7 @@
 # Testing Guide
 
 Status: active
-Last reviewed: 2026-07-30
+Last reviewed: 2026-08-01
 Owner: theMackabu
 
 This guide keeps validation proportional to the change while still protecting runtime behavior.
@@ -43,36 +43,33 @@ This guide keeps validation proportional to the change while still protecting ru
 - Validate any new repo-knowledge or workflow checks locally with
   `maid knowledge` and `maid structure`.
 
-## CI Workflows By Branch
+## CI Workflows
 
-This fork does not use pull requests — all work lands via direct pushes to
-`dev`, `main`, or `upstream`. Each branch has its own top-level workflow that
-triggers only on `push` to that branch (plus `workflow_dispatch` for manual
-runs), so a single push fires exactly one of them.
+Normal work starts from current `main` on a short-lived branch and enters
+`main` through a pull request. The repository ruleset requires the aggregate
+`PR Gate`, requires the branch to be current with `main`, and blocks force
+pushes and deletion of `main`.
 
-- **`.github/workflows/dev-ci.yml`** (branch `dev`): `build-and-test` (all 6
-  platform binaries, with the WinterTC gate running in the Linux x64 build
-  and failing it if any test fails), `repo-knowledge` (doc-link and
-  changed-file structure checks).
-- **`.github/workflows/main-ci.yml`** (branch `main`): everything in
-  `dev-ci.yml`, plus `compliance-tier2` — Tier 2 metric collection
-  (`--allow-failures --log`) followed by an exact failing-test-set comparison
-  with that branch's `docs/repo/compliance-baseline.json`. The gate fails
-  closed if the baseline or full manifest is absent or invalid, the manifest
-  identifies a different source revision, or any covered test newly fails.
-  All jobs gate merges to `main`. Tier 1 is already gated inside
-  `build-platform.yml`, so a push is checked against tiers 1 and 2.
+- **`.github/workflows/pr-ci.yml`** (pull requests to `main`): always runs
+  classification and repository checks. It runs workflow lint for CI changes,
+  all six platform builds plus Tier 1 and Tier 2 for build/code changes, and a
+  full Tier 3 exact-set comparison for runtime changes and merge groups. The
+  final `PR Gate` fails unless every job required by the classification passes.
+  Docs-only changes still produce the same required aggregate status.
+- **`.github/workflows/main-ci.yml`** (push to `main`): validates the exact
+  landed SHA and produces post-merge evidence. It adapts by changed-file class:
+  repository checks always run; workflow lint runs for automation changes;
+  code/build changes run all six platform builds, Tier 1, and Tier 2. This is a
+  post-merge alarm, not a substitute for the pull-request gate.
 - **`.github/workflows/upstream-ci.yml`** (branch `upstream`): identical job
   set and bar to `main-ci.yml`. `upstream` is a record of `theMackabu/ant`'s
   work kept for history and inspection, so this workflow exists to tell us when
   that record stops building — not to clear anything for submission.
 - **`.github/workflows/tier3-weekly.yml`** (schedule): tier 3 is ~50k
   Test262/WPT tests, too slow to sit in front of a push, so it runs weekly
-  (Mondays 04:00 UTC) plus on demand. A two-entry matrix explicitly checks out
-  `main` and `dev`; each independently builds that ref, runs the full suite,
-  compares exact failing-test names with that branch's checked-in baseline,
-  and uploads `tier3-compliance-main` or `tier3-compliance-dev`. Branch-aware
-  concurrency prevents the two jobs from cancelling one another.
+  (Mondays 04:00 UTC) plus on demand. It checks out `main`, runs the full pinned
+  corpus, compares exact failing-test names with the trusted baseline, and
+  uploads `tier3-compliance-main`.
 
 **No performance gate runs in CI.** The bench threshold assertion compared
 absolute milliseconds against a baseline recorded on a developer machine, which
@@ -82,13 +79,13 @@ measurements are in [../exec-plans/tech-debt.md](../exec-plans/tech-debt.md);
 speed and memory are checked locally with `just bench-fast-diff`.
 
 Compare tiers as failing-test *sets*, not percentages: a net-positive rate can
-still hide a newly failing test, and only the sets separate the two. Baselines
-belong to the branch that checks them in; do not reuse a manifest or baseline
-refresh from another branch merely because its aggregate totals match.
+still hide a newly failing test, and only the sets separate the two. The
+trusted baseline belongs to `main`. Do not promote a filtered, dirty, or
+different-corpus manifest merely because its aggregate totals look better.
 
 Reusable/utility workflows are not part of any branch's automatic signal —
 they're `workflow_call` targets or `workflow_dispatch`-only:
-`build-platform.yml` (single-platform build, called by all 3 CI workflows),
+`build-platform.yml` (single-platform build, called by the CI workflows),
 `build-nanos.yml`, `build-musl-sandboxes.yml`, `build-single.yml` (manual
 sandbox/single-platform builds).
 
