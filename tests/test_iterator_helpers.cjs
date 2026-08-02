@@ -198,6 +198,20 @@ same(Object.keys(Iterator.from(plain([1])).next()).join(","), "done,value", "res
   same(closes, 1, "invalid callback closes the iterator without reading next");
 }
 
+for (const name of ["every", "some", "find", "forEach", "reduce"]) {
+  let nextGets = 0;
+  let closes = 0;
+  const source = {
+    get next() { nextGets++; throw new Error("next must not be read"); },
+    return() { closes++; return {}; },
+  };
+  let typeError = false;
+  try { Iterator.prototype[name].call(source); } catch (error) { typeError = error instanceof TypeError; }
+  assert(typeError, `${name} invalid callback throws TypeError`);
+  same(nextGets, 0, `${name} invalid callback does not read next`);
+  same(closes, 1, `${name} invalid callback closes the iterator`);
+}
+
 {
   const effects = [];
   const source = {

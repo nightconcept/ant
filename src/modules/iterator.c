@@ -136,6 +136,13 @@ restore_abrupt:
   return completion;
 }
 
+static ant_value_t invalid_terminal_callback(ant_t *js, const char *method) {
+  ant_value_t error = js_mkerr_typed(js, JS_ERR_TYPE, "%s requires a callable", method);
+  if (!is_object_type(js->this_val)) return error;
+  direct_iter_t record = { .iterator = js->this_val, .next = js_mkundef() };
+  return direct_iter_close(js, &record, error, true);
+}
+
 static inline ant_value_t set_iter_result(ant_t *js, ant_value_t value, bool done) {
   return js_iter_result_done(js, value, done);
 }
@@ -386,7 +393,7 @@ static ant_value_t iter_flatMap(ant_t *js, ant_value_t *args, int nargs) {
 
 static ant_value_t iter_every(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1 || !is_callable(args[0]))
-    return js_mkerr_typed(js, JS_ERR_TYPE, "Iterator.prototype.every requires a callable");
+    return invalid_terminal_callback(js, "Iterator.prototype.every");
   ant_value_t fn = args[0];
 
   direct_iter_t it;
@@ -408,7 +415,7 @@ static ant_value_t iter_every(ant_t *js, ant_value_t *args, int nargs) {
 
 static ant_value_t iter_some(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1 || !is_callable(args[0]))
-    return js_mkerr_typed(js, JS_ERR_TYPE, "Iterator.prototype.some requires a callable");
+    return invalid_terminal_callback(js, "Iterator.prototype.some");
   ant_value_t fn = args[0];
 
   direct_iter_t it;
@@ -430,7 +437,7 @@ static ant_value_t iter_some(ant_t *js, ant_value_t *args, int nargs) {
 
 static ant_value_t iter_find(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1 || !is_callable(args[0]))
-    return js_mkerr_typed(js, JS_ERR_TYPE, "Iterator.prototype.find requires a callable");
+    return invalid_terminal_callback(js, "Iterator.prototype.find");
   ant_value_t fn = args[0];
 
   direct_iter_t it;
@@ -452,7 +459,7 @@ static ant_value_t iter_find(ant_t *js, ant_value_t *args, int nargs) {
 
 static ant_value_t iter_forEach(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1 || !is_callable(args[0]))
-    return js_mkerr_typed(js, JS_ERR_TYPE, "Iterator.prototype.forEach requires a callable");
+    return invalid_terminal_callback(js, "Iterator.prototype.forEach");
   ant_value_t fn = args[0];
 
   direct_iter_t it;
@@ -473,7 +480,7 @@ static ant_value_t iter_forEach(ant_t *js, ant_value_t *args, int nargs) {
 
 static ant_value_t iter_reduce(ant_t *js, ant_value_t *args, int nargs) {
   if (nargs < 1 || !is_callable(args[0]))
-    return js_mkerr_typed(js, JS_ERR_TYPE, "Iterator.prototype.reduce requires a callable");
+    return invalid_terminal_callback(js, "Iterator.prototype.reduce");
   ant_value_t fn = args[0];
   bool has_init = (nargs >= 2);
 
