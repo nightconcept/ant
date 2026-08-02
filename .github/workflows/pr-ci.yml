@@ -102,7 +102,7 @@ jobs:
           ref: ${{ github.sha }}
       - name: Install actionlint
         env:
-          ACTIONLINT_VERSION: v1.7.7
+          ACTIONLINT_VERSION: v1.7.12
         run: |
           go install "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}"
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"

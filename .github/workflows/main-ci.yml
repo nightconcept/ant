@@ -82,7 +82,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
       - name: Install actionlint
         env:
-          ACTIONLINT_VERSION: v1.7.7
+          ACTIONLINT_VERSION: v1.7.12
         run: |
           go install "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}"
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
