@@ -243,6 +243,15 @@ def cmd_diff(args) -> int:
     filter_value = manifest.get("filter")
     manifest_categories = manifest.get("categories", {})
     base_categories = base_suite.get("categories", {})
+    missing_categories = []
+    shrunken_categories = []
+    if args.require_full:
+        missing_categories = sorted(set(base_categories) - set(manifest_categories))
+        for name in sorted(set(base_categories) & set(manifest_categories)):
+            baseline_total = base_categories[name].get("total", 0)
+            current_total = manifest_categories[name].get("total", 0)
+            if current_total < baseline_total:
+                shrunken_categories.append((name, baseline_total, current_total))
 
     worse = []
     better = []
@@ -298,6 +307,18 @@ def cmd_diff(args) -> int:
                   f"{cur_cat['failed']} failing (untracked before)")
         print()
 
+    if missing_categories:
+        print(f"Corpus regression: missing categories ({len(missing_categories)}):")
+        for cat_name in missing_categories:
+            print(f"  - {cat_name}")
+        print()
+
+    if shrunken_categories:
+        print(f"Corpus regression: categories with fewer tests ({len(shrunken_categories)}):")
+        for cat_name, baseline_total, current_total in shrunken_categories:
+            print(f"  - {cat_name}: baseline {baseline_total}, now {current_total}")
+        print()
+
     if worse:
         print(f"Regressed categories ({len(worse)}):")
         for cat_name, cur_cat, base_cat, newly_failing, newly_passing in worse:
@@ -342,7 +363,12 @@ def cmd_diff(args) -> int:
 
     print("=" * 72)
 
-    regressed = bool(worse) or bool(new_categories and any(c["failed"] for _, c in new_categories))
+    regressed = (
+        bool(worse)
+        or bool(new_categories and any(c["failed"] for _, c in new_categories))
+        or bool(missing_categories)
+        or bool(shrunken_categories)
+    )
     if regressed:
         if args.allow_regressions:
             print("Regressions found, but --allow-regressions was passed: exiting 0.")

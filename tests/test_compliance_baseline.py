@@ -118,6 +118,24 @@ class ComplianceBaselineTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("partial", result.stderr)
 
+    def test_required_full_manifest_rejects_category_shrinkage(self):
+        self.seed(manifest())
+        current = manifest()
+        current["totals"].update(total=1, passed=1, pass_rate=100.0)
+        current["categories"]["synthetic"].update(total=1, passed=1)
+        result = self.run_diff(current, "--require-baseline", "--require-full")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("fewer tests", result.stdout)
+
+    def test_required_full_manifest_rejects_missing_category(self):
+        self.seed(manifest())
+        current = manifest()
+        current["totals"].update(total=0, passed=0, pass_rate=0.0)
+        current["categories"] = {}
+        result = self.run_diff(current, "--require-baseline", "--require-full")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing categories", result.stdout)
+
     def test_expected_revision_and_branch_are_exact(self):
         self.seed(manifest())
         result = self.run_diff(
