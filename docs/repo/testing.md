@@ -100,9 +100,9 @@ commit, enter its full 40-character SHA; the workflow rejects any SHA not
 reachable from `main`. Set **prerelease** only for an intentionally
 pre-release publication.
 
-The workflow runs WinterTC through the Linux x64 platform build. It also runs
-the Ant Regression exact-set gate before it creates a tag or release. Test262
-remains the scheduled and on-demand conformance suite.
+The workflow runs separate WinterTC and Ant Regression exact-set gates before
+it creates a tag or release. Test262 remains the scheduled and on-demand
+conformance suite.
 It builds every asset from the resolved SHA, then attaches target archives,
 `SHA256SUMS`, and `provenance.json`. Normal pushes to `main` never publish a
 release.

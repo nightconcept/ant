@@ -474,13 +474,26 @@ def run_wpt_test(
 ) -> tuple[bool, float, str]:
     """Execute one prepared WPT source and require testharness completion."""
     scratch = test_file.parent / f"{WPT_TMP_PREFIX}{sequence}_{test_file.name}"
+    return execute_prepared_wpt(
+        wpt_dir,
+        test_file,
+        scratch,
+        lambda path: run_js_test(ant_bin, path, timeout_sec=timeout_sec),
+    )
+
+
+def execute_prepared_wpt(
+    wpt_dir: Path,
+    test_file: Path,
+    scratch: Path,
+    execute,
+) -> tuple[bool, float, str]:
+    """Prepare and execute one WPT with a runtime-specific callback."""
     try:
         scratch.write_text(
             prepare_wpt_code(test_file, wpt_dir), encoding="utf-8"
         )
-        process_passed, duration_ms, output = run_js_test(
-            ant_bin, scratch, timeout_sec=timeout_sec
-        )
+        process_passed, duration_ms, output = execute(scratch)
         completed = WPT_COMPLETION_MARKER in output
         if process_passed and not completed:
             output = (output.rstrip() + "\nWPT harness did not report completion").lstrip()

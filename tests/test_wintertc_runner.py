@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from scripts import compliance_common
+from scripts import generate_wintertc_surface
 
 
 class WinterTCRunnerTests(unittest.TestCase):
@@ -118,6 +119,17 @@ class WinterTCRunnerTests(unittest.TestCase):
             "JSTag",
         ):
             self.assertIn(name, contract)
+
+    def test_api_surface_and_coverage_matrix_match_machine_table(self):
+        contract = generate_wintertc_surface.load_contract()
+        self.assertEqual(
+            generate_wintertc_surface.TEST_PATH.read_text(),
+            generate_wintertc_surface.render_test(contract),
+        )
+        self.assertEqual(
+            generate_wintertc_surface.DOC_PATH.read_text(),
+            generate_wintertc_surface.render_doc(contract),
+        )
 
     def test_prepare_wpt_code_rejects_missing_meta_script(self):
         test = self.root / "url/missing.any.js"

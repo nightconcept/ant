@@ -9,13 +9,16 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.compliance_common import (
-    WPT_COMPLETION_MARKER,
     WPT_TMP_PREFIX,
     discover_wpt_tests,
     ensure_wpt_repo,
-    prepare_wpt_code,
+    execute_prepared_wpt,
 )
-from scripts.run_compliance_wintertc import API_SURFACE_PATH, MANIFEST_PATH
+from scripts.run_compliance_wintertc import (
+    API_SURFACE_PATH,
+    MANIFEST_PATH,
+    sweep_stale_wpt_files,
+)
 
 from compliance_common import MultiRuntimeTracker, make_log_path, run_js_test
 
@@ -50,29 +53,27 @@ def run_wintertc(
             }
         tracker.add_test("WinterTC: API surface", results)
 
-    for sequence, item in enumerate(selected):
-        name = f"WPT: {item.path.relative_to(wpt_dir).as_posix()}"
-        results = {}
-        for runtime_index, runtime in enumerate(runtimes):
-            scratch = item.path.parent / (
-                f"{WPT_TMP_PREFIX}{sequence}_{runtime_index}_{item.path.name}"
-            )
-            try:
-                scratch.write_text(prepare_wpt_code(item.path, wpt_dir), encoding="utf-8")
-                passed, duration_ms, output = run_js_test(runtime, scratch)
-                completed = WPT_COMPLETION_MARKER in output
-                if passed and not completed:
-                    passed = False
-                    output += "\nWPT harness did not report completion"
-            finally:
-                try:
-                    scratch.unlink()
-                except OSError:
-                    pass
-            results[runtime["id"]] = {
-                "passed": passed,
-                "duration_ms": duration_ms,
-                "details": output if not passed else "",
-            }
-        tracker.add_test(name, results)
+    sweep_stale_wpt_files(wpt_dir)
+    try:
+        for sequence, item in enumerate(selected):
+            name = f"WPT: {item.path.relative_to(wpt_dir).as_posix()}"
+            results = {}
+            for runtime_index, runtime in enumerate(runtimes):
+                scratch = item.path.parent / (
+                    f"{WPT_TMP_PREFIX}{sequence}_{runtime_index}_{item.path.name}"
+                )
+                passed, duration_ms, output = execute_prepared_wpt(
+                    wpt_dir,
+                    item.path,
+                    scratch,
+                    lambda path, runtime=runtime: run_js_test(runtime, path),
+                )
+                results[runtime["id"]] = {
+                    "passed": passed,
+                    "duration_ms": duration_ms,
+                    "details": output if not passed else "",
+                }
+            tracker.add_test(name, results)
+    finally:
+        sweep_stale_wpt_files(wpt_dir)
     return tracker.print_suite_summary()
