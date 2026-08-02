@@ -320,6 +320,17 @@ def discover_wpt_tests(wpt_dir: Path, manifest_path: Path) -> list[WPTTest]:
             rel = path.relative_to(wpt_dir).as_posix()
             if any(fnmatch.fnmatch(rel, excluded) for excluded in excludes):
                 continue
+            content = path.read_text(encoding="utf-8", errors="replace")
+            declared_globals = re.findall(
+                r"^\s*//\s*META:\s*global=(\S+)", content, re.MULTILINE
+            )
+            if declared_globals and all(
+                "worker" not in value and "jsshell" not in value
+                for value in declared_globals
+            ):
+                raise WPTManifestError(
+                    f"WPT test {rel} declares global=window and needs a window-only exclusion"
+                )
             previous = selected.get(rel)
             if previous and previous.category != category:
                 raise WPTManifestError(
@@ -342,8 +353,8 @@ def prepare_wpt_code(test_file: Path, wpt_dir: Path) -> str:
         raise WPTManifestError(f"WPT testharness is missing: {harness_path}")
     content = test_file.read_text(encoding="utf-8", errors="replace")
     parts = [
-        harness_path.read_text(encoding="utf-8", errors="replace"),
         WPT_SHELL_SHIM,
+        harness_path.read_text(encoding="utf-8", errors="replace"),
     ]
     root = wpt_dir.resolve()
     for reference in _WPT_META_SCRIPT_RE.findall(content):

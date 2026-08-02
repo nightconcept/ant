@@ -22,12 +22,10 @@ from compliance_common import MultiRuntimeTracker, make_log_path, run_js_test
 
 def run_wintertc(
     runtimes: list[dict],
-    smoke: bool = False,
     filter_term: str | None = None,
     log_all: bool = False,
     log_fail: bool = False,
 ) -> dict:
-    del smoke
     wpt_dir = ensure_wpt_repo()
     selected = discover_wpt_tests(wpt_dir, MANIFEST_PATH)
     if filter_term:

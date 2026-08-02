@@ -11,6 +11,7 @@ WORKFLOW = REPO_ROOT / ".github" / "workflows" / "pr-ci.yml"
 BUILD_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "build-platform.yml"
 MAIN_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "main-ci.yml"
 RELEASE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "release.yml"
+UPSTREAM_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "upstream-ci.yml"
 
 
 BASE_ENV = {
@@ -105,6 +106,7 @@ class PullRequestGateTests(unittest.TestCase):
         release = RELEASE_WORKFLOW.read_text()
         self.assertIn("suite: wintertc", release)
         self.assertIn("compliance-wintertc", release)
+        self.assertIn("suite: wintertc", UPSTREAM_WORKFLOW.read_text())
 
 
 if __name__ == "__main__":

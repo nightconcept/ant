@@ -171,7 +171,7 @@ compliance-update-wintertc:
         exit 1
     fi
     meson compile -C build
-    python3 scripts/run_compliance.py --suite wintertc --all --log-fail || true
+    python3 scripts/run_compliance.py --suite wintertc --all --allow-failures --log-fail
     python3 scripts/compliance_baseline.py update .deps/compliance/logs/wintertc-latest.json
 
 # Full clean Ant Regression run, then promote its manifest to the checked-in baseline
@@ -183,7 +183,7 @@ compliance-update-regression:
         exit 1
     fi
     meson compile -C build
-    python3 scripts/run_compliance.py --suite regression --all --log-fail || true
+    python3 scripts/run_compliance.py --suite regression --all --log-fail
     python3 scripts/compliance_baseline.py update .deps/compliance/logs/regression-latest.json
 
 # Full clean Test262 run (~50k tests), then promote its manifest
@@ -196,7 +196,7 @@ compliance-update-test262:
     fi
     echo "Running the full Test262 suite (~50k tests) - this takes a while."
     meson compile -C build
-    python3 scripts/run_compliance.py --suite test262 --all --log-fail || true
+    python3 scripts/run_compliance.py --suite test262 --all --allow-failures --log-fail
     python3 scripts/compliance_baseline.py update .deps/compliance/logs/test262-latest.json
 
 # Run WinterTC and diff the resulting manifest against the checked-in baseline

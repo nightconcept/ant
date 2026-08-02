@@ -26,6 +26,9 @@ class WinterTCRunnerTests(unittest.TestCase):
             "test(() => assert_true(helperLoaded), 'helper');\n"
         )
         (self.root / "url" / "server.any.js").write_text("test(() => {}, 'server');\n")
+        (self.root / "url" / "window.any.js").write_text(
+            "// META: global=window\ntest(() => {}, 'window');\n"
+        )
         (self.root / "url" / "support.js").write_text("throw new Error('not a test');\n")
         (self.root / "streams" / "basic.any.js").write_text("test(() => {}, 'stream');\n")
 
@@ -46,6 +49,7 @@ class WinterTCRunnerTests(unittest.TestCase):
             ],
             "excludes": [
                 {"pattern": "url/server.any.js", "reason": "server-required"},
+                {"pattern": "url/window.any.js", "reason": "window-only"},
             ],
         }
 
@@ -64,6 +68,12 @@ class WinterTCRunnerTests(unittest.TestCase):
         with self.assertRaisesRegex(compliance_common.WPTManifestError, "reason"):
             compliance_common.discover_wpt_tests(self.root, self.write_manifest(value))
 
+    def test_manifest_rejects_selected_window_only_test(self):
+        value = self.manifest()
+        value["excludes"] = [value["excludes"][0]]
+        with self.assertRaisesRegex(compliance_common.WPTManifestError, "global=window"):
+            compliance_common.discover_wpt_tests(self.root, self.write_manifest(value))
+
     def test_manifest_fails_when_an_include_matches_nothing(self):
         value = self.manifest()
         value["includes"].append({"pattern": "missing/**/*.any.js", "category": "missing"})
@@ -72,6 +82,7 @@ class WinterTCRunnerTests(unittest.TestCase):
 
     def test_prepare_wpt_code_resolves_meta_scripts_and_requires_completion(self):
         code = compliance_common.prepare_wpt_code(self.root / "url/basic.any.js", self.root)
+        self.assertLess(code.index("globalThis.GLOBAL"), code.index("// harness"))
         self.assertLess(code.index("// harness"), code.index("const helperLoaded"))
         self.assertLess(code.index("const helperLoaded"), code.index("helperLoaded), 'helper'"))
         self.assertIn("globalThis.GLOBAL", code)
@@ -90,9 +101,23 @@ class WinterTCRunnerTests(unittest.TestCase):
         for path in (
             "url/url-constructor.any.js",
             "url/url-setters.any.js",
+            "fetch/api/request/request-bad-port.any.js",
+            "fetch/api/response/response-blob-realm.any.js",
             "fetch/api/response/response-clone.any.js",
         ):
-            self.assertEqual(exclusions.get(path), "server-required")
+            self.assertIn(exclusions.get(path), {"server-required", "window-only"})
+
+    def test_api_surface_checks_all_tc55_global_properties(self):
+        contract = (
+            compliance_common.REPO_ROOT / "tests/wintertc/api-surface.js"
+        ).read_text()
+        for name in (
+            "onerror",
+            "onunhandledrejection",
+            "onrejectionhandled",
+            "JSTag",
+        ):
+            self.assertIn(name, contract)
 
     def test_prepare_wpt_code_rejects_missing_meta_script(self):
         test = self.root / "url/missing.any.js"

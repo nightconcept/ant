@@ -67,6 +67,9 @@ for (const name of requiredFunctions) {
 for (const name of ['console', 'crypto', 'performance', 'navigator', 'self']) {
   if (!(name in globalThis)) missing.push(name);
 }
+for (const name of ['onerror', 'onunhandledrejection', 'onrejectionhandled']) {
+  if (!(name in globalThis)) missing.push(name);
+}
 if (!globalThis.navigator || typeof globalThis.navigator.userAgent !== 'string') {
   missing.push('navigator.userAgent');
 }
@@ -76,6 +79,7 @@ for (const name of [
   'Global', 'Instance', 'Memory', 'Module', 'Table', 'Tag', 'Exception',
   'CompileError', 'LinkError', 'RuntimeError', 'compile', 'compileStreaming',
   'instantiate', 'instantiateStreaming', 'validate',
+  'JSTag',
 ]) {
   if (!wasm || typeof wasm[name] !== 'function') missing.push(`WebAssembly.${name}`);
 }

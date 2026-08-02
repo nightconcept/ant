@@ -86,6 +86,15 @@ class NamedManifestTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("--suite", result.stdout)
         self.assertIn("wintertc", result.stdout)
+        self.assertNotIn("--smoke", result.stdout)
+
+    def test_regression_baseline_recipe_requires_a_passing_run(self):
+        justfile = (Path(__file__).resolve().parent.parent / "justfile").read_text()
+        recipe = justfile.split("compliance-update-regression:", 1)[1].split(
+            "compliance-update-test262:", 1
+        )[0]
+        self.assertNotIn("|| true", recipe)
+        self.assertNotIn("--allow-failures", recipe)
 
 
 class RegressionDiscoveryTests(unittest.TestCase):

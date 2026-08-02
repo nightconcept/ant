@@ -124,6 +124,15 @@ jobs:
       # docs/exec-plans/tech-debt.md; performance is gated locally via
       # `just bench-fast-diff` in the meantime.
 
+  compliance-wintertc:
+    name: WinterTC Gate
+    uses: ./.github/workflows/compliance-gate.yml
+    with:
+      suite: wintertc
+      source_revision: ${{ github.sha }}
+      logical_branch: upstream
+      baseline_revision: ${{ github.sha }}
+
   repo-knowledge:
     name: Repo Knowledge
     runs-on: ubuntu-latest

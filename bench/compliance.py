@@ -176,7 +176,6 @@ def save_compliance_json_and_baseline(runtimes: list[dict], suite_results: dict,
 def main():
     parser = argparse.ArgumentParser(description="Multi-Runtime Compliance Benchmark Orchestrator")
     parser.add_argument("--suite", choices=["wintertc", "regression", "test262", "all"], default="all", help="Select suite to execute (default: all)")
-    parser.add_argument("--smoke", action="store_true", help="Run official online smoke test subset")
     parser.add_argument("--all", action="store_true", help="Run full local test suite (default)")
     parser.add_argument("-f", "--filter", type=str, help="Filter test name by substring")
     parser.add_argument("--runtimes", type=str, help="Comma-separated runtime IDs to run (e.g. 'ant,tjs,node,deno,bun')")
@@ -187,8 +186,6 @@ def main():
     parser.add_argument("--allow-failures", action="store_true", help="Exit with 0 even if some tests fail")
     parser.add_argument("--update-baseline", action="store_true", help="Update checked-in compliance baseline file with run manifest")
     args = parser.parse_args()
-
-    smoke_mode = args.smoke and not args.all
 
     extra_runtimes = []
     if args.add_runtime:
@@ -206,26 +203,25 @@ def main():
         print(f"{RED}Error: No valid runtimes resolved.{RESET}")
         sys.exit(1)
 
-    mode_str = "Smoke Test" if smoke_mode else "Full Suite"
-    print(draw_compliance_header_box(runtimes, mode_str))
+    print(draw_compliance_header_box(runtimes, "Full Suite"))
 
     suite_results = {}
     overall_exit_code = 0
 
     if args.suite in ("wintertc", "all"):
-        stats = run_wintertc(runtimes, smoke=smoke_mode, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)
+        stats = run_wintertc(runtimes, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)
         suite_results["WinterTC"] = stats
         if any(st["failed"] > 0 for st in stats.values()):
             overall_exit_code = 1
 
     if args.suite in ("regression", "all"):
-        stats = run_regression(runtimes, smoke=smoke_mode, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)
+        stats = run_regression(runtimes, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)
         suite_results["Ant Regression"] = stats
         if any(st["failed"] > 0 for st in stats.values()):
             overall_exit_code = 1
 
     if args.suite in ("test262", "all"):
-        stats = run_test262(runtimes, smoke=smoke_mode, filter_term=args.filter, limit=args.limit, log_all=args.log, log_fail=args.log_fail)
+        stats = run_test262(runtimes, filter_term=args.filter, limit=args.limit, log_all=args.log, log_fail=args.log_fail)
         suite_results["Test262"] = stats
         if any(st["failed"] > 0 for st in stats.values()):
             overall_exit_code = 1

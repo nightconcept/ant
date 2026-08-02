@@ -15,12 +15,10 @@ from compliance_common import MultiRuntimeTracker, make_log_path, run_js_test
 
 def run_regression(
     runtimes: list[dict],
-    smoke: bool = False,
     filter_term: str | None = None,
     log_all: bool = False,
     log_fail: bool = False,
 ) -> dict:
-    del smoke
     selected = discover_regression_tests(REPO_ROOT)
     if filter_term:
         selected = [item for item in selected if filter_term.lower() in item.name.lower()]

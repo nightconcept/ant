@@ -20,13 +20,11 @@ from compliance_common import MultiRuntimeTracker, make_log_path, run_js_test
 
 def run_test262(
     runtimes: list[dict],
-    smoke: bool = False,
     filter_term: str | None = None,
     limit: int | None = None,
     log_all: bool = False,
     log_fail: bool = False,
 ) -> dict:
-    del smoke
     test262_dir = ensure_test262_repo()
     selected = discover_test262_tests(test262_dir, filter_term, limit)
     log_path = make_log_path("test262") if log_all or log_fail else None

@@ -64,6 +64,9 @@ has one of these reasons:
 Do not exclude a test because Ant fails required behavior. Keep that test as a
 visible failure.
 
+The [WinterTC coverage matrix](wintertc-coverage.md) maps every TC55 interface,
+method, and property to the local contract and selected WPT evidence.
+
 ## Manifests and Logs
 
 Each logged run writes two files:
