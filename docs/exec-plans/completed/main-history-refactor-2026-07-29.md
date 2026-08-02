@@ -1,7 +1,7 @@
 # Main History Refactor (2026-07-29)
 
-Status: in progress
-Last reviewed: 2026-07-29
+Status: completed
+Last reviewed: 2026-08-01
 Owner: Core Engineering
 
 ## Goal

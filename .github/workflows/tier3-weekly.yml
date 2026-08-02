@@ -1,8 +1,8 @@
 name: Tier 3 Weekly
 
 # Tier 3 is ~50k Test262/WPT tests and takes far too long to sit in front of a
-# push. It runs on a schedule instead, against both `main` and `dev`, and each
-# branch compares its exact failing-test set with its own checked-in baseline.
+# push. It runs on a schedule against `main` and compares the exact failing-test
+# set with the checked-in trusted baseline.
 on:
   schedule:
     # Mondays, 04:00 UTC - off-peak, and a full working week before anyone is
@@ -16,20 +16,16 @@ permissions:
 
 jobs:
   compliance-tier3:
-    name: Compliance (Tier 3, ${{ matrix.branch }})
+    name: Compliance (Tier 3, main)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        branch: [main, dev]
     concurrency:
-      group: tier3-weekly-${{ matrix.branch }}
+      group: tier3-weekly-main
       cancel-in-progress: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
-          ref: ${{ matrix.branch }}
+          ref: main
 
       - name: Record checked-out source
         id: source
@@ -64,7 +60,7 @@ jobs:
       - name: Setup build caches
         uses: ./.github/actions/setup-build-caches
         with:
-          platform: compliance-${{ matrix.branch }}-linux-x64
+          platform: compliance-main-linux-x64
           compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
           zig_version: "0.16.0"
 
@@ -94,12 +90,12 @@ jobs:
             --require-baseline \
             --require-full \
             --expect-commit "${{ steps.source.outputs.commit }}" \
-            --expect-branch "${{ matrix.branch }}"
+            --expect-branch main
 
       - name: Upload tier 3 manifest and log
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
-          name: tier3-compliance-${{ matrix.branch }}
+          name: tier3-compliance-main
           path: .deps/compliance/logs/tier3_*
           if-no-files-found: error

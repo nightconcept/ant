@@ -7,8 +7,8 @@ Owner: theMackabu
 ## Goal
 
 Reduce Ant's overall peak RSS while preserving enough speed to remain
-competitive with txiki.js. Keep the collector experiment separable from
-`dev`, retain its measurement history, and track its relationship to the
+competitive with txiki.js. Keep the collector experiment on a short-lived
+branch from `main`, retain its measurement history, and track its relationship to the
 upstream performance branch where the policy was first developed.
 
 ## Provenance
@@ -26,7 +26,7 @@ upstream performance branch where the policy was first developed.
   never merged into upstream master.
 
 The current experiment intentionally ports only the opt-in telemetry and the
-1 MiB pool-pressure floor. It keeps the current `dev` nursery adaptation,
+1 MiB pool-pressure floor. It keeps the current `main` nursery adaptation,
 forced-collection cadence, coroutine handling, and stack scanning.
 
 ## Measurement Results
@@ -90,7 +90,7 @@ Raw manifests:
 
 ## Follow-Ups
 
-1. Run the full benchmark tier before proposing the change for `dev`.
+1. Run the full benchmark tier before opening a pull request to `main`.
 2. Run the broad spec suite and the appropriate compliance checks before
    treating the branch as landable.
 3. Re-run JSON in a quiet paired session to distinguish noise from a real

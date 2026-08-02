@@ -1,7 +1,7 @@
 # Compliance Work Guide
 
 Status: active
-Last reviewed: 2026-07-30
+Last reviewed: 2026-08-01
 Owner: theMackabu
 
 This guide covers work whose goal is moving Ant's conformance numbers: Test262,
@@ -90,7 +90,7 @@ header:
 === Tier 3 - Full Conformance (Test262 / WPT / Frameworks) ===
 Started  : 2026-07-26 08:41:12
 Commit   : 0ad56fb9...
-Branch   : dev
+Branch   : main
 Tree     : clean
 ```
 
@@ -117,7 +117,7 @@ built in `SummaryTracker` (`scripts/compliance_common.py`) and has this shape:
   "tier": 3,
   "started": "2026-07-26T08:53:35",
   "finished": "2026-07-26T09:14:02",
-  "revision": { "commit": "...", "short": "...", "dirty": false, "branch": "dev", "subject": "..." },
+  "revision": { "commit": "...", "short": "...", "dirty": false, "branch": "main", "subject": "..." },
   "filter": "language/module-code",
   "totals": { "total": 599, "passed": 474, "failed": 125, "pass_rate": 79.1 },
   "categories": {
@@ -135,10 +135,9 @@ makes per-category diffing across runs cheap and precise.
 
 ## The Checked-In Baseline
 
-`docs/repo/compliance-baseline.json` holds the most recent full-run manifest
-per tier, keyed by tier number: `{"schema_version": 1, "tiers": {"1": {...},
-"2": {...}}}`. Each long-lived branch owns its checked-in copy; a baseline
-refresh made on `dev` is not automatically a `main` baseline.
+`docs/repo/compliance-baseline.json` holds the most recent trusted full-run
+manifest per tier, keyed by tier number: `{"schema_version": 1, "tiers":
+{"1": {...}, "2": {...}}}`. The protected `main` branch owns this baseline.
 
 For interactive use, `diff` treats a missing tier baseline as "nothing to
 compare", prints that, and exits 0. Seed a missing Tier 3 entry with
@@ -164,11 +163,11 @@ case; call the script directly for a manifest from an ad-hoc or filtered run):
 CI adds `--require-baseline --require-full --expect-commit <sha>
 --expect-branch <branch>`. Together these require a valid clean full-run
 baseline, reject a filtered or stale current manifest, verify that its revision
-matches the exact checkout, and make missing inputs fatal. The `main` and
-`upstream` push workflows apply this gate to Tier 2. The scheduled and manually
-dispatched Tier 3 workflow runs separate `main` and `dev` matrix jobs every
-Monday at 04:00 UTC; each job uses its branch's baseline and uploads a
-branch-qualified artifact.
+matches the exact checkout, and make missing inputs fatal. The pull-request
+gate reads its trusted comparison baseline from the base `main` revision, so a
+candidate cannot weaken its own gate. The `main` and `upstream` push workflows
+apply the gate to Tier 2. The scheduled and manually dispatched Tier 3 workflow
+runs `main` every Monday at 04:00 UTC and uploads `tier3-compliance-main`.
 
 ## Compliance Vs Other Runtimes
 

@@ -1,7 +1,7 @@
 # Post-Audit Correctness and Compliance Gates
 
-Status: active
-Last reviewed: 2026-07-30
+Status: completed; final two-branch rollout superseded by protected trunk
+Last reviewed: 2026-08-01
 Owner: Core Engineering
 
 ## Goal
@@ -232,11 +232,11 @@ Final local validation on the corrected runtime:
 - `just bench-fast-diff`: Array Operations +0.5%; no time, RSS, or size
   threshold regressions.
 
-The plan remains active because live CI confirmation is an external rollout
-step. The commits have not been pushed, and the checked-out `main` branch does
-not yet contain the new baseline-tool options. Land the shared tooling on the
-long-lived branches, publish `dev`, then dispatch `tier3-weekly.yml` and record
-the two job/artifact URLs before moving this plan to `completed/`.
+The runtime and exact-set work landed. The planned two-branch rollout was
+superseded by the protected-trunk migration: `main` now owns the trusted
+baseline, runtime pull requests run Tier 3 before merge, and weekly Tier 3 runs
+against `main` only. The historical two-branch decisions below are retained as
+execution history.
 
 ## Decision Log
 

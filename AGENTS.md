@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Status: active
-Last reviewed: 2026-04-09
+Last reviewed: 2026-08-01
 Owner: theMackabu
 
 This file is the table of contents for agent work in Ant. Start here, then
@@ -17,12 +17,11 @@ entire repository into context.
 
 ## Branches
 
-Three long-lived branches, each with its own CI gate (see
-[docs/repo/testing.md](docs/repo/testing.md)):
-- **`dev`** — active work. Build all platforms + tier 1.
-- **`main`** — release-quality, and where "upstreamable" is the standard. Needs
-  tier 1 at 100% and no tier 1/2 regression against `dev`, compared as
-  failing-test *sets*. Tier 3 runs weekly and must not regress. No perf gate.
+Two long-lived branches (see [docs/repo/testing.md](docs/repo/testing.md)):
+- **`main`** — protected, release-quality trunk. Start normal work from current
+  `main` on a short-lived `feat/*`, `fix/*`, `perf/*`, `compliance/*`, `docs/*`,
+  `chore/*`, or `ci/*` branch and merge it through a pull request. The required
+  `PR Gate` must pass completely. There is no hosted performance gate.
 - **`upstream`** — a record, not a delivery target: it tracks
   `theMackabu/ant`'s work and keeps our history legible for inspection.
 

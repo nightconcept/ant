@@ -1,7 +1,7 @@
 # Active Plans
 
 Status: active
-Last reviewed: 2026-07-30
+Last reviewed: 2026-08-01
 Owner: theMackabu
 
 Store in-progress execution plans here.
@@ -13,10 +13,8 @@ Store in-progress execution plans here.
 - [GC Pool-Pressure Retest](gc-pool-pressure-retest.md)
 - [Large AST Workload Performance](large-ast-workload-perf.md)
 - [LLVM 21 Codegen Investigation](llvm-21-codegen-investigation.md)
-- [Main History Refactor (2026-07-29)](main-history-refactor-2026-07-29.md)
 - [Nanos Sandbox](nanos-sandbox.md)
 - [Platform Toolchains](platform-toolchains.md)
-- [Post-Audit Correctness and Compliance Gates](post-audit-correctness-and-compliance-gates.md)
 - [Silver Recursive JIT Performance](silver-recursive-jit-perf.md)
 - [Trunk PR Gates and Iterator Pilot](trunk-pr-gates-and-iterator-pilot.md)
 - [WICG Observable Migration](wicg-observable.md)

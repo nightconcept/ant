@@ -1,11 +1,12 @@
 # Upstream Sync Guide
 
 Status: active
-Last reviewed: 2026-07-27
+Last reviewed: 2026-08-01
 Owner: theMackabu
 
-How to pull `theMackabu/ant` (`upstream/master`) into this fork's `dev` without
-losing our work or silently inheriting a regression we can't explain.
+How to pull `theMackabu/ant` (`upstream/master`) into this fork's protected
+`main` without losing our work or silently inheriting a regression we cannot
+explain.
 
 For the meaning of the compliance tiers and the bar each one has to clear, read
 [compliance.md](compliance.md) first. This guide only covers the sync.
@@ -61,7 +62,9 @@ a different design, not a better version of the same one — record what we lose
 ### 3. Merge and resolve
 
 ```
-git checkout -b sync/upstream-<date> dev
+git switch main
+git pull --ff-only
+git switch -c sync/upstream-<date>
 git merge --no-commit --no-ff upstream/master
 ```
 
@@ -116,12 +119,15 @@ The three-way split matters because a merge can post a large net gain and still
 hide a resolution bug inside it. Rate comparisons cannot tell the two apart;
 only the failing-test *sets* can.
 
-### 6. Land it
+### 6. Land it through the protected route
 
 Tier 1 must be at 100%. Tier 2 and tier 3 must show no failure that
 `attribute` blames on us. Inherited upstream regressions are a judgement call —
 they are usually worth accepting to stay close to upstream, but list them
 explicitly in the merge commit or PR so they are not discovered later as ours.
+
+Push the sync branch and open a pull request to `main`. The required `PR Gate`
+must pass; do not push the merge directly to `main`.
 
 ## What A Sync Is Not
 
@@ -137,6 +143,6 @@ per [compliance.md](compliance.md), in a shape small enough to send upstream.
 
 - Compliance tiers and the definition of done: [compliance.md](compliance.md)
 - Validation scope: [testing.md](testing.md)
-- Branch layout (`dev` / `main` / `upstream`): [../../AGENTS.md](../../AGENTS.md).
+- Branch layout (`main` / `upstream`): [../../AGENTS.md](../../AGENTS.md).
   Note that `upstream` is a record of `theMackabu/ant`'s work kept for history
   and inspection; "upstreamable" is `main`'s standard.
