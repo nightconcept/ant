@@ -132,7 +132,7 @@ python3 -m unittest tests.test_compliance_baseline
 python3 -m py_compile scripts/compliance_common.py scripts/compliance_baseline.py scripts/run_compliance.py scripts/dashboard.py
 ```
 
-**Status:** [ ] not started
+**Status:** [x] complete
 
 ### Phase 2: Real WinterTC Runner
 
@@ -182,7 +182,7 @@ python3 scripts/run_compliance_wintertc.py --list
 python3 scripts/run_compliance_wintertc.py --filter url --limit 10 --log-fail
 ```
 
-**Status:** [ ] not started
+**Status:** [x] complete
 
 ### Phase 3: Ant Regression Suite
 
@@ -218,7 +218,7 @@ python3 scripts/run_compliance_regression.py --filter url --log-fail
 ./build/ant examples/spec/run.js --all
 ```
 
-**Status:** [ ] not started
+**Status:** [x] complete
 
 ### Phase 4: Test262 Rename
 
@@ -250,7 +250,7 @@ python3 -m unittest tests.test_compliance_suites
 python3 scripts/run_compliance_test262.py --filter built-ins/Array/prototype/map --limit 20 --log-fail
 ```
 
-**Status:** [ ] not started
+**Status:** [x] complete
 
 ### Phase 5: Commands, CI, Baselines, and Documentation
 
@@ -321,7 +321,7 @@ The final `rg` command must return no live operational references. Historical
 completed plans may retain old names only when changing them would falsify the
 record.
 
-**Status:** [ ] not started
+**Status:** [x] complete
 
 ### Phase 6: Close WinterTC Compliance Gaps
 
@@ -377,7 +377,7 @@ Done means the full clean WinterTC run is 100%, every TC55-required API has a
 coverage-matrix entry, all exclusions are justified as outside the standard or
 harness-only, and Ant Regression has no failing-set regression.
 
-**Status:** [ ] not started
+**Status:** [ ] in progress; the exact failure set is baselined
 
 ## Testing Strategy
 
@@ -434,3 +434,10 @@ fabricate named baselines by merely changing keys on old aggregate Tier 1 data.
 - 2026-08-01: Plan created after comparing Ant's runners with Kawa's WPT-based
   WinterTC runner. Chose the names WinterTC, Ant Regression, and Test262; chose
   a pinned allowlist rather than Kawa's unpinned recursive JavaScript scan.
+- 2026-08-01: Implemented schema 2, the three named runners, shared
+  multi-runtime discovery, named CI gates, commands, dashboards, failure
+  analysis, and documentation through red-green tests.
+- 2026-08-01: Generated clean full-suite baselines at commit `2916d9fc`.
+  Ant Regression passed 569/569. Test262 passed 34,527/53,428. WinterTC passed
+  78/436. The 358 WinterTC failures remain visible for Phase 6; the largest
+  groups are WebCrypto, WebAssembly, Streams, and Encoding.
