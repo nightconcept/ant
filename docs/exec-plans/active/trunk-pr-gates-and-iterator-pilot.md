@@ -522,3 +522,10 @@ Status: [ ] not started
   runtime commit. They modify the same helper-result control-flow hunks, so an
   independent revert would leave mismatched constructors and call sites. Revert
   the atomic Iterator commit if rollback is required.
+- 2026-08-01: Pilot PR #1 correctly blocked its first merge attempt. All six
+  platforms, Tier 2, repository checks, and workflow lint passed. Tier 3 cloned
+  a newer Test262 `main` than the baseline used (53,578 tests, including 140
+  more Iterator tests), so 127 tests absent from the baseline were reported as
+  regressions. Pinned Test262 to baseline corpus commit `07dbcbca04c5` in the
+  shared compliance runner; the suite pin must move only with an intentional
+  full baseline refresh.
