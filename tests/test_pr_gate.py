@@ -7,6 +7,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / ".github" / "agents" / "check_pr_gate.js"
+WORKFLOW = REPO_ROOT / ".github" / "workflows" / "pr-ci.yml"
 
 
 BASE_ENV = {
@@ -69,6 +70,12 @@ class PullRequestGateTests(unittest.TestCase):
         result = self.run_gate(EVENT_NAME="merge_group")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("tier3", result.stderr)
+
+    def test_aggregate_job_checks_out_its_gate_script(self):
+        aggregate_job = WORKFLOW.read_text().split("\n  pr-gate:\n", 1)[1]
+        checkout = aggregate_job.index("uses: actions/checkout@")
+        execute = aggregate_job.index("run: node .github/agents/check_pr_gate.js")
+        self.assertLess(checkout, execute)
 
 
 if __name__ == "__main__":
