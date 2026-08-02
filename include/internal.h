@@ -181,10 +181,9 @@ struct ant_isolate_t {
   ant_object_t *objects;
   ant_object_t *permanent_objects;
   ant_process_state_t *process_state;
+  ant_events_state_t *events_state;
 
   ant_fixed_arena_t obj_arena;
-  ant_prop_ref_t *prop_refs;
-
   ant_fixed_arena_t closure_arena;
   ant_fixed_arena_t upvalue_arena;
   
@@ -256,11 +255,22 @@ struct ant_isolate_t {
     ant_value_t async_generator_proto;
     ant_value_t async_iterator_proto;
   } sym;
+
+  struct {
+    #define ANT_BUILTIN(name) ant_value_t name;
+    #define ANT_BUILTIN_ARR(name, n) ant_value_t name[n];
+    #include "isolate_values.h"
+  } builtins;
+
+  struct {
+    #define ANT_MUTABLE_ROOT(name) ant_value_t name;
+    #define ANT_MUTABLE_ROOT_ARR(name, n) ant_value_t name[n];
+    #include "isolate_values.h"
+  } mutable_roots;
   
   ant_offset_t max_size;
-  ant_offset_t prop_refs_len;
-  ant_offset_t prop_refs_cap;
   js_error_site_t errsite;
+  double perf_time_origin_ms;
 
   struct {
     ant_pool_t rope;
@@ -273,6 +283,7 @@ struct ant_isolate_t {
   struct {
     size_t closures;
     size_t upvalues;
+    size_t arrays;
   } alloc_bytes;
   
   size_t gc_last_live;
@@ -481,20 +492,23 @@ ant_value_t js_proxy_has(ant_t *js, ant_value_t proxy, const char *key, size_t k
 
 ant_value_t tov(double d);
 double tod(ant_value_t v);
+
 double js_to_number(ant_t *js, ant_value_t arg);
+double js_parse_int_value(ant_t *js, ant_value_t arg);
+double js_parse_float_value(ant_t *js, ant_value_t arg);
 
 bool js_obj_ensure_prop_capacity(ant_object_t *obj, uint32_t needed);
 bool js_obj_ensure_unique_shape(ant_object_t *obj);
 
-ant_value_t js_propref_load(ant_t *js, ant_offset_t handle);
 ant_value_t js_template_to_string(ant_t *js, ant_value_t v);
+ant_value_t js_define_property(ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor, bool reflect_mode);
 
 ant_value_t mkprop(ant_t *js, ant_value_t obj, ant_value_t k, ant_value_t v, uint8_t attrs);
 ant_value_t mkprop_interned(ant_t *js, ant_value_t obj, const char *interned_key, ant_value_t v, uint8_t attrs);
 ant_value_t mkprop_interned_exact(ant_t *js, ant_value_t obj, const char *interned_key, ant_value_t v, uint8_t attrs);
+
 ant_value_t setprop_cstr(ant_t *js, ant_value_t obj, const char *key, size_t len, ant_value_t v);
 ant_value_t setprop_interned(ant_t *js, ant_value_t obj, const char *key, size_t len, ant_value_t v);
-ant_value_t js_define_property(ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor, bool reflect_mode);
 
 // TODO: move into builder.c
 typedef struct {
@@ -525,6 +539,7 @@ bool js_inspect_header_for(js_inspect_builder_t *builder, ant_value_t obj, const
 ant_value_t js_inspect_builder_result(js_inspect_builder_t *builder);
 ant_value_t js_define_own_prop(ant_t *js, ant_value_t obj, const char *key, size_t klen, ant_value_t v);
 ant_value_t js_instance_proto_from_new_target(ant_t *js, ant_value_t fallback_proto);
+ant_value_t js_construct_native(ant_t *js, ant_cfunc_t ctor, ant_value_t *args, int nargs);
 
 ant_value_t js_get_module_import_binding(ant_t *js);
 ant_value_t js_builtin_import(ant_t *js, ant_value_t *args, int nargs);
@@ -546,16 +561,19 @@ bool same_ctor_identity(ant_t *js, ant_value_t a, ant_value_t b);
 
 js_intern_stats_t js_intern_stats(void);
 const char *intern_string(const char *str, size_t len);
+size_t intern_length(const char *interned);
+
 js_cstr_t js_to_cstr(ant_t *js, ant_value_t value, char *stack_buf, size_t stack_size);
+js_cstr_t js_inspect_cstr(ant_t *js, ant_value_t value, char *stack_buf, size_t stack_size);
 
-ant_value_t  lkp_interned_val(ant_t *js, ant_value_t obj, const char *search_intern);
-ant_offset_t lkp_interned(ant_t *js, ant_value_t obj, const char *search_intern);
+ant_value_t lkp_interned_val(ant_t *js, ant_value_t obj, const char *search_intern);
+ant_prop_loc_t lkp_interned(ant_value_t obj, const char *search_intern);
 
-ant_offset_t lkp(ant_t *js, ant_value_t obj, const char *buf, size_t len);
-ant_offset_t lkp_proto(ant_t *js, ant_value_t obj, const char *buf, size_t len);
+ant_prop_loc_t lkp(ant_t *js, ant_value_t obj, const char *buf, size_t len);
+ant_prop_loc_t lkp_proto(ant_t *js, ant_value_t obj, const char *buf, size_t len);
 
-ant_offset_t lkp_sym(ant_t *js, ant_value_t obj, ant_offset_t sym_off);
-ant_offset_t lkp_sym_proto(ant_t *js, ant_value_t obj, ant_offset_t sym_off);
+ant_prop_loc_t lkp_sym(ant_value_t obj, ant_offset_t sym_off);
+ant_prop_loc_t lkp_sym_proto(ant_t *js, ant_value_t obj, ant_offset_t sym_off);
 
 ant_offset_t vstr(ant_t *js, ant_value_t value, ant_offset_t *len);
 ant_offset_t vstrlen(ant_t *js, ant_value_t value);

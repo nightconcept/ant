@@ -5,6 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <argtable3.h>
@@ -341,27 +342,6 @@ static char *read_stdin(size_t *len) {
   return buf;
 }
 
-static char *read_file(const char *filename, size_t *len) {
-  FILE *fp = fopen(filename, "rb");
-  if (!fp) return NULL;
-  
-  fseek(fp, 0, SEEK_END);
-  long size = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-  
-  char *buffer = malloc(size + 1);
-  if (!buffer) {
-    fclose(fp);
-    return NULL;
-  }
-  
-  *len = fread(buffer, 1, size, fp);
-  fclose(fp);
-  buffer[*len] = '\0';
-  
-  return buffer;
-}
-
 static void eval_code(
   ant_t *js, const char *script, size_t len,
   const char *tag, bool should_print, bool module_type
@@ -546,6 +526,8 @@ int main(int argc, char *argv[]) {
   
   #ifdef _WIN32
   ant_output_init_console();
+  #else
+  signal(SIGPIPE, SIG_IGN);
   #endif
   
   setup_console_colors();

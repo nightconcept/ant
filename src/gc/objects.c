@@ -625,13 +625,6 @@ static void gc_mark_roots(ant_t *js) {
   gc_mark_worker_threads(js, gc_mark_value);
   gc_mark_sandbox(js, gc_mark_value);
   gc_mark_abort(js, gc_mark_value);
-  gc_mark_domexception(js, gc_mark_value);
-  gc_mark_queuing_strategies(js, gc_mark_value);
-  gc_mark_readable_streams(js, gc_mark_value);
-  gc_mark_writable_streams(js, gc_mark_value);
-  gc_mark_transform_streams(js, gc_mark_value);
-  gc_mark_codec_streams(js, gc_mark_value);
-  gc_mark_compression_streams(js, gc_mark_value);
   gc_mark_zlib(js, gc_mark_value);
   gc_mark_wasm(js, gc_mark_value);
   gc_mark_napi(js, gc_mark_value);
@@ -679,6 +672,8 @@ void gc_object_free(ant_t *js, ant_object_t *obj) {
   }
 
   if (obj->type_tag == T_ARR && obj->u.array.data) {
+    size_t bytes = (size_t)obj->u.array.cap * sizeof(*obj->u.array.data);
+    js->alloc_bytes.arrays = js->alloc_bytes.arrays > bytes ? js->alloc_bytes.arrays - bytes : 0;
     free(obj->u.array.data);
     obj->u.array.data = NULL;
   }

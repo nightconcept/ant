@@ -31,8 +31,8 @@ static size_t ta_metadata_bytes     = 0;
 static size_t buffer_registry_count = 0;
 static size_t buffer_registry_cap   = 0;
 
-static ArrayBufferData **buffer_registry   = NULL;
-static ant_value_t g_typedarray_iter_proto = 0;
+// TODO: move to isolate
+static ArrayBufferData **buffer_registry = NULL;
 
 static void *ta_meta_alloc(size_t size) {
   void *ptr = ant_calloc(size);
@@ -206,7 +206,7 @@ static ant_value_t ta_values(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t iter = js_mkobj(js);
   js_set_slot_wb(js, iter, SLOT_DATA, js->this_val);
   js_set_slot(iter, SLOT_ITER_STATE, js_mknum((double)ITER_STATE_PACK(ARR_ITER_VALUES, 0)));
-  js_set_proto_init(iter, g_typedarray_iter_proto);
+  js_set_proto_init(iter, js->builtins.typedarray_iter_proto);
   return iter;
 }
 
@@ -214,7 +214,7 @@ static ant_value_t ta_keys(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t iter = js_mkobj(js);
   js_set_slot_wb(js, iter, SLOT_DATA, js->this_val);
   js_set_slot(iter, SLOT_ITER_STATE, js_mknum((double)ITER_STATE_PACK(ARR_ITER_KEYS, 0)));
-  js_set_proto_init(iter, g_typedarray_iter_proto);
+  js_set_proto_init(iter, js->builtins.typedarray_iter_proto);
   return iter;
 }
 
@@ -222,7 +222,7 @@ static ant_value_t ta_entries(ant_t *js, ant_value_t *args, int nargs) {
   ant_value_t iter = js_mkobj(js);
   js_set_slot_wb(js, iter, SLOT_DATA, js->this_val);
   js_set_slot(iter, SLOT_ITER_STATE, js_mknum((double)ITER_STATE_PACK(ARR_ITER_ENTRIES, 0)));
-  js_set_proto_init(iter, g_typedarray_iter_proto);
+  js_set_proto_init(iter, js->builtins.typedarray_iter_proto);
   return iter;
 }
 
@@ -646,31 +646,6 @@ static bool typedarray_read_number(const TypedArrayData *ta_data, size_t index, 
   R_FLOAT32: *out = (double)((float *)data)[index];    return true;
   R_FLOAT64: *out = ((double *)data)[index];           return true;
   R_FAIL:    return false;
-}
-
-static bool typedarray_write_number(TypedArrayData *ta_data, size_t index, double value) {
-  if (!ta_data || !ta_data->buffer || ta_data->buffer->is_detached || index >= ta_data->length) return false;
-  uint8_t *data = ta_data->buffer->data + ta_data->byte_offset;
-
-  static const void *dispatch[] = {
-    &&W_INT8, &&W_UINT8, &&W_UINT8_CLAMPED, &&W_INT16, &&W_UINT16,
-    &&W_INT32, &&W_UINT32, &&W_FLOAT16, &&W_FLOAT32, &&W_FLOAT64, &&W_FAIL, &&W_FAIL
-  };
-
-  if (ta_data->type > TYPED_ARRAY_BIGUINT64) goto W_FAIL;
-  goto *dispatch[ta_data->type];
-
-  W_INT8:    ((int8_t *)data)[index] = (int8_t)js_to_int32(value);     return true;
-  W_UINT8:   data[index] = (uint8_t)js_to_uint32(value);               return true;
-  W_UINT8_CLAMPED: data[index] = typedarray_to_uint8_clamped(value);   return true;
-  W_INT16:   ((int16_t *)data)[index] = (int16_t)js_to_int32(value);   return true;
-  W_UINT16:  ((uint16_t *)data)[index] = (uint16_t)js_to_uint32(value); return true;
-  W_INT32:   ((int32_t *)data)[index] = js_to_int32(value);            return true;
-  W_UINT32:  ((uint32_t *)data)[index] = js_to_uint32(value);          return true;
-  W_FLOAT16: ((uint16_t *)data)[index] = double_to_half(value); return true;
-  W_FLOAT32: ((float *)data)[index] = (float)value;       return true;
-  W_FLOAT64: ((double *)data)[index] = value;             return true;
-  W_FAIL:    return false;
 }
 
 static ant_value_t js_typedarray_every(ant_t *js, ant_value_t *args, int nargs) {
@@ -2554,7 +2529,7 @@ static ant_value_t js_buffer_from(ant_t *js, ant_value_t *args, int nargs) {
       free(decoded);
       return create_typed_array(js, TYPED_ARRAY_UINT8, buffer, 0, decoded_len, "Buffer");
     } else if (encoding == ENC_UCS2) {
-      size_t unit_count = utf16_strlen(str, len);
+      size_t unit_count = (size_t)str_utf16_len(js, args[0]);
       size_t decoded_len = unit_count * 2;
       ArrayBufferData *buffer = create_array_buffer_data(decoded_len);
       if (!buffer) return js_mkerr(js, "Failed to allocate buffer");
@@ -3105,7 +3080,7 @@ static ant_value_t buffer_encode_search_string(ant_t *js, ant_value_t value, Buf
     *out_len = decoded_len;
     *owned = decoded;
   } else if (encoding == ENC_UCS2) {
-    size_t unit_count = utf16_strlen(str, len);
+    size_t unit_count = (size_t)str_utf16_len(js, str_value);
     size_t decoded_len = unit_count * 2;
     uint8_t *decoded = malloc(decoded_len == 0 ? 1 : decoded_len);
     if (!decoded) return js_mkerr(js, "Failed to allocate string");
@@ -3724,10 +3699,10 @@ void init_buffer_module(ant_t *js) {
   js_set(js, typedarray_proto, "constructor", typedarray_ctor);
   js_set_descriptor(js, typedarray_proto, "constructor", 11, JS_DESC_W | JS_DESC_C);
 
-  g_typedarray_iter_proto = js_mkobj(js);
-  js_set_proto_init(g_typedarray_iter_proto, js->sym.iterator_proto);
-  js_set(js, g_typedarray_iter_proto, "next", js_mkfun(ta_iter_next));
-  js_iter_register_advance(g_typedarray_iter_proto, advance_typedarray);
+  js->builtins.typedarray_iter_proto = js_mkobj(js);
+  js_set_proto_init(js->builtins.typedarray_iter_proto, js->sym.iterator_proto);
+  js_set(js, js->builtins.typedarray_iter_proto, "next", js_mkfun(ta_iter_next));
+  js_iter_register_advance(js->builtins.typedarray_iter_proto, advance_typedarray);
 
   js_set(js, typedarray_proto, "values", js_mkfun(ta_values));
   js_set(js, typedarray_proto, "keys", js_mkfun(ta_keys));

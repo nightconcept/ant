@@ -31,7 +31,11 @@ static inline bool sv_is_map_iter(
   iter_type_t *out_type
 ) {
   if (vtype(obj) != T_OBJ) return false;
-  if (!g_map_iter_proto || js_get_proto(js, obj) != g_map_iter_proto) return false;
+  
+  if (
+    !js->builtins.map_iter_proto || 
+    js_get_proto(js, obj) != js->builtins.map_iter_proto
+  ) return false;
   
   map_iterator_state_t *st = get_map_iter_state(obj);
   if (!st) return false;
@@ -48,7 +52,11 @@ static inline bool sv_is_set_iter(
   iter_type_t *out_type
 ) {
   if (vtype(obj) != T_OBJ) return false;
-  if (!g_set_iter_proto || js_get_proto(js, obj) != g_set_iter_proto) return false;
+  
+  if (
+    !js->builtins.set_iter_proto || 
+    js_get_proto(js, obj) != js->builtins.set_iter_proto
+  ) return false;
   
   set_iterator_state_t *st = get_set_iter_state(obj);
   if (!st) return false;
@@ -192,7 +200,7 @@ static inline ant_value_t sv_iter_result_get_named(
   bool should_fallback = false;
 
   if (interned && sv_try_get_shape_data_prop(js, ptr, interned, &out, &should_fallback)) return out;
-  return sv_getprop_fallback_len(js, result, key, key_len);
+  return js_getprop_fallback_len(js, result, key, (size_t)key_len);
 }
 
 static inline void sv_iter_result_unpack(
