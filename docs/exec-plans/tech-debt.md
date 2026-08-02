@@ -124,7 +124,7 @@ scheduled.
 
 - Area: Dense array index writes bypass property attributes
   - Issue: The dense branch of `js_setprop_array_fast` (`src/ant.c`) stores straight into the element buffer whenever the index is inside the dense length, without consulting the property's attributes. `Object.freeze` and `Object.defineProperty` on an array index neither de-densify the array nor clear a flag, so a frozen array accepts writes, a non-writable index is overwritten, an accessor defined on an index is clobbered by the raw value, and a prototype setter for an unset index is shadowed by a new own data property. Node disagrees on all four. The VM-level fast path added alongside the typed-array work (`js_arr_try_fast_set`) deliberately routes exotic, frozen and non-extensible arrays to this same slow path, so it neither fixes nor widens the gap.
-  - Impact: Four spec deviations on ordinary arrays, silently producing wrong values rather than throwing. Not currently visible in tier 2/3 numbers.
+  - Impact: Four spec deviations on ordinary arrays silently produce wrong values instead of throwing. The current Ant Regression and Test262 totals do not show these deviations.
   - Proposed fix: Give the object a "plain elements" bit (the existing `flags.fast_array` is only set at allocation and growth, so it can be repurposed or joined by a sibling) and clear it in `Object.freeze`/`seal`/`preventExtensions` and in `defineProperty` when the key is an array index and the descriptor is not a plain writable/enumerable/configurable data descriptor. Both the dense branch and `js_arr_try_fast_set` then gate on that bit and de-opt to the general path once an array stops being plain.
   - Status: backlog
 

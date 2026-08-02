@@ -113,7 +113,7 @@ DEFAULT_RUNTIMES = [
 
 # Official Upstream Online Smoke Test Manifests
 PULLED_SMOKE_TESTS = {
-    "tier1": [
+    "wintertc": [
         {
             "name": "Test262: Array.prototype.map (15.4.4.19-1-1)",
             "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Array/prototype/map/15.4.4.19-1-1.js",
@@ -145,7 +145,7 @@ PULLED_SMOKE_TESTS = {
             "type": "test262"
         }
     ],
-    "tier2": [
+    "regression": [
         {
             "name": "Node.js: events.once (test-events-once.js)",
             "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-events-once.js",
@@ -177,7 +177,7 @@ PULLED_SMOKE_TESTS = {
             "type": "node"
         }
     ],
-    "tier3": [
+    "test262": [
         {
             "name": "Test262: Promise.resolve (S25.4.4.5_A1.1_T1)",
             "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Promise/resolve/S25.4.4.5_A1.1_T1.js",
@@ -467,8 +467,8 @@ def make_log_path(label: str) -> Path:
     return LOGS_DIR / f"{safe}_{ts}.log"
 
 class MultiRuntimeTracker:
-    def __init__(self, tier_name: str, runtimes: list[dict], log_path: Path | None = None, log_fail_only: bool = False):
-        self.tier_name = tier_name
+    def __init__(self, suite_name: str, runtimes: list[dict], log_path: Path | None = None, log_fail_only: bool = False):
+        self.suite_name = suite_name
         self.runtimes = runtimes
         self.log_path = log_path
         self.log_fail_only = log_fail_only
@@ -478,7 +478,7 @@ class MultiRuntimeTracker:
         if self.log_path:
             self.log_path.parent.mkdir(parents=True, exist_ok=True)
             self._log_file = open(self.log_path, "w", encoding="utf-8")
-            self._log_file.write(f"=== {tier_name} ===\n")
+            self._log_file.write(f"=== {suite_name} ===\n")
             self._log_file.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
     def _write_log(self, text: str):
@@ -530,9 +530,9 @@ class MultiRuntimeTracker:
                         self._write_log(details.rstrip())
                         self._write_log("-" * 14)
 
-    def print_tier_summary(self, width: int = 90) -> dict:
+    def print_suite_summary(self, width: int = 90) -> dict:
         """
-        Print tier summary box and return runtime stats dict:
+        Print the suite summary box and return runtime statistics:
         { r_id: { "total": int, "passed": int, "failed": int, "pass_pct": float } }
         """
         stats = {}
@@ -550,7 +550,7 @@ class MultiRuntimeTracker:
             }
 
         lines = [
-            f"{BOLD}{MAGENTA}Summary: {self.tier_name}{RESET}",
+            f"{BOLD}{MAGENTA}Summary: {self.suite_name}{RESET}",
             "─" * (width - 6),
             f"{BOLD}{pad_cell('Runtime', 16)} {pad_cell('Total', 10, 'right')} {pad_cell('Passed', 10, 'right')} {pad_cell('Failed', 10, 'right')} {pad_cell('Pass Rate', 14, 'right')}{RESET}",
             "─" * (width - 6),
@@ -575,7 +575,7 @@ class MultiRuntimeTracker:
         print("\n".join(box))
 
         if self._log_file:
-            self._write_log(f"Summary for {self.tier_name}:")
+            self._write_log(f"Summary for {self.suite_name}:")
             for r in self.runtimes:
                 st = stats[r["id"]]
                 self._write_log(f"  {r['name']}: {st['passed']}/{st['total']} ({st['pass_pct']:.1f}%)")

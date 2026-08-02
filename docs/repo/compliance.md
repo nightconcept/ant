@@ -4,240 +4,161 @@ Status: active
 Last reviewed: 2026-08-01
 Owner: theMackabu
 
-This guide covers work whose goal is moving Ant's conformance numbers: Test262,
-WPT, and Node.js compatibility. For ordinary validation scope, read
-[testing.md](testing.md) instead.
+This guide defines the external conformance suites and the Ant regression suite.
+Read [testing.md](testing.md) for normal change validation.
 
-## The Tiers
+## Suites
 
-| Tier | Suite | Bar |
-| ---- | ----- | --- |
-| 1 | WinterTC / edge baseline | **Must be 100%.** A tier 1 failure is a release blocker and outranks any other compliance work. |
-| 2 | Node.js compatibility | No previously passing test may newly fail. Increases are desirable. |
-| 3 | Test262 / WPT / frameworks | No previously passing test may newly fail. Increases are the point of the work. |
+| Suite ID | Display name | Corpus | Bar |
+| --- | --- | --- | --- |
+| `wintertc` | WinterTC | TC55 API-surface contract and pinned WPT subset | No new failures. The final conformance bar is 100%. |
+| `regression` | Ant Regression | `tests/test_*` and `examples/spec/*.js` | No failures. |
+| `test262` | Test262 | Complete pinned TC39 Test262 corpus | No new failures. Improvements are desirable. |
 
-## Running The Suites
+The WinterTC suite measures applicable Web Platform behavior. The suite does
+not prove full conformance while required tests fail. WinterTC also requires
+ECMA-262 conformance.
 
-`just` is the surface everyone should use; no one should need to remember
-`scripts/run_compliance*.py` flags for the common cases. Each tier has three
-recipes, all doing a full, unfiltered run with `--log-fail`, and none of them
-abort the recipe when tests fail (the build step still does — a broken build
-stops the run):
+## Commands
 
-- `just compliance-t1` / `compliance-t2` / `compliance-t3` - run the full tier
-  suite and print the summary. Tier 3 is ~50k tests and takes a while; the
-  recipe says so up front.
-- `just compliance-update-t1` / `compliance-update-t2` / `compliance-update-t3`
-  - full clean run, then promote the resulting manifest to the checked-in
-  baseline. Refuses (before running, and again inside `compliance_baseline.py
-  update`) if the working tree is dirty - a baseline must come from one
-  specific, reproducible run.
-- `just compliance-diff-t1` / `compliance-diff-t2` / `compliance-diff-t3` - full
-  run, then diff the resulting manifest against the checked-in baseline.
+Use these commands for full runs:
 
-Each run's manifest is always reachable at
-`.deps/compliance/logs/tier<N>-latest.json`, a symlink refreshed at the end of
-every run (see [The Per-Run Manifest](#the-per-run-manifest) below) - that is
-what the update/diff recipes feed to `compliance_baseline.py`.
-
-Tier 3 checks out the full Test262 commit pinned at
-`.github/versions.json:dependencies.test262`. The pin keeps the failing-test
-universe identical between a checked-in baseline and a PR gate. Update the pin
-only with an intentional full baseline refresh; otherwise new upstream tests
-look like engine regressions even though they did not exist in the baseline.
-
-For anything ad-hoc - attributing a single change, running a subset, a smoke
-check - drop to the underlying scripts directly (see
-[Measuring A Change Without A Full Run](#measuring-a-change-without-a-full-run)):
-`python3 scripts/run_compliance_tier3.py --filter <path-substring> --log-fail`,
-or the generic `just compliance -- --tier 3 --filter <path-substring>`. The
-`--filter`, `--limit`, and `--smoke` script flags aren't going away; the just
-recipes above just cover the common full-run cases so nobody has to remember
-them.
-
-## Definition Of Done
-
-A compliance change is done when all of the following hold.
-
-1. **Tier 1 is at 100%.** No exceptions, no "pre-existing" excuses.
-2. **No tier 2 or tier 3 failing-set regression** measured on the final state
-   of the change. A net gain that hides a regression in one area is not done —
-   diff the failing-test *lists*, not just totals or percentages (see below).
-3. **The change is small and upstreamable.** This is the bar for landing on
-   `main`, not something deferred to the `upstream` branch. Prefer one root cause per commit,
-   expressed the way the surrounding subsystem already expresses things. If a
-   fix needs a new subsystem, a feature flag, or a suite-specific special case,
-   it is the wrong shape — split it or write an exec plan first.
-4. **Harness fixes are separated from engine fixes.** A runner bug that inflates
-   the failure count is worth fixing, but land it as its own change so the
-   engine delta stays legible.
-5. **Anything the engine now does correctly has a test in `tests/`.** Test262 is
-   the discovery mechanism, not the regression net — it is not run per-commit.
-
-Explicitly *not* required: fixing every failure in an area. Landing a verified
-partial improvement beats sitting on a large branch.
-
-## Reading Logs
-
-Every log records the commit it was produced at, in both the filename and the
-header:
-
-```
-.deps/compliance/logs/tier3_<timestamp>_<short-sha>[-dirty].log
+```text
+just compliance-wintertc
+just compliance-regression
+just compliance-test262
 ```
 
+Use the generic command for filters and limits:
+
+```text
+just compliance -- --suite wintertc --filter url --limit 20
+just compliance -- --suite regression --filter streams
+just compliance -- --suite test262 --filter built-ins/Array --limit 100
 ```
-=== Tier 3 - Full Conformance (Test262 / WPT / Frameworks) ===
-Started  : 2026-07-26 08:41:12
-Commit   : 0ad56fb9...
-Branch   : main
-Tree     : clean
+
+Use these commands to compare exact failing-test names:
+
+```text
+just compliance-diff-wintertc
+just compliance-diff-regression
+just compliance-diff-test262
 ```
 
-**Check the commit before trusting a log.** A tier 3 run takes long enough that
-logs routinely outlive the code they describe; failures already fixed on `HEAD`
-look identical to live ones. If the log's commit is not an ancestor of your
-work — or the tree was `dirty` — re-verify individual tests against the current
-binary before acting on them.
+Use `compliance-update-<suite>` only after a clean full run. The command refuses
+a dirty tree or a filtered manifest.
 
-Tier 3 logs are 20+ MB. Never read one directly; use the
-`compliance-failures` skill, which ranks and groups the failures.
+## Corpus Pins
 
-## The Per-Run Manifest
+`.github/versions.json` pins WPT and Test262 to full commit SHAs. Do not update a
+pin without a clean full run and a reviewed baseline change.
 
-Every run that writes a log (`--log` or `--log-fail`) also writes a sibling
-JSON manifest at the same path with `.json` instead of `.log` — a few KB
-versus the log's tens of MB, so it is what agents should read first. It is
-built in `SummaryTracker` (`scripts/compliance_common.py`) and has this shape:
+The WinterTC selection is in `tests/wintertc/wpt-manifest.json`. Each exclusion
+has one of these reasons:
+
+- `window-only`
+- `server-required`
+- `unsupported-harness`
+- `outside-wintertc`
+
+Do not exclude a test because Ant fails required behavior. Keep that test as a
+visible failure.
+
+## Manifests and Logs
+
+Each logged run writes two files:
+
+```text
+.deps/compliance/logs/<suite>_<timestamp>_<revision>.log
+.deps/compliance/logs/<suite>_<timestamp>_<revision>.json
+```
+
+The stable link is `.deps/compliance/logs/<suite>-latest.json`.
+
+Schema 2 manifests have this identity:
 
 ```json
 {
-  "schema_version": 1,
-  "suite": "Tier 3 - Full Conformance (Test262 / WPT / Frameworks)",
-  "tier": 3,
-  "started": "2026-07-26T08:53:35",
-  "finished": "2026-07-26T09:14:02",
-  "revision": { "commit": "...", "short": "...", "dirty": false, "branch": "main", "subject": "..." },
-  "filter": "language/module-code",
-  "totals": { "total": 599, "passed": 474, "failed": 125, "pass_rate": 79.1 },
-  "categories": {
-    "Test262: language/module-code": {
-      "total": 599, "passed": 474, "failed": 125,
-      "failing": ["Test262: language/module-code/foo.js", "..."]
-    }
-  }
+  "schema_version": 2,
+  "suite_id": "wintertc",
+  "suite": "WinterTC"
 }
 ```
 
-`filter` is the `--filter` value used for the run, or `null` for a full run.
-`failing` lists only failing test *names*, sorted — no output — which is what
-makes per-category diffing across runs cheap and precise.
+The manifest also records the revision, filter, totals, categories, and exact
+failing-test names. Read the manifest before you read a large log.
 
-## The Checked-In Baseline
+## Baselines
 
-`docs/repo/compliance-baseline.json` holds the most recent trusted full-run
-manifest per tier, keyed by tier number: `{"schema_version": 1, "tiers":
-{"1": {...}, "2": {...}}}`. The protected `main` branch owns this baseline.
+`docs/repo/compliance-baseline.json` stores the trusted full-run manifest for
+each named suite. The top-level `suites` object uses stable suite IDs.
 
-For interactive use, `diff` treats a missing tier baseline as "nothing to
-compare", prints that, and exits 0. Seed a missing Tier 3 entry with
-`just compliance-update-t3` only after reviewing a clean full run. CI instead
-passes `--require-baseline` and fails closed when the expected entry is absent
-or malformed.
+The diff command compares failing-test sets by category. A better total cannot
+hide a newly failing test. A filtered run compares only its selected categories.
 
-`scripts/compliance_baseline.py` has two subcommands (wrapped by the
-`compliance-update-t*` / `compliance-diff-t*` just recipes above for the full-run
-case; call the script directly for a manifest from an ad-hoc or filtered run):
+CI uses these options for exact revision checks:
 
-- `update <manifest.json>` — store that manifest as the new baseline for its
-  tier. Refuses (non-zero exit) a manifest with a non-null `filter` or a dirty
-  revision — a baseline must describe one specific, reproducible, full run.
-- `diff <manifest.json>` — compare a manifest (full run or a filtered slice)
-  against the stored baseline for its tier, per category. Only categories the
-  run actually covered are compared, so a `--filter` slice cannot look like a
-  suite-wide regression. It lists newly-failing and newly-passing test names
-  (capped, with exact counts) and exits non-zero if any covered category
-  regressed. Pass `--allow-regressions` to report without failing the exit
-  code.
-
-CI adds `--require-baseline --require-full --expect-commit <sha>
---expect-branch <branch>`. Together these require a valid clean full-run
-baseline, reject a filtered or stale current manifest, verify that its revision
-matches the exact checkout, and make missing inputs fatal. The pull-request
-gate reads its trusted comparison baseline from the base `main` revision, so a
-candidate cannot weaken its own gate. The `main` and `upstream` push workflows
-apply the gate to Tier 2. The scheduled and manually dispatched Tier 3 workflow
-runs `main` every Monday at 04:00 UTC and uploads `tier3-compliance-main`.
-
-## Compliance Vs Other Runtimes
-
-`docs/repo/compliance-runtimes-baseline.json` is a separate, **informational**
-snapshot of tiers 1-3 run across Ant and other JS runtimes (txiki.js, Node,
-Deno, Bun — the same binaries `bench/bench.py` uses, resolved via
-`bench/versions.json`). It is not a CI regression gate, and it is not the same
-file as `compliance-baseline.json` above — the schemas differ (this one is
-keyed by tier label with a `{runtime_id: {total, passed, failed, pass_pct}}`
-matrix per tier) and mixing them up will corrupt whichever file is written
-second.
-
-- `just compliance-runtimes` — run the multi-runtime suite and print the
-  matrix, no persistence.
-- `just compliance-runtimes-update` — same, on a clean tree, then promote the
-  manifest to the checked-in snapshot at
-  `docs/repo/compliance-runtimes-baseline.json`.
-
-`just dashboard` renders this snapshot in its own section, alongside the
-ant-only baseline and the bench comparison.
-
-## Measuring A Change Without A Full Run
-
-A full tier 3 run is expensive. To attribute a delta:
-
-```
-python3 scripts/run_compliance_tier3.py --filter <path-substring> --log-fail
-python3 scripts/compliance_baseline.py diff .deps/compliance/logs/tier3_<new-run>.json
+```text
+--require-baseline
+--require-full
+--expect-commit <sha>
+--expect-branch <branch>
 ```
 
-`diff` does the failing-test-name comparison for you, scoped to the categories
-the slice actually touched. Once a change is verified clean (or an improvement
-is confirmed) on a full run, promote it with `compliance_baseline.py update` so
-later slices compare against it.
+The baseline tool has a temporary read-only bridge for the old schema. Old
+Regression and Test262 baselines can support a migration pull request. The old
+numeric WinterTC label has no mapping because it did not run WPT.
 
-Treat single-test movements with suspicion until reproduced. Runs before the
-per-test scratch-file fix could clobber each other's sources and record false
-passes.
+## WinterTC Harness Rules
 
-## Harness Invariants
+- Run only `.any.js` files that the checked-in manifest selects.
+- Run each source file as one named result.
+- Resolve each `// META: script=` dependency from the pinned WPT checkout.
+- Write each prepared file beside its source file.
+- Use a unique scratch name for each test.
+- Require the WPT testharness completion callback.
+- Treat process exit zero without completion as a harness failure.
+- Remove scratch files after each test and after each run.
 
-These are properties of the runner, not the engine. Preserve them.
+Network-backed fetch tests require the WPT server. These tests remain visible as
+`server-required` work until the runner supplies the required server environment.
 
-- **Tests run in place.** The harness-prepended copy is written next to the
-  original test as `ant_t262_tmp_<n>_<name>.js`, because Test262 reaches sibling
-  files through relative specifiers (`./x_FIXTURE.js`, `import('./y.js')`) that
-  cannot resolve from a shared scratch directory. Stale copies are swept at
-  start and end of a run.
-- **Scratch names are unique per test**, not per worker slot. A `idx % workers`
-  name is unsafe under a thread pool.
-- **`$262` is shimmed** from primitives ant actually exposes. Capabilities ant
-  lacks (`agent`, `createRealm`, `IsHTMLDDA`) are deliberately left absent so
-  those tests fail with an accurate error.
+## Test262 Harness Rules
 
-## Known Large Gaps
+- Run tests from the pinned checkout.
+- Skip fixture files.
+- Write each prepared file beside its source file.
+- Use a unique scratch name for each test.
+- Supply the supported `$262` host methods.
+- Keep unsupported host capabilities absent so failures remain accurate.
 
-Areas where the failure count is dominated by an unimplemented feature rather
-than by fixable bugs. Do not mine these for "easy wins".
+## Definition of Done
 
-- `built-ins/Temporal` and `intl402/Temporal` — Temporal is not implemented.
-  ~6,600 failures, about 12% of the suite.
-- `intl402/*` constructors — most Intl constructors are not constructible.
-- Builtin `length` values. `js_mkfun` defaults arity to 0, so most builtins
-  report `length === 0`. Correcting it means an arity per registration site
-  across thousands of call sites; worth ~500 tests but not a small change.
+A compliance change is complete when all applicable conditions are true:
 
-## Open Trade-offs
+1. Ant Regression has no failures.
+2. WinterTC and Test262 have no newly failing tests.
+3. Each corrected external failure has an Ant Regression test.
+4. Harness changes and runtime changes are separate commits when practical.
+5. The change is small enough for upstream review.
 
-- Because tests run in place, ant sees the Test262 checkout's `package.json` and
-  runs them in CommonJS scope instead of as Scripts. Removing that manifest
-  recovers a handful of `noStrict` tests that assert `this === global` but
-  breaks ~60 `dynamic-import` tests, so it is left in place. Closing this
-  properly needs an engine-side way to force Script semantics for a file.
+Full WinterTC conformance needs more evidence:
+
+1. The API-surface contract passes.
+2. All applicable selected WPT tests pass.
+3. All exclusions describe browser-only or harness-only cases.
+4. The coverage matrix includes every TC55-required interface and property.
+5. Required ECMA-262 behavior passes.
+
+## Failure Analysis
+
+Use the `compliance-failures` skill for large logs. It supports these suite IDs:
+
+```text
+wintertc
+regression
+test262
+```
+
+Check the revision before you act on a failure. A dirty or superseded log does
+not describe the current binary reliably.

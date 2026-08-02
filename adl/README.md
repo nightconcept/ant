@@ -29,7 +29,7 @@ Required sections:
   the change gets reverted — see `0005`.
 - Record rejected options in as much detail as accepted ones. The value of this
   log is mostly in the paths not taken.
-- Compliance is a gate, not a trade: tier 1 at 100%, no tier 2/3 regression.
+- Compliance is a gate, not a trade: WinterTC at 100%, with no Ant Regression or Test262 regression.
   Entries state the compliance run that backs them.
 
 ## Index

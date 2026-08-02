@@ -4,10 +4,11 @@ import os
 import re
 import json
 import time
-import urllib.request
 import subprocess
+import fnmatch
 from pathlib import Path
 from datetime import datetime, timezone
+from dataclasses import dataclass
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEPS_DIR = REPO_ROOT / ".deps" / "compliance"
@@ -26,94 +27,6 @@ _ANSI_RE = re.compile(r"\033\[[0-9;]*m")
 
 def strip_ansi(text: str) -> str:
     return _ANSI_RE.sub("", text)
-
-# Official Upstream Online Smoke Test Manifests
-PULLED_SMOKE_TESTS = {
-    "tier1": [
-        {
-            "name": "Test262: Array.prototype.map (15.4.4.19-1-1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Array/prototype/map/15.4.4.19-1-1.js",
-            "filename": "t262_array_map_1.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Array.prototype.indexOf (15.4.4.14-1-1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Array/prototype/indexOf/15.4.4.14-1-1.js",
-            "filename": "t262_array_indexof.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Math.abs (S15.8.2.1_A1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Math/abs/S15.8.2.1_A1.js",
-            "filename": "t262_math_abs.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Object.create (15.2.3.5-1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Object/create/15.2.3.5-1.js",
-            "filename": "t262_object_create.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Reflect.has (return-boolean)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Reflect/has/return-boolean.js",
-            "filename": "t262_reflect_has.js",
-            "type": "test262"
-        }
-    ],
-    "tier2": [
-        {
-            "name": "Node.js: events.once (test-events-once.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-events-once.js",
-            "filename": "node_events_once.cjs",
-            "type": "node"
-        },
-        {
-            "name": "Node.js: buffer inheritance (test-buffer-inheritance.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-buffer-inheritance.js",
-            "filename": "node_buffer_inheritance.cjs",
-            "type": "node"
-        },
-        {
-            "name": "Node.js: buffer iterator (test-buffer-iterator.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-buffer-iterator.js",
-            "filename": "node_buffer_iterator.cjs",
-            "type": "node"
-        },
-        {
-            "name": "Node.js: stream readable event (test-stream-readable-event.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-stream-readable-event.js",
-            "filename": "node_stream_readable_event.cjs",
-            "type": "node"
-        },
-        {
-            "name": "Node.js: process.uptime (test-process-uptime.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-process-uptime.js",
-            "filename": "node_process_uptime.cjs",
-            "type": "node"
-        }
-    ],
-    "tier3": [
-        {
-            "name": "Test262: Promise.resolve (S25.4.4.5_A1.1_T1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Promise/resolve/S25.4.4.5_A1.1_T1.js",
-            "filename": "t262_promise_resolve.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Promise.all (S25.4.4.1_A1.1_T1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Promise/all/S25.4.4.1_A1.1_T1.js",
-            "filename": "t262_promise_all.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Array.prototype.map (15.4.4.19-1-10)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Array/prototype/map/15.4.4.19-1-10.js",
-            "filename": "t262_array_map_10.js",
-            "type": "test262"
-        }
-    ]
-}
 
 # Test262 host-provided `$262` object. Test262 assumes the host injects this
 # global (see test262/INTERPRETING.md); ant, as a runtime, does not ship it, so
@@ -194,11 +107,6 @@ def category_of(name: str) -> str:
         return f"Test262: {m.group(2)}"
     return name
 
-def suite_tier(suite_name: str) -> int | None:
-    """Extract the numeric tier from a suite name like 'Tier 3 - Full ...'."""
-    m = re.match(r"\s*Tier\s+(\d+)", suite_name)
-    return int(m.group(1)) if m else None
-
 def find_ant_binary() -> Path:
     local_ant = REPO_ROOT / "build" / "ant"
     if local_ant.exists() and os.access(local_ant, os.X_OK):
@@ -233,33 +141,17 @@ def find_ant_binary() -> Path:
         f"Ant binary not found at {local_ant}. Please run 'just build' or 'meson compile -C build' first."
     )
 
-def ensure_test262_harness() -> tuple[Path, Path]:
-    harness_dir = DEPS_DIR / "harness"
-    harness_dir.mkdir(parents=True, exist_ok=True)
-    
-    assert_js = harness_dir / "assert.js"
-    sta_js = harness_dir / "sta.js"
-    
-    headers = {"User-Agent": "ant-compliance-runner"}
-    
-    if not assert_js.exists():
-        url = "https://raw.githubusercontent.com/tc39/test262/main/harness/assert.js"
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req) as resp, open(assert_js, "wb") as f:
-            f.write(resp.read())
-
-    if not sta_js.exists():
-        url = "https://raw.githubusercontent.com/tc39/test262/main/harness/sta.js"
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req) as resp, open(sta_js, "wb") as f:
-            f.write(resp.read())
-            
-    return assert_js, sta_js
-
 def pinned_test262_revision() -> str:
     revision = json.loads(VERSIONS_FILE.read_text())["dependencies"]["test262"]
     if not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
         raise RuntimeError(".github/versions.json must pin Test262 to a full commit SHA")
+    return revision.lower()
+
+
+def pinned_wpt_revision() -> str:
+    revision = json.loads(VERSIONS_FILE.read_text())["dependencies"]["wpt"]
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
+        raise RuntimeError(".github/versions.json must pin WPT to a full commit SHA")
     return revision.lower()
 
 
@@ -288,7 +180,7 @@ def ensure_test262_repo() -> Path:
     """Ensure Test262 suite repository is checked out locally.
 
     Note: the checkout ships a `package.json`, which makes ant run the tests
-    (which are executed in place, see run_compliance_tier3) in CommonJS scope
+    (which are executed in place, see run_compliance_test262) in CommonJS scope
     rather than as Scripts. Removing it fixes a handful of `noStrict` tests that
     assert `this === global`, but costs ~60 dynamic-import tests, so it is left
     alone. Fixing both needs an engine-side way to force Script semantics.
@@ -319,6 +211,165 @@ def ensure_test262_repo() -> Path:
         check=True,
     )
     return deps_t262
+
+
+def ensure_wpt_repo() -> Path:
+    """Ensure the canonical WPT repository is at the configured commit."""
+    revision = pinned_wpt_revision()
+    wpt_dir = DEPS_DIR / "wpt"
+    if not (wpt_dir / ".git").exists():
+        print(f"{CYAN}Cloning pinned web-platform-tests/wpt into {wpt_dir}...{RESET}")
+        wpt_dir.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            [
+                "git", "clone", "--filter=blob:none", "--no-checkout",
+                "https://github.com/web-platform-tests/wpt.git", str(wpt_dir),
+            ],
+            check=True,
+        )
+    current = subprocess.run(
+        ["git", "-C", str(wpt_dir), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip().lower()
+    if current != revision:
+        print(f"{CYAN}Checking out pinned WPT revision {revision[:12]}...{RESET}")
+        subprocess.run(
+            ["git", "-C", str(wpt_dir), "fetch", "--depth", "1", "origin", revision],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(wpt_dir), "checkout", "--detach", revision],
+            check=True,
+        )
+    elif not (wpt_dir / "resources" / "testharness.js").is_file():
+        subprocess.run(
+            ["git", "-C", str(wpt_dir), "checkout", "--detach", "--force", revision],
+            check=True,
+        )
+    return wpt_dir
+
+
+class WPTManifestError(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class WPTTest:
+    path: Path
+    category: str
+
+
+WPT_EXCLUSION_REASONS = {
+    "window-only",
+    "server-required",
+    "unsupported-harness",
+    "outside-wintertc",
+}
+WPT_COMPLETION_MARKER = "__ANT_WPT_COMPLETE__"
+WPT_SHELL_SHIM = (
+    "if (typeof globalThis.self === 'undefined') globalThis.self = globalThis;\n"
+    "if (typeof globalThis.GLOBAL === 'undefined') {\n"
+    "  globalThis.GLOBAL = {\n"
+    "    isWindow: function() { return false; },\n"
+    "    isWorker: function() { return true; },\n"
+    "    isShadowRealm: function() { return false; }\n"
+    "  };\n"
+    "}\n"
+    "if (typeof globalThis.location === 'undefined') {\n"
+    "  globalThis.location = { search: '', href: 'file:///wpt-shell' };\n"
+    "}"
+)
+
+
+def discover_wpt_tests(wpt_dir: Path, manifest_path: Path) -> list[WPTTest]:
+    """Resolve the checked-in WinterTC allowlist against a pinned WPT tree."""
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise WPTManifestError(f"cannot read WPT manifest {manifest_path}: {exc}") from exc
+    if manifest.get("schema_version") != 1:
+        raise WPTManifestError("WPT manifest must have schema_version 1")
+
+    excludes = []
+    for item in manifest.get("excludes", []):
+        pattern = item.get("pattern") if isinstance(item, dict) else None
+        reason = item.get("reason") if isinstance(item, dict) else None
+        if not pattern or reason not in WPT_EXCLUSION_REASONS:
+            raise WPTManifestError(
+                "every WPT exclusion needs a pattern and a supported reason"
+            )
+        excludes.append(pattern)
+
+    selected: dict[str, WPTTest] = {}
+    includes = manifest.get("includes")
+    if not isinstance(includes, list) or not includes:
+        raise WPTManifestError("WPT manifest must contain at least one include")
+    for item in includes:
+        pattern = item.get("pattern") if isinstance(item, dict) else None
+        category = item.get("category") if isinstance(item, dict) else None
+        if not pattern or not category or not pattern.endswith(".any.js"):
+            raise WPTManifestError(
+                "every WPT include needs a category and an .any.js pattern"
+            )
+        matches = sorted(path for path in wpt_dir.glob(pattern) if path.is_file())
+        if not matches:
+            raise WPTManifestError(f"WPT include pattern {pattern!r} matched no files")
+        for path in matches:
+            rel = path.relative_to(wpt_dir).as_posix()
+            if any(fnmatch.fnmatch(rel, excluded) for excluded in excludes):
+                continue
+            previous = selected.get(rel)
+            if previous and previous.category != category:
+                raise WPTManifestError(
+                    f"WPT test {rel} has conflicting categories "
+                    f"{previous.category!r} and {category!r}"
+                )
+            selected[rel] = WPTTest(path=path, category=category)
+    if not selected:
+        raise WPTManifestError("WPT manifest selected no runnable tests")
+    return [selected[name] for name in sorted(selected)]
+
+
+_WPT_META_SCRIPT_RE = re.compile(r"^\s*//\s*META:\s*script=(\S+)\s*$", re.MULTILINE)
+
+
+def prepare_wpt_code(test_file: Path, wpt_dir: Path) -> str:
+    """Build one shell-compatible WPT program and require harness completion."""
+    harness_path = wpt_dir / "resources" / "testharness.js"
+    if not harness_path.is_file():
+        raise WPTManifestError(f"WPT testharness is missing: {harness_path}")
+    content = test_file.read_text(encoding="utf-8", errors="replace")
+    parts = [
+        harness_path.read_text(encoding="utf-8", errors="replace"),
+        WPT_SHELL_SHIM,
+    ]
+    root = wpt_dir.resolve()
+    for reference in _WPT_META_SCRIPT_RE.findall(content):
+        dependency = (
+            wpt_dir / reference.lstrip("/")
+            if reference.startswith("/")
+            else test_file.parent / reference
+        ).resolve()
+        if not dependency.is_relative_to(root) or not dependency.is_file():
+            raise WPTManifestError(
+                f"WPT META script {reference!r} for {test_file} is missing or unsafe"
+            )
+        parts.append(dependency.read_text(encoding="utf-8", errors="replace"))
+    parts.append(
+        "add_completion_callback(function(tests, status) {\n"
+        "  var failures = [];\n"
+        "  for (var i = 0; i < tests.length; i++) {\n"
+        "    if (tests[i].status !== 0) failures.push(tests[i].name + ': ' + tests[i].message);\n"
+        "  }\n"
+        "  if (status && status.status !== 0) failures.push(status.message || 'harness failure');\n"
+        "  if (failures.length) throw new Error('WPT Test Failure\\n' + failures.join('\\n'));\n"
+        f"  console.log('{WPT_COMPLETION_MARKER}');\n"
+        "});"
+    )
+    parts.append(content)
+    return "\n".join(parts)
 
 def parse_test262_frontmatter(content: str) -> dict:
     frontmatter = {"includes": [], "flags": [], "negative": None}
@@ -377,32 +428,6 @@ def prepare_test262_code(test_file: Path, test262_dir: Path) -> tuple[str, dict]
     parts.append(content)
     return "\n".join(parts), fm
 
-def fetch_pulled_test(spec: dict) -> Path:
-    pulled_dir = DEPS_DIR / "pulled"
-    pulled_dir.mkdir(parents=True, exist_ok=True)
-    
-    target_path = pulled_dir / spec["filename"]
-    
-    if not target_path.exists():
-        headers = {"User-Agent": "ant-compliance-runner"}
-        req = urllib.request.Request(spec["url"], headers=headers)
-        with urllib.request.urlopen(req) as resp:
-            content = resp.read().decode("utf-8")
-            
-        if spec["type"] == "test262":
-            assert_js, sta_js = ensure_test262_harness()
-            harness_code = assert_js.read_text() + "\n" + sta_js.read_text() + "\n"
-            content = harness_code + content
-        elif spec["type"] == "node":
-            content = content.replace(
-                "require('../common')",
-                "(function(){ return { mustCall: (f) => f || (() => {}), mustNotCall: () => {} }; })()"
-            )
-            
-        target_path.write_text(content)
-        
-    return target_path
-
 def run_js_test(ant_bin: Path, test_path: Path, timeout_sec: float = 15.0) -> tuple[bool, float, str]:
     start = time.perf_counter()
     try:
@@ -425,6 +450,36 @@ def run_js_test(ant_bin: Path, test_path: Path, timeout_sec: float = 15.0) -> tu
         duration_ms = (time.perf_counter() - start) * 1000.0
         return False, duration_ms, str(e)
 
+
+WPT_TMP_PREFIX = "ant_wpt_tmp_"
+
+
+def run_wpt_test(
+    ant_bin: Path,
+    wpt_dir: Path,
+    test_file: Path,
+    sequence: int,
+    timeout_sec: float = 15.0,
+) -> tuple[bool, float, str]:
+    """Execute one prepared WPT source and require testharness completion."""
+    scratch = test_file.parent / f"{WPT_TMP_PREFIX}{sequence}_{test_file.name}"
+    try:
+        scratch.write_text(
+            prepare_wpt_code(test_file, wpt_dir), encoding="utf-8"
+        )
+        process_passed, duration_ms, output = run_js_test(
+            ant_bin, scratch, timeout_sec=timeout_sec
+        )
+        completed = WPT_COMPLETION_MARKER in output
+        if process_passed and not completed:
+            output = (output.rstrip() + "\nWPT harness did not report completion").lstrip()
+        return process_passed and completed, duration_ms, output
+    finally:
+        try:
+            scratch.unlink()
+        except FileNotFoundError:
+            pass
+
 def make_log_path(label: str) -> Path:
     """Return a revision-tagged, timestamped log path under .deps/compliance/logs/.
 
@@ -437,7 +492,10 @@ def make_log_path(label: str) -> Path:
     return LOGS_DIR / f"{safe}_{ts}_{revision_tag(git_revision())}.log"
 
 class SummaryTracker:
-    def __init__(self, suite_name: str, log_path: Path | None = None, log_fail_only: bool = False, filter: str | None = None):
+    def __init__(self, suite_id: str, suite_name: str, log_path: Path | None = None, log_fail_only: bool = False, filter: str | None = None):
+        if not suite_id or not re.fullmatch(r"[a-z0-9-]+", suite_id):
+            raise ValueError(f"invalid suite_id: {suite_id!r}")
+        self.suite_id = suite_id
         self.suite_name = suite_name
         self.results = []
         self.log_path = log_path
@@ -533,9 +591,9 @@ class SummaryTracker:
             cat["failing"].sort()
 
         return {
-            "schema_version": 1,
+            "schema_version": 2,
+            "suite_id": self.suite_id,
             "suite": self.suite_name,
-            "tier": suite_tier(self.suite_name),
             "started": self.started,
             "finished": datetime.now(timezone.utc).isoformat(),
             "revision": self.revision,
@@ -552,7 +610,7 @@ class SummaryTracker:
     def _write_manifest(self):
         """Write the JSON manifest next to the log file (same stem, .json suffix).
 
-        Also refreshes a stable `tier<N>-latest.json` symlink pointing at it, so
+        Also refreshes a stable `<suite>-latest.json` symlink pointing at it, so
         callers (justfile recipes, CI, the compliance-failures skill) can find
         the manifest a run just produced without globbing the timestamped
         filenames and sorting by mtime.
@@ -569,10 +627,7 @@ class SummaryTracker:
             print(f"  {YELLOW}Warning: failed to write manifest {manifest_path}: {e}{RESET}")
             return
 
-        tier = suite_tier(self.suite_name)
-        if tier is None:
-            return
-        latest_path = LOGS_DIR / f"tier{tier}-latest.json"
+        latest_path = LOGS_DIR / f"{self.suite_id}-latest.json"
         try:
             if latest_path.exists() or latest_path.is_symlink():
                 latest_path.unlink()

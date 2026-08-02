@@ -12,13 +12,21 @@ SCRIPT = REPO_ROOT / "scripts" / "compliance_baseline.py"
 COMMIT = "a" * 40
 
 
-def manifest(*, failing=(), filter_value=None, commit=COMMIT, branch="dev", dirty=False):
+def manifest(
+    *,
+    suite_id="regression",
+    failing=(),
+    filter_value=None,
+    commit=COMMIT,
+    branch="dev",
+    dirty=False,
+):
     failing = list(failing)
     total = 2
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "suite": "Synthetic",
-        "tier": 2,
+        "suite_id": suite_id,
         "filter": filter_value,
         "revision": {
             "commit": commit,
@@ -78,7 +86,7 @@ class ComplianceBaselineTests(unittest.TestCase):
     def seed(self, baseline_manifest):
         self.write_json(
             self.baseline_path,
-            {"schema_version": 1, "tiers": {"2": baseline_manifest}},
+            {"schema_version": 2, "suites": {baseline_manifest["suite_id"]: baseline_manifest}},
         )
 
     def test_equal_total_pass_fail_swap_is_a_regression(self):
@@ -153,6 +161,37 @@ class ComplianceBaselineTests(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("not found", result.stderr)
+
+    def test_manifest_cannot_diff_against_another_suite(self):
+        self.seed(manifest(suite_id="regression"))
+        result = self.run_diff(manifest(suite_id="wintertc"), "--require-baseline")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("wintertc", result.stderr)
+
+    def test_legacy_base_branch_baseline_maps_tier_two_to_regression(self):
+        legacy = manifest()
+        legacy["schema_version"] = 1
+        legacy["tier"] = 2
+        legacy.pop("suite_id")
+        self.write_json(
+            self.baseline_path,
+            {"schema_version": 1, "tiers": {"2": legacy}},
+        )
+        result = self.run_diff(manifest(), "--require-baseline")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_legacy_tier_one_is_not_accepted_as_wintertc(self):
+        legacy = manifest(suite_id="wintertc")
+        legacy["schema_version"] = 1
+        legacy["tier"] = 1
+        legacy.pop("suite_id")
+        self.write_json(
+            self.baseline_path,
+            {"schema_version": 1, "tiers": {"1": legacy}},
+        )
+        result = self.run_diff(manifest(suite_id="wintertc"), "--require-baseline")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("no baseline recorded", result.stderr)
 
 
 if __name__ == "__main__":

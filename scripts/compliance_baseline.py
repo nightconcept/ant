@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
 """Manage the checked-in compliance baseline (docs/repo/compliance-baseline.json).
 
-The baseline holds the most recent full-run manifest per tier, so that a
-filtered slice run later (e.g. `run_compliance_tier3.py --filter foo`) can be
-compared against "the last known-good full run" without re-running the whole
-tier.
+The baseline holds the most recent full-run manifest per named suite, so that a
+filtered slice can be compared against the last known-good full run without
+re-running the whole suite.
 
 Subcommands
 -----------
 update <manifest.json>
-    Store a manifest as the new baseline for its tier. Refuses manifests that
+    Store a manifest as the new baseline for its suite. Refuses manifests that
     are partial (`filter` is set) or unreproducible (dirty tree, no commit) -
     a baseline must describe one specific, reproducible, full run.
 
 diff <manifest.json>
     Compare a manifest (full run or filtered slice) against the stored
-    baseline for its tier, per category. Exits non-zero if any covered
+    baseline for its suite, per category. Exits non-zero if any covered
     category regressed (new failures relative to baseline), unless
     --allow-regressions is passed.
 
@@ -39,8 +38,25 @@ def load_json(path: Path) -> dict:
 
 def load_baseline(path: Path) -> dict:
     if not path.exists():
-        return {"schema_version": 1, "tiers": {}}
-    return load_json(path)
+        return {"schema_version": 2, "suites": {}}
+    baseline = load_json(path)
+    if baseline.get("schema_version") != 1:
+        return baseline
+
+    # One-way, read-only migration bridge for a PR whose base branch still has
+    # the numeric schema. Schema-1 suite ID 1 was not WinterTC and is not mapped.
+    legacy_map = {"2": "regression", "3": "test262"}
+    suites = {}
+    for tier, suite_id in legacy_map.items():
+        legacy = baseline.get("tiers", {}).get(tier)
+        if not isinstance(legacy, dict):
+            continue
+        translated = dict(legacy)
+        translated["schema_version"] = 2
+        translated["suite_id"] = suite_id
+        translated.pop("tier", None)
+        suites[suite_id] = translated
+    return {"schema_version": 2, "suites": suites}
 
 
 def save_baseline(baseline: dict, path: Path):
@@ -75,10 +91,10 @@ def _manifest_errors(
     expected_branch: str | None = None,
 ) -> list[str]:
     errors = []
-    if manifest.get("schema_version") != 1:
+    if manifest.get("schema_version") != 2:
         errors.append(f"{label} has unsupported schema_version {manifest.get('schema_version')!r}")
-    if not isinstance(manifest.get("tier"), int):
-        errors.append(f"{label} has no integer 'tier' field")
+    if not isinstance(manifest.get("suite_id"), str) or not manifest.get("suite_id"):
+        errors.append(f"{label} has no non-empty string 'suite_id' field")
     if not isinstance(manifest.get("categories"), dict):
         errors.append(f"{label} has no object-valued 'categories' field")
     if not isinstance(manifest.get("totals"), dict):
@@ -122,10 +138,10 @@ def cmd_update(args) -> int:
     if manifest is None:
         return 1
 
-    tier = manifest.get("tier")
-    if tier is None:
-        print(f"error: manifest {manifest_path} has no 'tier' field", file=sys.stderr)
+    errors = _manifest_errors(manifest, label="manifest", require_full=True)
+    if _report_errors(errors):
         return 1
+    suite_id = manifest["suite_id"]
 
     if manifest.get("filter") is not None:
         print(
@@ -152,14 +168,15 @@ def cmd_update(args) -> int:
 
     baseline_path = Path(args.baseline)
     baseline = load_baseline(baseline_path)
-    baseline.setdefault("schema_version", 1)
-    baseline.setdefault("tiers", {})
-    baseline["tiers"][str(tier)] = manifest
+    baseline["schema_version"] = 2
+    baseline.setdefault("suites", {})
+    baseline.pop("tiers", None)
+    baseline["suites"][suite_id] = manifest
     save_baseline(baseline, baseline_path)
 
     totals = manifest.get("totals", {})
     print(
-        f"Updated baseline for tier {tier} "
+        f"Updated baseline for suite {suite_id} "
         f"({totals.get('passed', '?')}/{totals.get('total', '?')} = "
         f"{totals.get('pass_rate', '?')}%) at commit {revision.get('short', '?')}."
     )
@@ -190,10 +207,7 @@ def cmd_diff(args) -> int:
     if _report_errors(manifest_errors):
         return 1
 
-    tier = manifest.get("tier")
-    if tier is None:
-        print(f"error: manifest {manifest_path} has no 'tier' field", file=sys.stderr)
-        return 1
+    suite_id = manifest["suite_id"]
 
     baseline_path = Path(args.baseline)
     try:
@@ -201,33 +215,34 @@ def cmd_diff(args) -> int:
     except (OSError, json.JSONDecodeError) as exc:
         print(f"error: cannot read baseline {baseline_path}: {exc}", file=sys.stderr)
         return 1
-    base_tier = baseline.get("tiers", {}).get(str(tier))
+    base_suite = baseline.get("suites", {}).get(suite_id)
 
-    if base_tier is None:
+    if base_suite is None:
         if args.require_baseline:
-            print(f"error: no baseline recorded for tier {tier} in {baseline_path}", file=sys.stderr)
+            print(f"error: no baseline recorded for suite {suite_id} in {baseline_path}", file=sys.stderr)
             return 1
-        print(f"No baseline recorded for tier {tier} - nothing to diff against.")
+        print(f"No baseline recorded for suite {suite_id} - nothing to diff against.")
         print(f"(Seed one with: python3 scripts/compliance_baseline.py update <full-run-manifest.json>)")
         return 0
 
     if args.require_baseline:
         baseline_errors = _manifest_errors(
-            base_tier,
-            label=f"tier {tier} baseline",
+            base_suite,
+            label=f"suite {suite_id} baseline",
             require_full=True,
             require_clean=True,
         )
-        if base_tier.get("tier") != tier:
+        if base_suite.get("suite_id") != suite_id:
             baseline_errors.append(
-                f"tier {tier} baseline identifies itself as tier {base_tier.get('tier')!r}"
+                f"suite {suite_id} baseline identifies itself as suite "
+                f"{base_suite.get('suite_id')!r}"
             )
         if _report_errors(baseline_errors):
             return 1
 
     filter_value = manifest.get("filter")
     manifest_categories = manifest.get("categories", {})
-    base_categories = base_tier.get("categories", {})
+    base_categories = base_suite.get("categories", {})
 
     worse = []
     better = []
@@ -263,10 +278,10 @@ def cmd_diff(args) -> int:
             unchanged.append(cat_name)
 
     rev = manifest.get("revision", {})
-    base_rev = base_tier.get("revision", {})
+    base_rev = base_suite.get("revision", {})
 
     print("=" * 72)
-    print(f"Compliance diff: tier {tier} - {manifest.get('suite', '')}")
+    print(f"Compliance diff: {suite_id} - {manifest.get('suite', '')}")
     print("=" * 72)
     print(f"Manifest : {manifest_path}")
     print(f"  commit : {rev.get('short', '?')}{' (dirty)' if rev.get('dirty') else ''}")
@@ -343,7 +358,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="command", required=True)
 
-    p_update = sub.add_parser("update", help="Store a full-run manifest as the tier's baseline")
+    p_update = sub.add_parser("update", help="Store a full-run manifest as the suite's baseline")
     p_update.add_argument("manifest", help="Path to a manifest .json produced by a compliance run")
     p_update.add_argument("--baseline", default=str(BASELINE_PATH),
                           help="Baseline JSON path (default: checked-in repository baseline)")
@@ -356,7 +371,7 @@ def main() -> int:
     p_diff.add_argument("--allow-regressions", action="store_true",
                          help="Report regressions without failing the exit code (for informational runs)")
     p_diff.add_argument("--require-baseline", action="store_true",
-                        help="Fail if the tier baseline is absent, partial, dirty, or malformed")
+                        help="Fail if the suite baseline is absent, partial, dirty, or malformed")
     p_diff.add_argument("--require-full", action="store_true",
                         help="Fail unless the manifest describes a full, unfiltered run")
     p_diff.add_argument("--expect-commit",

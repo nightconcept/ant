@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.compliance_common import (
+    WPT_COMPLETION_MARKER,
+    WPT_TMP_PREFIX,
+    discover_wpt_tests,
+    ensure_wpt_repo,
+    prepare_wpt_code,
+)
+from scripts.run_compliance_wintertc import API_SURFACE_PATH, MANIFEST_PATH
+
+from compliance_common import MultiRuntimeTracker, make_log_path, run_js_test
+
+
+def run_wintertc(
+    runtimes: list[dict],
+    smoke: bool = False,
+    filter_term: str | None = None,
+    log_all: bool = False,
+    log_fail: bool = False,
+) -> dict:
+    del smoke
+    wpt_dir = ensure_wpt_repo()
+    selected = discover_wpt_tests(wpt_dir, MANIFEST_PATH)
+    if filter_term:
+        needle = filter_term.lower()
+        selected = [
+            item for item in selected
+            if needle in item.path.relative_to(wpt_dir).as_posix().lower()
+        ]
+    log_path = make_log_path("wintertc") if log_all or log_fail else None
+    tracker = MultiRuntimeTracker(
+        "WinterTC", runtimes, log_path=log_path, log_fail_only=log_fail and not log_all
+    )
+
+    if not filter_term or filter_term.lower() in "api-surface":
+        results = {}
+        for runtime in runtimes:
+            passed, duration_ms, output = run_js_test(runtime, API_SURFACE_PATH)
+            results[runtime["id"]] = {
+                "passed": passed,
+                "duration_ms": duration_ms,
+                "details": output if not passed else "",
+            }
+        tracker.add_test("WinterTC: API surface", results)
+
+    for sequence, item in enumerate(selected):
+        name = f"WPT: {item.path.relative_to(wpt_dir).as_posix()}"
+        results = {}
+        for runtime_index, runtime in enumerate(runtimes):
+            scratch = item.path.parent / (
+                f"{WPT_TMP_PREFIX}{sequence}_{runtime_index}_{item.path.name}"
+            )
+            try:
+                scratch.write_text(prepare_wpt_code(item.path, wpt_dir), encoding="utf-8")
+                passed, duration_ms, output = run_js_test(runtime, scratch)
+                completed = WPT_COMPLETION_MARKER in output
+                if passed and not completed:
+                    passed = False
+                    output += "\nWPT harness did not report completion"
+            finally:
+                try:
+                    scratch.unlink()
+                except OSError:
+                    pass
+            results[runtime["id"]] = {
+                "passed": passed,
+                "duration_ms": duration_ms,
+                "details": output if not passed else "",
+            }
+        tracker.add_test(name, results)
+    return tracker.print_suite_summary()

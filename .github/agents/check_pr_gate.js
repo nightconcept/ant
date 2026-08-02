@@ -28,16 +28,18 @@ if (env.WORKFLOW_CHANGED === "true") {
 
 if (env.BUILD_CHANGED === "true") {
   requireSuccess("build-and-test", env.BUILD_RESULT);
-  requireSuccess("tier2", env.TIER2_RESULT);
+  requireSuccess("wintertc", env.WINTERTC_RESULT);
+  requireSuccess("regression", env.REGRESSION_RESULT);
 } else {
   requireSkippedOrSuccess("build-and-test", env.BUILD_RESULT);
-  requireSkippedOrSuccess("tier2", env.TIER2_RESULT);
+  requireSkippedOrSuccess("wintertc", env.WINTERTC_RESULT);
+  requireSkippedOrSuccess("regression", env.REGRESSION_RESULT);
 }
 
 if (env.RUNTIME_CHANGED === "true" || env.EVENT_NAME === "merge_group") {
-  requireSuccess("tier3", env.TIER3_RESULT);
+  requireSuccess("test262", env.TEST262_RESULT);
 } else {
-  requireSkippedOrSuccess("tier3", env.TIER3_RESULT);
+  requireSkippedOrSuccess("test262", env.TEST262_RESULT);
 }
 
 if (failures.length > 0) {

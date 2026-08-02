@@ -47,8 +47,8 @@ Two long-lived branches (see [docs/repo/testing.md](docs/repo/testing.md)):
 - `meson/` and `meson.build` define the build graph and generated headers.
 - `.github/agents/` contains the lightweight repo-harness checks and validation
   router used by local tasks and CI.
-- `tests/`, `examples/spec/`, and `tools/wpt/` cover targeted runtime tests,
-  the spec suite, and conformance harnesses.
+- `tests/`, `examples/spec/`, and `tests/wintertc/` cover runtime tests, the
+  internal spec suite, and the WinterTC selection.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for subsystem boundaries and change
 guidance.
@@ -67,9 +67,9 @@ guidance.
   approval before sandbox escalation.
 - Check [docs/repo/testing.md](docs/repo/testing.md) before choosing validation
   scope or retrying a failing broad test command.
-- For conformance work read [docs/repo/compliance.md](docs/repo/compliance.md)
-  first. Done means tier 1 at 100%, no tier 2/3 regression, small upstreamable
-  changes. Logs are commit-stamped — check that before treating one as live.
+- For conformance work, read [docs/repo/compliance.md](docs/repo/compliance.md)
+  first. Done means no named-suite regression and a small upstreamable change.
+  Logs are commit-stamped. Check the revision before you use a log.
 - Before finalizing most code changes, run `just preflight` and then whatever
   build or spec commands it recommends, or explain why they were not run.
 

@@ -1,117 +1,14 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "type": "multi_runtime_compliance",
-  "timestamp": "2026-07-29T11:33:21.191012+00:00",
+  "timestamp": null,
   "revision": {
-    "commit": "63b0a9c60c1d381339275622c8a66c65260fd127",
-    "short": "63b0a9c6",
+    "commit": "unknown",
+    "short": "unknown",
     "dirty": false,
-    "branch": "dev",
-    "subject": "dashboard: add cross-runtime compliance tracking, show local timestamps"
+    "branch": "unknown",
+    "subject": "Named suites require a fresh multi-runtime baseline"
   },
-  "runtimes": [
-    "ant",
-    "tjs",
-    "node",
-    "deno",
-    "bun"
-  ],
-  "tier_results": {
-    "Tier 1 (WinterTC/Edge)": {
-      "ant": {
-        "total": 53,
-        "passed": 53,
-        "failed": 0,
-        "pass_pct": 100.0
-      },
-      "tjs": {
-        "total": 53,
-        "passed": 35,
-        "failed": 18,
-        "pass_pct": 66.0377358490566
-      },
-      "node": {
-        "total": 53,
-        "passed": 39,
-        "failed": 14,
-        "pass_pct": 73.58490566037736
-      },
-      "deno": {
-        "total": 53,
-        "passed": 39,
-        "failed": 14,
-        "pass_pct": 73.58490566037736
-      },
-      "bun": {
-        "total": 53,
-        "passed": 43,
-        "failed": 10,
-        "pass_pct": 81.13207547169812
-      }
-    },
-    "Tier 2 (Node.js Compat)": {
-      "ant": {
-        "total": 38,
-        "passed": 38,
-        "failed": 0,
-        "pass_pct": 100.0
-      },
-      "tjs": {
-        "total": 38,
-        "passed": 5,
-        "failed": 33,
-        "pass_pct": 13.157894736842104
-      },
-      "node": {
-        "total": 38,
-        "passed": 19,
-        "failed": 19,
-        "pass_pct": 50.0
-      },
-      "deno": {
-        "total": 38,
-        "passed": 18,
-        "failed": 20,
-        "pass_pct": 47.368421052631575
-      },
-      "bun": {
-        "total": 38,
-        "passed": 10,
-        "failed": 28,
-        "pass_pct": 26.31578947368421
-      }
-    },
-    "Tier 3 (Test262/WPT)": {
-      "ant": {
-        "total": 53453,
-        "passed": 33724,
-        "failed": 19729,
-        "pass_pct": 63.09093970403906
-      },
-      "tjs": {
-        "total": 53453,
-        "passed": 41049,
-        "failed": 12404,
-        "pass_pct": 76.79456718986773
-      },
-      "node": {
-        "total": 53453,
-        "passed": 48721,
-        "failed": 4732,
-        "pass_pct": 91.14736310403532
-      },
-      "deno": {
-        "total": 53453,
-        "passed": 48876,
-        "failed": 4577,
-        "pass_pct": 91.43733747404261
-      },
-      "bun": {
-        "total": 53453,
-        "passed": 42523,
-        "failed": 10930,
-        "pass_pct": 79.55212990851777
-      }
-    }
-  }
+  "runtimes": [],
+  "suite_results": {}
 }

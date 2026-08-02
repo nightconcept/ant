@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Parse ant compliance tier logs into structured failure data.
+"""Parse Ant named compliance-suite logs into structured failure data.
 
-Logs live in .deps/compliance/logs/tier{1,2,3}_<timestamp>.log and share one
+Logs live in .deps/compliance/logs/<suite>_<timestamp>.log and share one
 block format:
 
     [FAIL] <test name> (<time>ms)
@@ -10,16 +10,16 @@ block format:
     --------------
 
 Only failures are emitted to the log (passes are counted in the summary only).
-This script locates the latest log per tier, extracts every [FAIL] block, pulls
+This script locates the latest log per suite, extracts every [FAIL] block, pulls
 the primary error type + message, and prints either a human summary or JSON.
 
 Usage:
-    parse_failures.py                 # summary of all tiers (latest run)
-    parse_failures.py --tier 3        # only tier 3
-    parse_failures.py --tier 2 --list # every failing test + one-line error
-    parse_failures.py --tier 3 --group category   # group by test category
-    parse_failures.py --tier 3 --group message    # group by error message
-    parse_failures.py --tier 3 --filter Temporal  # only tests matching substring
+    parse_failures.py                       # summary of all suites
+    parse_failures.py --suite test262       # only Test262
+    parse_failures.py --suite regression --list
+    parse_failures.py --suite test262 --group category
+    parse_failures.py --suite test262 --group message
+    parse_failures.py --suite test262 --filter Temporal
     parse_failures.py --json          # machine-readable, for follow-up tooling
     parse_failures.py --log <path>    # parse a specific log file
     parse_failures.py --require-current  # exit non-zero if the log is stale
@@ -31,7 +31,7 @@ names; this script's grouping/message analysis is for drilling into the
 
 Staleness: every log records the commit and tree state it was produced at
 (`Commit:` / `Branch:` / `Tree:` in the header, and `<sha>[-dirty]` in the
-filename). Tier 3 runs take long enough that a log routinely outlives the
+filename). Test262 runs take long enough that a log routinely outlives the
 code it describes. This script checks whether the log's commit is still an
 ancestor of HEAD and warns loudly (see `staleness_of`) if not, if the tree
 was dirty, or if no commit can be determined at all (old logs).
@@ -56,7 +56,10 @@ DASHES_RE = re.compile(r"^-{6,}\s*$")
 HEADER_COMMIT_RE = re.compile(r"^Commit\s*:\s*([0-9a-fA-F]+)", re.MULTILINE)
 HEADER_BRANCH_RE = re.compile(r"^Branch\s*:\s*(.+)$", re.MULTILINE)
 HEADER_TREE_RE = re.compile(r"^Tree\s*:\s*(\w+)", re.MULTILINE)
-FILENAME_SHA_RE = re.compile(r"^tier\d+_\d{8}_\d{6}_([0-9a-fA-F]{6,40})(-dirty)?\.log$")
+FILENAME_SHA_RE = re.compile(
+    r"^(?:wintertc|regression|test262|tier\d+)_\d{8}_\d{6}_"
+    r"([0-9a-fA-F]{6,40})(-dirty)?\.log$"
+)
 
 
 def revision_of(path, text):
@@ -124,8 +127,8 @@ def staleness_of(rev):
     return bool(reasons), reasons
 
 
-def latest_log(tier):
-    pattern = os.path.join(LOG_DIR, f"tier{tier}_*.log")
+def latest_log(suite):
+    pattern = os.path.join(LOG_DIR, f"{suite}_*.log")
     files = sorted(glob.glob(pattern))
     return files[-1] if files else None
 
@@ -227,20 +230,20 @@ def _staleness_entry(path, text):
     return {"revision": rev, "stale": stale, "reasons": reasons}
 
 
-def load(tier=None, log=None):
-    """Return {tier_label: (path, summary_dict, [failures], staleness_dict)}."""
+def load(suite=None, log=None):
+    """Return {suite_id: (path, summary_dict, [failures], staleness_dict)}."""
     results = {}
     if log:
         text = open(log, errors="replace").read()
         results[os.path.basename(log)] = (log, parse_summary(text), parse_log(log), _staleness_entry(log, text))
         return results
-    tiers = [tier] if tier else [1, 2, 3]
-    for t in tiers:
-        path = latest_log(t)
+    suites = [suite] if suite else ["wintertc", "regression", "test262"]
+    for suite_id in suites:
+        path = latest_log(suite_id)
         if not path:
             continue
         text = open(path, errors="replace").read()
-        results[f"tier{t}"] = (path, parse_summary(text), parse_log(path), _staleness_entry(path, text))
+        results[suite_id] = (path, parse_summary(text), parse_log(path), _staleness_entry(path, text))
     return results
 
 
@@ -312,7 +315,7 @@ def cmd_list(results, filt):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--tier", type=int, choices=[1, 2, 3])
+    ap.add_argument("--suite", choices=["wintertc", "regression", "test262"])
     ap.add_argument("--log", help="parse a specific log file")
     ap.add_argument("--list", action="store_true", help="list every failing test")
     ap.add_argument("--group", choices=["category", "message", "type"])
@@ -325,7 +328,7 @@ def main():
     )
     args = ap.parse_args()
 
-    results = load(tier=args.tier, log=args.log)
+    results = load(suite=args.suite, log=args.log)
     if not results:
         print("No compliance logs found in " + LOG_DIR, file=sys.stderr)
         return 1

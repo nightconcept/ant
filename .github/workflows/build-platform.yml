@@ -211,10 +211,6 @@ jobs:
           extra_meson_args: ${{ steps.config.outputs.extra_meson_args }}
           binary_name: ${{ steps.config.outputs.binary_name }}
 
-      - name: WinterTC tests
-        if: inputs.platform == 'linux-glibc-x64'
-        run: python3 scripts/run_compliance.py --tier 1 --all
-
       # === UPLOAD ARTIFACTS ===
       - name: Upload binary
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
