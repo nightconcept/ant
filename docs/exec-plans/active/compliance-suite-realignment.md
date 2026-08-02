@@ -439,5 +439,5 @@ fabricate named baselines by merely changing keys on old aggregate Tier 1 data.
   analysis, and documentation through red-green tests.
 - 2026-08-01: Generated clean full-suite baselines at commit `2916d9fc`.
   Ant Regression passed 569/569. Test262 passed 34,527/53,428. WinterTC passed
-  78/436. The 358 WinterTC failures remain visible for Phase 6; the largest
+  78/431. The 353 WinterTC failures remain visible for Phase 6; the largest
   groups are WebCrypto, WebAssembly, Streams, and Encoding.

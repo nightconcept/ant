@@ -20702,15 +20702,13 @@
           "total": 11
         },
         "WinterTC: compression": {
-          "failed": 13,
+          "failed": 11,
           "failing": [
             "WPT: compression/compression-bad-chunks.any.js",
             "WPT: compression/compression-constructor-error.any.js",
             "WPT: compression/compression-including-empty-chunk.any.js",
             "WPT: compression/compression-large-flush-output.any.js",
             "WPT: compression/compression-multiple-chunks.any.js",
-            "WPT: compression/compression-output-length.any.js",
-            "WPT: compression/compression-stream.any.js",
             "WPT: compression/decompression-bad-chunks.any.js",
             "WPT: compression/decompression-buffersource.any.js",
             "WPT: compression/decompression-constructor-error.any.js",
@@ -20719,7 +20717,7 @@
             "WPT: compression/decompression-extra-input.any.js"
           ],
           "passed": 5,
-          "total": 18
+          "total": 16
         },
         "WinterTC: console": {
           "failed": 3,
@@ -20794,10 +20792,9 @@
           "total": 9
         },
         "WinterTC: fetch-request": {
-          "failed": 19,
+          "failed": 18,
           "failing": [
             "WPT: fetch/api/request/forbidden-method.any.js",
-            "WPT: fetch/api/request/request-bad-port.any.js",
             "WPT: fetch/api/request/request-cache-default-conditional.any.js",
             "WPT: fetch/api/request/request-cache-default.any.js",
             "WPT: fetch/api/request/request-cache-force-cache.any.js",
@@ -20817,13 +20814,11 @@
             "WPT: fetch/api/request/request-structure.any.js"
           ],
           "passed": 2,
-          "total": 21
+          "total": 20
         },
         "WinterTC: fetch-response": {
-          "failed": 16,
+          "failed": 14,
           "failing": [
-            "WPT: fetch/api/response/response-blob-realm.any.js",
-            "WPT: fetch/api/response/response-cancel-stream.any.js",
             "WPT: fetch/api/response/response-consume-empty.any.js",
             "WPT: fetch/api/response/response-consume-stream.any.js",
             "WPT: fetch/api/response/response-error.any.js",
@@ -20840,7 +20835,7 @@
             "WPT: fetch/api/response/response-stream-with-broken-then.any.js"
           ],
           "passed": 6,
-          "total": 22
+          "total": 20
         },
         "WinterTC: file": {
           "failed": 2,
@@ -21157,23 +21152,23 @@
         }
       },
       "filter": null,
-      "finished": "2026-08-02T04:52:30.248992+00:00",
+      "finished": "2026-08-02T05:03:52.313247+00:00",
       "revision": {
         "branch": "compliance/named-suites",
-        "commit": "2916d9fc008ccdd5d5864a0795119d4fd8df998d",
+        "commit": "e494a3f555faf545d20040d0a7b84bb95d975962",
         "dirty": false,
-        "short": "2916d9fc",
-        "subject": "test: replace compliance tiers with named suites"
+        "short": "e494a3f5",
+        "subject": "test: harden WinterTC suite boundaries"
       },
       "schema_version": 2,
-      "started": "2026-08-02T04:52:22.436599+00:00",
+      "started": "2026-08-02T05:03:46.588984+00:00",
       "suite": "WinterTC",
       "suite_id": "wintertc",
       "totals": {
-        "failed": 358,
-        "pass_rate": 17.9,
+        "failed": 353,
+        "pass_rate": 18.1,
         "passed": 78,
-        "total": 436
+        "total": 431
       }
     }
   }
