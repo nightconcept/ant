@@ -10,6 +10,7 @@ can reuse the decision history.
 
 ## Plans
 
+- [Trunk PR Gates and Iterator Pilot](trunk-pr-gates-and-iterator-pilot.md)
 - [Main History Refactor (2026-07-29)](main-history-refactor-2026-07-29.md)
 - [Post-Audit Correctness and Compliance Gates](post-audit-correctness-and-compliance-gates.md)
 - [Tier 3 Symbol Coercion and Microtask Memory (2026-08-01)](t3-symbol-coercion-microtask-memory-2026-08-01.md)
