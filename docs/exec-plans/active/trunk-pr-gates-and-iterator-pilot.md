@@ -534,3 +534,8 @@ Status: [ ] not started
   generator receiver. Added an internal Iterator Helper brand, checked it in
   `next` and `return`, and added a focused regression test. The exact staging
   test `iterator-helper-methods-throw-on-generators.js` now passes locally.
+- 2026-08-01: The next pilot run passed every classified job, including the
+  full pinned Tier 3 exact-set comparison, then correctly remained blocked
+  because the aggregate job had not checked out `check_pr_gate.js`. Added a
+  read-only merge-candidate checkout to `PR Gate` and a structural regression
+  test that requires checkout before script execution.

@@ -165,6 +165,11 @@ jobs:
       - compliance-tier3
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout merge candidate
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.sha }}
+
       - name: Enforce classified jobs
         env:
           EVENT_NAME: ${{ github.event_name }}
