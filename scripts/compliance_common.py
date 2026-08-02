@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEPS_DIR = REPO_ROOT / ".deps" / "compliance"
 LOGS_DIR = DEPS_DIR / "logs"
+VERSIONS_FILE = REPO_ROOT / ".github" / "versions.json"
 
 # ANSI Colors
 GREEN = "\033[32m"
@@ -255,6 +256,34 @@ def ensure_test262_harness() -> tuple[Path, Path]:
             
     return assert_js, sta_js
 
+def pinned_test262_revision() -> str:
+    revision = json.loads(VERSIONS_FILE.read_text())["dependencies"]["test262"]
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
+        raise RuntimeError(".github/versions.json must pin Test262 to a full commit SHA")
+    return revision.lower()
+
+
+def checkout_test262_revision(test262_dir: Path, revision: str) -> None:
+    current = subprocess.run(
+        ["git", "-C", str(test262_dir), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip().lower()
+    if current == revision:
+        return
+
+    print(f"{CYAN}Checking out pinned Test262 revision {revision[:12]}...{RESET}")
+    subprocess.run(
+        ["git", "-C", str(test262_dir), "fetch", "--depth", "1", "origin", revision],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(test262_dir), "checkout", "--detach", revision],
+        check=True,
+    )
+
+
 def ensure_test262_repo() -> Path:
     """Ensure Test262 suite repository is checked out locally.
 
@@ -264,19 +293,30 @@ def ensure_test262_repo() -> Path:
     assert `this === global`, but costs ~60 dynamic-import tests, so it is left
     alone. Fixing both needs an engine-side way to force Script semantics.
     """
+    revision = pinned_test262_revision()
     root_t262 = REPO_ROOT / "test262"
     if (root_t262 / "test").exists():
+        checkout_test262_revision(root_t262, revision)
         return root_t262
 
     deps_t262 = DEPS_DIR / "test262"
     if (deps_t262 / "test").exists():
+        checkout_test262_revision(deps_t262, revision)
         return deps_t262
 
-    print(f"{CYAN}Cloning tc39/test262 repository into {deps_t262}...{RESET}")
+    print(f"{CYAN}Cloning pinned tc39/test262 repository into {deps_t262}...{RESET}")
     deps_t262.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        ["git", "clone", "--depth", "1", "https://github.com/tc39/test262.git", str(deps_t262)],
+        ["git", "clone", "--filter=blob:none", "--no-checkout", "https://github.com/tc39/test262.git", str(deps_t262)],
         check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(deps_t262), "fetch", "--depth", "1", "origin", revision],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(deps_t262), "checkout", "--detach", revision],
+        check=True,
     )
     return deps_t262
 

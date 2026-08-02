@@ -40,6 +40,12 @@ Each run's manifest is always reachable at
 every run (see [The Per-Run Manifest](#the-per-run-manifest) below) - that is
 what the update/diff recipes feed to `compliance_baseline.py`.
 
+Tier 3 checks out the full Test262 commit pinned at
+`.github/versions.json:dependencies.test262`. The pin keeps the failing-test
+universe identical between a checked-in baseline and a PR gate. Update the pin
+only with an intentional full baseline refresh; otherwise new upstream tests
+look like engine regressions even though they did not exist in the baseline.
+
 For anything ad-hoc - attributing a single change, running a subset, a smoke
 check - drop to the underlying scripts directly (see
 [Measuring A Change Without A Full Run](#measuring-a-change-without-a-full-run)):
