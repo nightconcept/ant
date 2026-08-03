@@ -5,7 +5,6 @@
 #include "shapes.h"
 
 #include "gc/objects.h"
-#include "gc/refs.h"
 #include "gc/stats.h"
 #include "gc/strings.h"
 #include "gc/ropes.h"
@@ -175,11 +174,7 @@ static void gc_mark_str(ant_t *js, ant_value_t v) {
 
 void gc_run(ant_t *js) {
   if (__builtin_expect(gc_disabled, 0)) return;
-  uint64_t start_ns = gc_stats_begin();
   size_t live_before = js->obj_arena.live_count;
-
-  js->prop_refs_len = 0;
-  gc_refs_shrink(js);
 
   gc_strings_begin(js);
   gc_ropes_begin(js);
@@ -198,13 +193,6 @@ void gc_run(ant_t *js) {
   js->gc_remember_overflow = false;
 
   gc_adapt_major_interval(live_before, js->obj_arena.live_count);
-  gc_stats_note_major(
-    js,
-    live_before > js->obj_arena.live_count
-      ? live_before - js->obj_arena.live_count
-      : 0,
-    start_ns
-  );
   gc_last_run_ms = gc_now_ms();
 }
 
@@ -212,7 +200,6 @@ void gc_run_minor(ant_t *js) {
   if (__builtin_expect(gc_disabled, 0)) return;
 
   if (__builtin_expect(js->gc_remember_overflow, 0)) {
-    gc_stats_note_major_cause(GC_STATS_MAJOR_OVERFLOW);
     gc_run(js);
     return;
   }
@@ -220,17 +207,11 @@ void gc_run_minor(ant_t *js) {
   size_t old_before   = js->old_live_count;
   size_t live_before  = js->obj_arena.live_count;
   size_t young_before = live_before > old_before ? live_before - old_before : 0;
-  uint64_t start_ns = gc_stats_begin();
 
   gc_objects_run_minor(js, NULL);
   ant_ic_epoch_bump();
 
-  /* gc_last_live is the major-collection baseline. A minor cannot prove old-gen
-     garbage dead, so refreshing it here would let the threshold chase the heap
-     upward and defer the major that actually reclaims. The exception is a heap
-     whose majors keep coming back empty: there the old generation really is
-     live, and holding the baseline down would only buy repeated full scans. */
-  if (gc_major_recl_ewma <= 13) js->gc_last_live = js->obj_arena.live_count;
+  js->gc_last_live = js->obj_arena.live_count;
   js->old_live_count = js->obj_arena.live_count;
   js->minor_gc_count++;
 
@@ -238,7 +219,6 @@ void gc_run_minor(ant_t *js) {
     ? js->obj_arena.live_count - old_before : 0;
     
   gc_adapt_nursery(young_before, survivors);
-  gc_stats_note_minor(js, young_before, survivors, start_ns);
   gc_last_run_ms = gc_now_ms();
 }
 
@@ -264,7 +244,6 @@ void gc_maybe(ant_t *js) {
       
       if (major_due) {
         js->minor_gc_count = 0;
-        gc_stats_note_major_cause(GC_STATS_MAJOR_AFTER_MINOR);
         gc_run(js);
       }
     }
@@ -276,7 +255,6 @@ void gc_maybe(ant_t *js) {
   
   if (live >= threshold) {
     gc_tick = 0;
-    gc_stats_note_major_cause(GC_STATS_MAJOR_LIVE);
     gc_run(js);
     return;
   }

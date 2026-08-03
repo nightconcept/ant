@@ -19,6 +19,14 @@ export function targets() {
     'test_global_accessor_read.cjs',
     'test_jit_inline_call_errors.cjs',
     'test_string_length_accumulation.cjs',
+    'test_property_location_stress.cjs',
+    'test_accessor_undefined_result.cjs',
+    'test_array_define_fast_path.cjs',
+    'test_nul_property_keys.cjs',
+    'test_url_legacy_idna.cjs',
+    'test_child_process_sigpipe_reset.cjs',
+    'test_spawn_sync_stdin_pump.cjs',
+    'test_child_process_exec_sync_options.cjs',
     'test_node_http_incoming_message_readable.cjs',
     'test_stream_readable_to_web.cjs',
     'test_esm_package_self_reference.cjs',
@@ -50,7 +58,11 @@ export function targets() {
     { group: 'servers', type: 'server', name: 'elysia', entry: 'examples/npm/elysia' }
   );
 
-  const scrubPid = [[/\b\d{3,7}\b/g, '<pid>']];
+  const scrubPid = [
+    [/\bpid \d+\b/g, 'pid <pid>'],
+    [/\bppid=\d+/g, 'ppid=<pid>'],
+    [/\bgot \d+ pids\b/g, 'got <pid> pids']
+  ];
   list.push(
     { group: 'examples', type: 'snapshot', name: 'smoke', entry: 'examples/npm/smoke/index.js' },
     { group: 'examples', type: 'snapshot', name: 'djot', entry: 'examples/npm/djot/index.ts' },

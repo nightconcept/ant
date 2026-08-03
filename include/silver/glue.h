@@ -187,8 +187,7 @@ void jit_helper_set_name(
 
 ant_value_t jit_helper_put_field(
   sv_vm_t *vm, ant_t *js, ant_value_t obj,
-  ant_value_t val, const char *str, uint32_t len,
-  sv_func_t *func, int32_t bc_off
+  ant_value_t val, const char *str, uint32_t len
 );
 
 ant_value_t jit_helper_get_elem(

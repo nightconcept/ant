@@ -926,14 +926,10 @@ ant_value_t jit_helper_get_length(sv_vm_t *vm, ant_t *js, ant_value_t obj) {
 
 ant_value_t jit_helper_put_field(
   sv_vm_t *vm, ant_t *js, ant_value_t obj,
-  ant_value_t val, const char *str, uint32_t len,
-  sv_func_t *func, int32_t bc_off
+  ant_value_t val, const char *str, uint32_t len
 ) {
-  (void)vm;
-  uint8_t *ip = NULL;
-  if (func && bc_off >= 0 && bc_off < func->code_len) ip = func->code + bc_off;
-  sv_atom_t atom = { .str = str, .len = len };
-  return sv_prop_put_field_ic(js, obj, val, &atom, func, ip);
+  ant_value_t key = js_mkstr(js, str, len);
+  return js_setprop(js, obj, key, val);
 }
 
 ant_value_t jit_helper_get_elem(
@@ -945,9 +941,11 @@ ant_value_t jit_helper_get_elem(
     jit_set_error_site_from_func(js, func, bc_off);
     return sv_mk_nullish_read_error_by_key(js, obj, key);
   }
-  ant_value_t fast_elem = js_mkundef();
-  if (sv_try_elem_fast_get(js, obj, key, &fast_elem))
-    return fast_elem;
+  if (vtype(obj) == T_ARR && vtype(key) == T_NUM) {
+    double d = tod(key);
+    if (d >= 0 && d == (uint32_t)d)
+      return js_arr_get(js, obj, (uint32_t)d);
+  }
   ant_value_t str_elem = js_mkundef();
   if (sv_try_string_index_get(js, obj, key, &str_elem))
     return str_elem;
@@ -972,15 +970,6 @@ ant_value_t jit_helper_put_elem(
   ant_value_t obj, ant_value_t key, ant_value_t val
 ) {
   if (vtype(key) == T_SYMBOL) return js_setprop(js, obj, key, val);
-
-  ant_offset_t idx;
-  if (sv_elem_index_from_key(key, &idx) && js_arr_try_fast_set(js, obj, idx, val))
-    return js_mkundef();
-
-  ant_value_t ta_res = js_mkundef();
-  if (sv_try_typedarray_elem_set(js, obj, key, val, &ta_res))
-    return is_err(ta_res) ? ta_res : js_mkundef();
-
   ant_value_t key_jv = sv_key_to_propstr(js, key);
   return js_setprop(js, obj, key_jv, val);
 }
@@ -989,7 +978,7 @@ ant_value_t jit_helper_put_global(
   sv_vm_t *vm, ant_t *js, ant_value_t val,
   const char *str, uint32_t len, int is_strict
 ) {
-  if (is_strict && lkp(js, js->global, str, len) == 0)
+  if (is_strict && !lkp(js, js->global, str, len).obj)
     return js_mkerr_typed(js, JS_ERR_REFERENCE, "'%.*s' is not defined", (int)len, str);
   ant_value_t key = js_mkstr(js, str, len);
   return js_setprop(js, js->global, key, val);
@@ -1026,9 +1015,11 @@ ant_value_t jit_helper_throw_error(
 ) { return js_mkerr_typed(js, (js_err_type_t)err_type, "%.*s", (int)len, str); }
 
 ant_value_t jit_helper_get_elem2(sv_vm_t *vm, ant_t *js, ant_value_t obj, ant_value_t key) {
-  ant_value_t fast_elem = js_mkundef();
-  if (sv_try_elem_fast_get(js, obj, key, &fast_elem))
-    return fast_elem;
+  if (vtype(obj) == T_ARR && vtype(key) == T_NUM) {
+    double d = tod(key);
+    if (d >= 0 && d == (uint32_t)d)
+      return js_arr_get(js, obj, (uint32_t)d);
+  }
   ant_value_t str_elem = js_mkundef();
   if (sv_try_string_index_get(js, obj, key, &str_elem))
     return str_elem;
