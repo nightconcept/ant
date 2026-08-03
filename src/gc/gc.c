@@ -5,6 +5,7 @@
 #include "shapes.h"
 
 #include "gc/objects.h"
+#include "gc/stats.h"
 #include "gc/strings.h"
 #include "gc/ropes.h"
 
@@ -22,6 +23,17 @@ static uint32_t gc_major_pool_growth_x256 = 384;
 static uint32_t gc_minor_surv_ewma = 128;
 static uint32_t gc_major_recl_ewma =  26;
 static bool gc_use_nursery_major_floor = true;
+
+void gc_policy_state_get(gc_policy_state_t *out) {
+  out->nursery_threshold = gc_nursery_threshold;
+  out->major_every_n = gc_major_every_n;
+  out->live_growth_x256 = gc_major_live_growth_x256;
+  out->pool_growth_x256 = gc_major_pool_growth_x256;
+  out->minor_surv_ewma = gc_minor_surv_ewma;
+  out->major_recl_ewma = gc_major_recl_ewma;
+  out->remember_ewma = 0;
+  out->promoted_ewma = 0;
+}
 
 static uint64_t gc_now_ms(void) {
   struct timespec ts;
