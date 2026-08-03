@@ -66,8 +66,9 @@ that also carried an activation-VM sizing experiment, since dropped — upstream
 #62 replaced per-await activation VMs with heap `sv_activation_t` snapshots — so
 some of the gain is not attributable to this change.
 
-Compliance: spec suite 3672/3672. Test262 tier 3 **32842/53434 both before and
-after** (identical pass count). Tier 1 53/53.
+Compliance: the legacy spec-suite aggregate was 3672/3672. Test262 was
+**32842/53434 both before and after** (identical pass count). The legacy
+53-test internal gate was 53/53.
 
 ## Options considered
 

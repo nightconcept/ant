@@ -112,8 +112,8 @@ jobs:
       build_timestamp: ${{ needs.prepare.outputs.timestamp }}
       source_revision: ${{ needs.prepare.outputs.revision }}
 
-  compliance-tier2:
-    name: Compliance (Tier 2, Release Gate)
+  compliance-regression:
+    name: Ant Regression Release Gate
     needs: prepare
     runs-on: ubuntu-latest
     steps:
@@ -155,18 +155,28 @@ jobs:
         run: |
           meson setup build -Dbuildtype=release
           meson compile -C build
-      - name: Run and verify Tier 2
+      - name: Run and verify Ant Regression
         run: |
-          python3 scripts/run_compliance.py --tier 2 --all --allow-failures --log
+          python3 scripts/run_compliance.py --suite regression --all --allow-failures --log
           python3 scripts/compliance_baseline.py diff \
-            .deps/compliance/logs/tier2-latest.json \
+            .deps/compliance/logs/regression-latest.json \
             --require-baseline --require-full \
             --expect-commit "${{ needs.prepare.outputs.revision }}" \
             --expect-branch main
 
+  compliance-test262:
+    name: Test262 Non-Regression Release Gate
+    needs: prepare
+    uses: ./.github/workflows/compliance-gate.yml
+    with:
+      suite: test262
+      source_revision: ${{ needs.prepare.outputs.revision }}
+      logical_branch: main
+      baseline_revision: ${{ needs.prepare.outputs.revision }}
+
   publish:
     name: Publish GitHub Release
-    needs: [prepare, build-and-test, compliance-tier2]
+    needs: [prepare, build-and-test, compliance-regression, compliance-test262]
     runs-on: ubuntu-latest
     permissions:
       contents: write

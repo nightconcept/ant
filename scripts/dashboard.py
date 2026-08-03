@@ -3,13 +3,13 @@
 
 Reads the same files the CI regression gates diff against:
 
-  * docs/repo/compliance-baseline.json          - ant tier 1/2/3 pass rates (CI gate)
+  * docs/repo/compliance-baseline.json          - named Ant compliance suites (CI gate)
   * docs/repo/compliance-runtimes-baseline.json - ant vs. other runtimes compliance
   * docs/repo/bench-baseline.json                - ant vs. other runtimes timing/size
 
 All are checked-in snapshots, not live measurements - see the commit/branch
 printed with each section before treating a number as current. Run
-`just compliance-diff-t<N>`, `just compliance-runtimes-update`, or
+`just compliance-diff-<suite>`, `just compliance-runtimes-update`, or
 `just bench-fast-diff` for a fresh run.
 """
 
@@ -30,13 +30,6 @@ GREEN = "\033[32m"
 YELLOW = "\033[33m"
 RED = "\033[31m"
 RESET = "\033[0m"
-
-TIER_NAMES = {
-    "1": "WinterTC / edge baseline",
-    "2": "Node.js compatibility",
-    "3": "Test262 / WPT / frameworks",
-}
-
 
 def load(path):
     if not path.exists():
@@ -74,17 +67,16 @@ def print_compliance(data):
         print(f"  {DIM}no baseline at {COMPLIANCE_BASELINE.relative_to(REPO_ROOT)}{RESET}")
         return
 
-    tiers = data.get("tiers", {})
-    for tier in sorted(tiers, key=lambda t: int(t)):
-        entry = tiers[tier]
+    suites = data.get("suites", {})
+    for suite_id, entry in suites.items():
         totals = entry["totals"]
         rev = entry["revision"]
         rate = totals["pass_rate"]
         color = pass_rate_color(rate)
-        name = TIER_NAMES.get(tier, f"tier {tier}")
+        name = entry.get("suite", suite_id)
         when = format_local(entry.get("finished"))
         print(
-            f"  Tier {tier} {DIM}({name}){RESET}: "
+            f"  {name} {DIM}({suite_id}){RESET}: "
             f"{color}{rate:5.1f}%{RESET} "
             f"({totals['passed']}/{totals['total']} passed, {totals['failed']} failed) "
             f"{DIM}@ {rev['short']} [{rev['branch']}] recorded {when}{RESET}"
@@ -106,9 +98,9 @@ def print_compliance_runtimes(data):
         runtime_ids.remove("ant")
         runtime_ids = ["ant"] + runtime_ids
 
-    for tier_label, runtime_stats in data.get("tier_results", {}).items():
+    for suite_label, runtime_stats in data.get("suite_results", {}).items():
         print()
-        print(f"  {BOLD}{tier_label}{RESET}")
+        print(f"  {BOLD}{suite_label}{RESET}")
         header = "    " + f"{'runtime':<12}" + f"{'pass rate':>12}" + f"{'passed/total':>16}"
         print(header)
         for rt in runtime_ids:

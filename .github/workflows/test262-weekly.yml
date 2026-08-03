@@ -1,12 +1,9 @@
-name: Tier 3 Weekly
+name: Test262 Weekly
 
-# Tier 3 is ~50k Test262/WPT tests and takes far too long to sit in front of a
-# push. It runs on a schedule against `main` and compares the exact failing-test
-# set with the checked-in trusted baseline.
+# The pinned Test262 corpus is too large to sit in front of every push. This
+# scheduled run compares exact failing-test names against the trusted baseline.
 on:
   schedule:
-    # Mondays, 04:00 UTC - off-peak, and a full working week before anyone is
-    # likely to be looking at the result.
     - cron: "0 4 * * 1"
   workflow_dispatch:
 
@@ -15,11 +12,11 @@ permissions:
   contents: read
 
 jobs:
-  compliance-tier3:
-    name: Compliance (Tier 3, main)
+  compliance-test262:
+    name: Test262 (main)
     runs-on: ubuntu-latest
     concurrency:
-      group: tier3-weekly-main
+      group: test262-weekly-main
       cancel-in-progress: false
     steps:
       - name: Checkout
@@ -37,8 +34,6 @@ jobs:
           sudo apt-get install -y ninja-build ccache jq
           pip install --break-system-packages -U meson
 
-      # Same pinned toolchain as the platform builds: the runner's default clang
-      # is older than the C23 the engine requires and cannot compile src/ant.c.
       - name: Resolve pinned tool versions
         id: config
         run: |
@@ -60,7 +55,7 @@ jobs:
       - name: Setup build caches
         uses: ./.github/actions/setup-build-caches
         with:
-          platform: compliance-main-linux-x64
+          platform: test262-main-linux-x64
           compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
           zig_version: "0.16.0"
 
@@ -80,22 +75,22 @@ jobs:
         if: always()
         run: ccache --show-stats
 
-      - name: Run Tier 3 Compliance Tracking
-        run: python3 scripts/run_compliance.py --tier 3 --all --allow-failures --log
+      - name: Run Test262 tracking
+        run: python3 scripts/run_compliance.py --suite test262 --all --allow-failures --log
 
-      - name: Check tier 3 exact failing set against baseline
+      - name: Check Test262 exact failing set against baseline
         run: |
           python3 scripts/compliance_baseline.py diff \
-            .deps/compliance/logs/tier3-latest.json \
+            .deps/compliance/logs/test262-latest.json \
             --require-baseline \
             --require-full \
             --expect-commit "${{ steps.source.outputs.commit }}" \
             --expect-branch main
 
-      - name: Upload tier 3 manifest and log
+      - name: Upload Test262 manifest and log
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
-          name: tier3-compliance-main
-          path: .deps/compliance/logs/tier3_*
+          name: test262-compliance-main
+          path: .deps/compliance/logs/test262_*
           if-no-files-found: error

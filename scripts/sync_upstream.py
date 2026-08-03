@@ -156,7 +156,7 @@ def cmd_worktree(args) -> int:
         print(f"{GREEN}test262{RESET} pinned to {rev or 'local checkout'}")
     else:
         print(f"{YELLOW}warning:{RESET} no Test262 checkout at {corpus} to pin - "
-              f"run a tier 3 here first, then re-run so both sides share it.",
+              f"run Test262 here first, then re-run so both sides share it.",
               file=sys.stderr)
 
     print(f"\nnext: meson setup {dest}/build {dest} && meson compile -C {dest}/build")

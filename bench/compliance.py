@@ -17,9 +17,8 @@ from compliance_common import (
     RESET,
     REPO_ROOT
 )
-from compliance_tier1 import run_tier1
-from compliance_tier2 import run_tier2
-from compliance_tier3 import run_tier3
+from compliance_regression import run_regression
+from compliance_test262 import run_test262
 
 def parse_add_runtime_arg(arg_str: str) -> dict:
     """Parse '--add-runtime id:name:binary_path[:args]' argument."""
@@ -44,7 +43,7 @@ def draw_compliance_header_box(runtimes: list[dict], mode_name: str, width: int 
         f"{BOLD}{MAGENTA}JS/TS RUNTIME COMPLIANCE BENCHMARK SUITE{RESET}",
         f"{DIM}Target Runtimes: {r_names}{RESET}",
         f"{DIM}Execution Mode: {mode_name}{RESET}",
-        f"{DIM}Tiers: Tier 1 (WinterTC / Edge Baseline), Tier 2 (Node.js Compat), Tier 3 (Test262 / WPT / Frameworks){RESET}"
+        f"{DIM}Suites: Ant Regression, Test262{RESET}"
     ]
     box = []
     box.append("╔" + "═" * (width - 2) + "╗")
@@ -53,19 +52,19 @@ def draw_compliance_header_box(runtimes: list[dict], mode_name: str, width: int 
     box.append("╚" + "═" * (width - 2) + "╝")
     return "\n".join(box)
 
-def draw_overall_matrix(runtimes: list[dict], tier_results: dict, width: int = 96) -> str:
+def draw_overall_matrix(runtimes: list[dict], suite_results: dict, width: int = 96) -> str:
     """
-    Transposed matrix: Runtimes as rows, Tiers & Overall Score as columns.
+    Transposed matrix: runtimes as rows and suites as columns.
     """
     lines = [
         f"{BOLD}{MAGENTA}OVERALL COMPLIANCE SCORE MATRIX{RESET}",
         "─" * (width - 6),
     ]
 
-    tier_keys = list(tier_results.keys())
+    suite_keys = list(suite_results.keys())
 
     header_cols = [pad_cell("Runtime", 16)]
-    for tk in tier_keys:
+    for tk in suite_keys:
         short_name = tk.split(" ")[0] + " " + tk.split(" ")[1] if " " in tk else tk
         header_cols.append(pad_cell(short_name, 16, "right"))
     header_cols.append(pad_cell("Overall Score", 18, "right"))
@@ -81,8 +80,8 @@ def draw_overall_matrix(runtimes: list[dict], tier_results: dict, width: int = 9
         tot_passed = 0
         tot_total = 0
 
-        for tk in tier_keys:
-            st = tier_results[tk].get(r_id, {"total": 0, "passed": 0, "pass_pct": 0.0})
+        for tk in suite_keys:
+            st = suite_results[tk].get(r_id, {"total": 0, "passed": 0, "pass_pct": 0.0})
             tot_passed += st["passed"]
             tot_total += st["total"]
             score_str = f"{st['passed']}/{st['total']} ({st['pass_pct']:.0f}%)"
@@ -100,9 +99,9 @@ def draw_overall_matrix(runtimes: list[dict], tier_results: dict, width: int = 9
     tot_ant_p, tot_ant_t = 0, 0
     tot_tjs_p, tot_tjs_t = 0, 0
 
-    for tk in tier_keys:
-        st_ant = tier_results[tk].get("ant", {"total": 0, "passed": 0})
-        st_tjs = tier_results[tk].get("tjs", {"total": 0, "passed": 0})
+    for tk in suite_keys:
+        st_ant = suite_results[tk].get("ant", {"total": 0, "passed": 0})
+        st_tjs = suite_results[tk].get("tjs", {"total": 0, "passed": 0})
         tot_ant_p += st_ant.get("passed", 0)
         tot_ant_t += st_ant.get("total", 0)
         tot_tjs_p += st_tjs.get("passed", 0)
@@ -122,7 +121,7 @@ def draw_overall_matrix(runtimes: list[dict], tier_results: dict, width: int = 9
     box.append("╚" + "═" * (width - 2) + "╝\n")
     return "\n".join(box)
 
-def save_compliance_json_and_baseline(runtimes: list[dict], tier_results: dict, update_baseline: bool = False) -> tuple[Path, Path | None]:
+def save_compliance_json_and_baseline(runtimes: list[dict], suite_results: dict, update_baseline: bool = False) -> tuple[Path, Path | None]:
     import json
     import time
     from datetime import datetime, timezone
@@ -143,7 +142,7 @@ def save_compliance_json_and_baseline(runtimes: list[dict], tier_results: dict, 
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "revision": rev,
         "runtimes": [r["id"] for r in runtimes],
-        "tier_results": tier_results
+        "suite_results": suite_results
     }
 
     with open(manifest_path, "w", encoding="utf-8") as f:
@@ -161,8 +160,8 @@ def save_compliance_json_and_baseline(runtimes: list[dict], tier_results: dict, 
     if update_baseline:
         # Deliberately NOT docs/repo/compliance-baseline.json - that file is the
         # ant-only CI regression gate (scripts/compliance_baseline.py, keyed by
-        # tier number) and has an incompatible schema from this multi-runtime
-        # manifest (keyed by tier label). Keep this snapshot separate so running
+        # suite ID) and has an incompatible schema from this multi-runtime
+        # manifest (keyed by suite label). Keep this snapshot separate so running
         # --update-baseline can't corrupt the CI gate's baseline.
         baseline_path = REPO_ROOT.parent / "docs" / "repo" / "compliance-runtimes-baseline.json"
         baseline_path.parent.mkdir(parents=True, exist_ok=True)
@@ -175,20 +174,17 @@ def save_compliance_json_and_baseline(runtimes: list[dict], tier_results: dict, 
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-Runtime Compliance Benchmark Orchestrator")
-    parser.add_argument("--tier", choices=["1", "2", "3", "all"], default="all", help="Select tier to execute (default: all)")
-    parser.add_argument("--smoke", action="store_true", help="Run official online smoke test subset")
+    parser.add_argument("--suite", choices=["regression", "test262", "all"], default="all", help="Select suite to execute (default: all)")
     parser.add_argument("--all", action="store_true", help="Run full local test suite (default)")
     parser.add_argument("-f", "--filter", type=str, help="Filter test name by substring")
     parser.add_argument("--runtimes", type=str, help="Comma-separated runtime IDs to run (e.g. 'ant,tjs,node,deno,bun')")
     parser.add_argument("--add-runtime", type=str, action="append", help="Add custom runtime formatted as 'id:name:binary_path[:arg1,arg2]' (e.g. 'ant-fork:Ant Fork:../ant/build/ant')")
-    parser.add_argument("--limit", type=int, help="Limit number of Test262 tests to execute (Tier 3)")
+    parser.add_argument("--limit", type=int, help="Limit the selected Test262 tests")
     parser.add_argument("--log", action="store_true", help="Write all test output to log files")
     parser.add_argument("--log-fail", action="store_true", help="Write failing test output to log files")
     parser.add_argument("--allow-failures", action="store_true", help="Exit with 0 even if some tests fail")
     parser.add_argument("--update-baseline", action="store_true", help="Update checked-in compliance baseline file with run manifest")
     args = parser.parse_args()
-
-    smoke_mode = args.smoke and not args.all
 
     extra_runtimes = []
     if args.add_runtime:
@@ -206,34 +202,27 @@ def main():
         print(f"{RED}Error: No valid runtimes resolved.{RESET}")
         sys.exit(1)
 
-    mode_str = "Smoke Test" if smoke_mode else "Full Suite"
-    print(draw_compliance_header_box(runtimes, mode_str))
+    print(draw_compliance_header_box(runtimes, "Full Suite"))
 
-    tier_results = {}
+    suite_results = {}
     overall_exit_code = 0
 
-    if args.tier in ("1", "all"):
-        t1_stats = run_tier1(runtimes, smoke=smoke_mode, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)
-        tier_results["Tier 1 (WinterTC/Edge)"] = t1_stats
-        if any(st["failed"] > 0 for st in t1_stats.values()):
+    if args.suite in ("regression", "all"):
+        stats = run_regression(runtimes, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)
+        suite_results["Ant Regression"] = stats
+        if any(st["failed"] > 0 for st in stats.values()):
             overall_exit_code = 1
 
-    if args.tier in ("2", "all"):
-        t2_stats = run_tier2(runtimes, smoke=smoke_mode, filter_term=args.filter, log_all=args.log, log_fail=args.log_fail)
-        tier_results["Tier 2 (Node.js Compat)"] = t2_stats
-        if any(st["failed"] > 0 for st in t2_stats.values()):
+    if args.suite in ("test262", "all"):
+        stats = run_test262(runtimes, filter_term=args.filter, limit=args.limit, log_all=args.log, log_fail=args.log_fail)
+        suite_results["Test262"] = stats
+        if any(st["failed"] > 0 for st in stats.values()):
             overall_exit_code = 1
 
-    if args.tier in ("3", "all"):
-        t3_stats = run_tier3(runtimes, smoke=smoke_mode, filter_term=args.filter, limit=args.limit, log_all=args.log, log_fail=args.log_fail)
-        tier_results["Tier 3 (Test262/WPT)"] = t3_stats
-        if any(st["failed"] > 0 for st in t3_stats.values()):
-            overall_exit_code = 1
+    if len(suite_results) > 1:
+        print(draw_overall_matrix(runtimes, suite_results))
 
-    if len(tier_results) > 1:
-        print(draw_overall_matrix(runtimes, tier_results))
-
-    manifest_path, baseline_path = save_compliance_json_and_baseline(runtimes, tier_results, update_baseline=args.update_baseline)
+    manifest_path, baseline_path = save_compliance_json_and_baseline(runtimes, suite_results, update_baseline=args.update_baseline)
     print(f"  {CYAN}Compliance Manifest JSON : {manifest_path}{RESET}")
     if baseline_path:
         print(f"  {GREEN}Compliance Baseline Updated: {baseline_path}{RESET}")

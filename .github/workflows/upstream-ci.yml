@@ -41,8 +41,8 @@ jobs:
       build_timestamp: ${{ needs.prepare.outputs.timestamp }}
       source_revision: ${{ github.sha }}
 
-  compliance-tier2:
-    name: Compliance (Tier 2, Gate)
+  compliance-regression:
+    name: Ant Regression Gate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -101,13 +101,13 @@ jobs:
         if: always()
         run: ccache --show-stats
 
-      - name: Run Tier 2 Compliance Tracking
-        run: python3 scripts/run_compliance.py --tier 2 --all --allow-failures --log
+      - name: Run Ant Regression tracking
+        run: python3 scripts/run_compliance.py --suite regression --all --allow-failures --log
 
-      - name: Check tier 2 exact failing set against baseline
+      - name: Check Regression exact failing set against baseline
         run: |
           python3 scripts/compliance_baseline.py diff \
-            .deps/compliance/logs/tier2-latest.json \
+            .deps/compliance/logs/regression-latest.json \
             --require-baseline \
             --require-full \
             --expect-commit "${{ github.sha }}" \

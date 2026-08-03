@@ -62,13 +62,24 @@ jobs:
       build_timestamp: ${{ needs.prepare.outputs.timestamp }}
       source_revision: ${{ github.sha }}
 
-  compliance-tier2:
-    name: Compliance (Tier 2, Gate)
+  compliance-regression:
+    name: Ant Regression Gate
     needs: prepare
     if: needs.prepare.outputs.build_changed == 'true'
     uses: ./.github/workflows/compliance-gate.yml
     with:
-      tier: 2
+      suite: regression
+      source_revision: ${{ github.sha }}
+      logical_branch: main
+      baseline_revision: ${{ github.sha }}
+
+  compliance-test262:
+    name: Test262 Non-Regression Gate
+    needs: prepare
+    if: needs.prepare.outputs.build_changed == 'true'
+    uses: ./.github/workflows/compliance-gate.yml
+    with:
+      suite: test262
       source_revision: ${{ github.sha }}
       logical_branch: main
       baseline_revision: ${{ github.sha }}

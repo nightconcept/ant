@@ -141,89 +141,66 @@ bench-history +args="":
 dashboard +args="":
     python3 scripts/dashboard.py {{args}}
 
-# Run compliance test suite (generic escape hatch; prefer compliance-t1/t2/t3 below)
+# Run compliance test suites (generic escape hatch; prefer named recipes below)
 compliance +args="":
     meson compile -C build
     python3 scripts/run_compliance.py {{args}}
 
-# Run the full tier 1 suite (WinterTC / edge baseline). Must be 100%.
-compliance-t1:
+# Run all Ant-owned regression tests.
+compliance-regression:
     meson compile -C build
-    -python3 scripts/run_compliance.py --tier 1 --all --log-fail
+    -python3 scripts/run_compliance.py --suite regression --all --log-fail
 
-# Run the full tier 2 suite (Node.js compatibility).
-compliance-t2:
+# Run the pinned Test262 corpus. ~50k tests, expect this to take a while.
+compliance-test262:
+    @echo "Running the full Test262 suite (~50k tests) - this takes a while."
     meson compile -C build
-    -python3 scripts/run_compliance.py --tier 2 --all --log-fail
+    -python3 scripts/run_compliance.py --suite test262 --all --log-fail
 
-# Run the full tier 3 suite (Test262 / WPT / frameworks). ~50k tests, expect this to take a while.
-compliance-t3:
-    @echo "Running the full tier 3 suite (~50k tests) - this takes a while."
-    meson compile -C build
-    -python3 scripts/run_compliance.py --tier 3 --all --log-fail
-
-# Full clean tier 1 run, then promote its manifest to the checked-in baseline
-compliance-update-t1:
+# Full clean Ant Regression run, then promote its manifest to the checked-in baseline
+compliance-update-regression:
     #!/usr/bin/env bash
     set -euo pipefail
     if [ -n "$(git status --porcelain)" ]; then
-        echo "error: working tree is dirty - refusing to update the tier 1 baseline from an unreproducible run." >&2
+        echo "error: working tree is dirty - refusing to update the Regression baseline from an unreproducible run." >&2
         exit 1
     fi
     meson compile -C build
-    python3 scripts/run_compliance.py --tier 1 --all --log-fail || true
-    python3 scripts/compliance_baseline.py update .deps/compliance/logs/tier1-latest.json
+    python3 scripts/run_compliance.py --suite regression --all --log-fail
+    python3 scripts/compliance_baseline.py update .deps/compliance/logs/regression-latest.json
 
-# Full clean tier 2 run, then promote its manifest to the checked-in baseline
-compliance-update-t2:
+# Full clean Test262 run (~50k tests), then promote its manifest
+compliance-update-test262:
     #!/usr/bin/env bash
     set -euo pipefail
     if [ -n "$(git status --porcelain)" ]; then
-        echo "error: working tree is dirty - refusing to update the tier 2 baseline from an unreproducible run." >&2
+        echo "error: working tree is dirty - refusing to update the Test262 baseline from an unreproducible run." >&2
         exit 1
     fi
+    echo "Running the full Test262 suite (~50k tests) - this takes a while."
     meson compile -C build
-    python3 scripts/run_compliance.py --tier 2 --all --log-fail || true
-    python3 scripts/compliance_baseline.py update .deps/compliance/logs/tier2-latest.json
+    python3 scripts/run_compliance.py --suite test262 --all --allow-failures --log-fail
+    python3 scripts/compliance_baseline.py update .deps/compliance/logs/test262-latest.json
 
-# Full clean tier 3 run (~50k tests, expensive), then promote its manifest to the checked-in baseline
-compliance-update-t3:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ -n "$(git status --porcelain)" ]; then
-        echo "error: working tree is dirty - refusing to update the tier 3 baseline from an unreproducible run." >&2
-        exit 1
-    fi
-    echo "Running the full tier 3 suite (~50k tests) - this takes a while."
+# Run Ant Regression and diff the resulting manifest against the checked-in baseline
+compliance-diff-regression:
     meson compile -C build
-    python3 scripts/run_compliance.py --tier 3 --all --log-fail || true
-    python3 scripts/compliance_baseline.py update .deps/compliance/logs/tier3-latest.json
+    -python3 scripts/run_compliance.py --suite regression --all --log-fail
+    python3 scripts/compliance_baseline.py diff .deps/compliance/logs/regression-latest.json
 
-# Run tier 1 and diff the resulting manifest against the checked-in baseline
-compliance-diff-t1:
+# Run Test262 and diff the resulting manifest against the checked-in baseline
+compliance-diff-test262:
+    @echo "Running the full Test262 suite (~50k tests) - this takes a while."
     meson compile -C build
-    -python3 scripts/run_compliance.py --tier 1 --all --log-fail
-    python3 scripts/compliance_baseline.py diff .deps/compliance/logs/tier1-latest.json
-
-# Run tier 2 and diff the resulting manifest against the checked-in baseline
-compliance-diff-t2:
-    meson compile -C build
-    -python3 scripts/run_compliance.py --tier 2 --all --log-fail
-    python3 scripts/compliance_baseline.py diff .deps/compliance/logs/tier2-latest.json
-
-# Run tier 3 and diff the resulting manifest against the checked-in baseline (~50k tests, expensive)
-compliance-diff-t3:
-    @echo "Running the full tier 3 suite (~50k tests) - this takes a while."
-    meson compile -C build
-    -python3 scripts/run_compliance.py --tier 3 --all --log-fail
-    python3 scripts/compliance_baseline.py diff .deps/compliance/logs/tier3-latest.json
+    -python3 scripts/run_compliance.py --suite test262 --all --log-fail
+    python3 scripts/compliance_baseline.py diff .deps/compliance/logs/test262-latest.json
 
 
 # Fetch upstream and report incoming commits plus which of our commits they collide with
 upstream-status branch="dev":
     python3 scripts/sync_upstream.py status --branch {{branch}}
 
-# Three-way tier 3 comparison across a merge: pre-merge, merged (current tree), upstream standalone.
+# Three-way Test262 comparison across a merge: pre-merge, merged, upstream standalone.
 # Run this from the sync branch. See docs/repo/upstream-sync.md.
 upstream-verify base="dev":
     #!/usr/bin/env bash
@@ -232,7 +209,7 @@ upstream-verify base="dev":
     # Every run is measured against one pinned Test262 checkout - a fresh clone
     # picks up new tests and reports corpus growth as merge regressions.
     if [ ! -d .deps/compliance/test262 ]; then
-        echo "error: no Test262 checkout to pin. Run 'just compliance-t3' once first." >&2
+        echo "error: no Test262 checkout to pin. Run 'just compliance-test262' once first." >&2
         exit 1
     fi
     for name in base upstream; do
@@ -243,14 +220,14 @@ upstream-verify base="dev":
     meson compile -C build
     cp build/ant "$work/ant-merged"
     # The upstream worktree has no compliance harness of its own - it is a
-    # fork-only addition - so every tier runs from this tree with the binary
+    # fork-only addition, so every suite runs from this tree with the binary
     # under test swapped in, and the merged binary restored afterwards.
     restore() { cp "$work/ant-merged" build/ant 2>/dev/null || true; }
     trap restore EXIT
 
     echo "=== merged ($(git rev-parse --short HEAD)) ==="
-    python3 scripts/run_compliance.py --tier 3 --all --log-fail || true
-    cp .deps/compliance/logs/tier3-latest.json "$work/merged.json"
+    python3 scripts/run_compliance.py --suite test262 --all --log-fail || true
+    cp .deps/compliance/logs/test262-latest.json "$work/merged.json"
 
     for spec in "base:{{base}}" "upstream:upstream/master"; do
         name="${spec%%:*}"; rev="${spec#*:}"
@@ -259,8 +236,8 @@ upstream-verify base="dev":
         meson setup "$work/$name/build" "$work/$name" >/dev/null
         meson compile -C "$work/$name/build"
         cp "$work/$name/build/ant" build/ant
-        python3 scripts/run_compliance.py --tier 3 --all --log-fail || true
-        cp .deps/compliance/logs/tier3-latest.json "$work/$name.json"
+        python3 scripts/run_compliance.py --suite test262 --all --log-fail || true
+        cp .deps/compliance/logs/test262-latest.json "$work/$name.json"
     done
     restore
 

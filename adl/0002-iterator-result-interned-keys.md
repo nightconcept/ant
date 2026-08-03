@@ -66,7 +66,7 @@ together on the same build:
 | baseline | 0.14 s | 85.3 MB |
 | after 0001+0002 | 0.10 s | 75.5 MB |
 
-Compliance: spec suite 3672/3672 (98 files). Test262 tier 3 identical pass
+Compliance: the legacy spec-suite aggregate was 3672/3672 (98 files). Test262 had an identical pass
 count to baseline, 32842/53434.
 
 ## Options considered
