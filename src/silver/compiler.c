@@ -567,6 +567,10 @@ static inline bool is_repl_top_level(const sv_compiler_t *c) {
     !c->is_strict;
 }
 
+static inline bool is_sloppy_eval_top_level(const sv_compiler_t *c) {
+  return c && c->mode == SV_COMPILE_EVAL && c->scope_depth == 0 && !c->is_strict;
+}
+
 static inline bool has_completion_value(const sv_compiler_t *c) {
   return c && (c->mode == SV_COMPILE_EVAL || c->mode == SV_COMPILE_REPL);
 }
@@ -2121,6 +2125,11 @@ static void hoist_one_func(sv_compiler_t *c, sv_ast_t *node, bool annex_b_update
   if (annex_var >= 0) emit_op(c, OP_DUP);
   if (is_repl_top_level(c)) {
     emit_atom_op(c, OP_PUT_GLOBAL, node->str, node->len);
+  } else if (is_sloppy_eval_top_level(c)) {
+    emit_op(c, OP_DUP);
+    emit_atom_op(c, OP_DEFINE_EVAL_VAR, node->str, node->len);
+    int local = resolve_local(c, node->str, node->len);
+    emit_put_local(c, local);
   } else {
     int local = resolve_local(c, node->str, node->len);
     emit_put_local(c, local);
@@ -3761,6 +3770,10 @@ static bool compile_direct_eval_call(
     return true;
   }
 
+  // Later unresolved identifiers may refer to var-scoped bindings created by
+  // this direct eval.
+  c->inherits_eval_env = true;
+
   uint32_t eval_scope;
   if (!capture_dynamic_eval_scope(c, &eval_scope)) return true;
 
@@ -3771,6 +3784,8 @@ static bool compile_direct_eval_call(
   }
 
   emit_op(c, OP_EVAL);
+  if (c->enclosing && !c->enclosing->enclosing)
+    eval_scope |= UINT32_C(0x80000000);
   emit_u32(c, eval_scope);
   return true;
 }
