@@ -618,18 +618,19 @@ static json_write_t json_write_object_fast(
     if (!is_key_in_replacer_arr(js, ctx, key, key_len)) continue;
 
     ant_prop_loc_t loc = lkp_interned(val, key);
-    if (!loc.obj) continue;
+    ant_value_t prop = js_mkundef();
 
-    ant_value_t prop;
-    const ant_shape_prop_t *meta = ant_shape_prop_at(loc.obj->shape, loc.slot);
+    if (loc.obj) {
+      const ant_shape_prop_t *meta = ant_shape_prop_at(loc.obj->shape, loc.slot);
 
-    if (meta && (meta->has_getter || meta->has_setter)) {
-      prop = js_get(js, val, key);
-      if (is_err(prop)) {
-        json_capture_error(ctx, prop);
-        goto abort;
-      }
-    } else prop = js_prop_load(loc);
+      if (meta && (meta->has_getter || meta->has_setter)) {
+        prop = js_get(js, val, key);
+        if (is_err(prop)) {
+          json_capture_error(ctx, prop);
+          goto abort;
+        }
+      } else prop = js_prop_load(loc);
+    }
 
     if (!json_ctx_pin_value(ctx, prop)) goto abort;
     size_t mark = out->len;
@@ -762,7 +763,14 @@ static json_write_t json_write_impl(
     ant_value_t prim = js_get_slot(val, SLOT_PRIMITIVE);
     switch (vtype(prim)) {
       case T_NUM:  return json_out_number(out, js_getnum(prim)) ? JSON_W_OK : JSON_W_ABORT;
-      case T_STR:  return json_out_quoted(ctx->js, out, prim) ? JSON_W_OK : JSON_W_ABORT;
+      case T_STR: {
+        ant_value_t string_value = js_tostring_val(ctx->js, val);
+        if (is_err(string_value)) {
+          json_capture_error(ctx, string_value);
+          return JSON_W_ABORT;
+        }
+        return json_out_quoted(ctx->js, out, string_value) ? JSON_W_OK : JSON_W_ABORT;
+      }
       case T_BOOL: return json_out_write(out, prim == js_true ? "true" : "false", prim == js_true ? 4 : 5) ? JSON_W_OK : JSON_W_ABORT;
 
       case T_BIGINT: 
