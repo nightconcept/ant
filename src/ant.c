@@ -2851,6 +2851,8 @@ typedef struct {
   uint8_t deleted[];
 } ant_arguments_state_t;
 
+static inline bool is_const_prop(ant_prop_loc_t loc);
+
 static inline sv_frame_t *js_arguments_frame(ant_t *js, ant_arguments_state_t *state) {
   if (state->direct_frame) return state->direct_frame;
   return &js->vm->frames[state->frame_index];
@@ -2887,15 +2889,27 @@ static bool js_arguments_setter(
   if (!parse_array_index(key, key_len, (ant_offset_t)-1, &idx)) return false;
 
   ant_arguments_state_t *state = js_arguments_state(obj);
-  if (state) state->in_setter = 1;
-  arr_set(js, obj, (ant_offset_t)idx, value);
-  
-  if (state) state->in_setter = 0;
-  if (
-    state && state->frame_index >= 0 &&
-    (uint32_t)idx < state->mapped_count &&
-    !state->deleted[idx]
-  ) {
+  if (!state || state->frame_index < 0 ||
+      (uint32_t)idx >= state->mapped_count || state->deleted[idx]) {
+    return false;
+  }
+
+  ant_prop_loc_t own = lkp(js, obj, key, key_len);
+  if (own.obj) {
+    prop_meta_t meta;
+    if (lookup_string_prop_meta(js, obj, key, key_len, &meta) &&
+        (meta.has_getter || meta.has_setter)) {
+      return false;
+    }
+    if (is_const_prop(own)) return true;
+    js_prop_store(js, own, value);
+  } else {
+    state->in_setter = 1;
+    arr_set(js, obj, (ant_offset_t)idx, value);
+    state->in_setter = 0;
+  }
+
+  if (state->frame_index >= 0 && !state->deleted[idx]) {
     sv_frame_t *frame = js_arguments_frame(js, state);
     frame->bp[idx] = value;
   }
@@ -4787,7 +4801,8 @@ switch (type) {
   case T_STR:       return get_ctor_proto(js, "String", 6);
   case T_NUM:       return get_ctor_proto(js, "Number", 6);
   case T_BOOL:      return get_ctor_proto(js, "Boolean", 7);
-  case T_FUNC:      return get_ctor_proto(js, "Function", 8);
+  case T_FUNC:
+  case T_CFUNC:     return get_ctor_proto(js, "Function", 8);
   case T_PROMISE:   return get_ctor_proto(js, "Promise", 7);
   case T_GENERATOR: return js->sym.generator_proto;
   case T_BIGINT:    return get_ctor_proto(js, "BigInt", 6);
@@ -8719,7 +8734,7 @@ static ant_value_t object_define_property_coerced(
     unsigned long fast_idx = 0;
 
     if (
-      fast_arr && fast_arr->flags.fast_array &&
+      fast_arr && !js_arguments_state(as_obj) && fast_arr->flags.fast_array &&
       fast_arr->flags.extensible && !fast_arr->flags.sealed && !fast_arr->flags.frozen &&
       parse_array_index(prop_str, (size_t)prop_len, ((ant_offset_t)UINT32_MAX), &fast_idx)
     ) {
@@ -8977,7 +8992,23 @@ static ant_value_t object_define_property_coerced(
     }
   }
 
-  if (!sym_key) array_define_or_set_index(js, as_obj, prop_str, (size_t)prop_len);
+  if (!sym_key) {
+    array_define_or_set_index(js, as_obj, prop_str, (size_t)prop_len);
+
+    ant_arguments_state_t *args_state = js_arguments_state(as_obj);
+    unsigned long args_idx = 0;
+    if (args_state && args_state->frame_index >= 0 &&
+        parse_array_index(prop_str, (size_t)prop_len, (ant_offset_t)-1, &args_idx) &&
+        (uint32_t)args_idx < args_state->mapped_count && !args_state->deleted[args_idx]) {
+      if (has_value) {
+        sv_frame_t *frame = js_arguments_frame(js, args_state);
+        frame->bp[args_idx] = value;
+      }
+      if (has_get || has_set || (has_writable && !writable)) {
+        args_state->deleted[args_idx] = 1;
+      }
+    }
+  }
 
   return obj;
 }
