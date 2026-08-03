@@ -46,7 +46,7 @@ function isRuntime(file) {
     file.startsWith('include/') ||
     file.startsWith('tests/') ||
     file.startsWith('examples/spec/') ||
-    file.startsWith('tools/wpt/');
+    file.startsWith('tests/');
 }
 
 function isPerformanceSensitive(file) {

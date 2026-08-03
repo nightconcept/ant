@@ -47,8 +47,7 @@ Two long-lived branches (see [docs/repo/testing.md](docs/repo/testing.md)):
 - `meson/` and `meson.build` define the build graph and generated headers.
 - `.github/agents/` contains the lightweight repo-harness checks and validation
   router used by local tasks and CI.
-- `tests/`, `examples/spec/`, and `tools/wpt/` cover targeted runtime tests,
-  the spec suite, and conformance harnesses.
+- `tests/` and `examples/spec/` cover runtime tests and the internal spec suite.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for subsystem boundaries and change
 guidance.
@@ -67,9 +66,9 @@ guidance.
   approval before sandbox escalation.
 - Check [docs/repo/testing.md](docs/repo/testing.md) before choosing validation
   scope or retrying a failing broad test command.
-- For conformance work read [docs/repo/compliance.md](docs/repo/compliance.md)
-  first. Done means tier 1 at 100%, no tier 2/3 regression, small upstreamable
-  changes. Logs are commit-stamped — check that before treating one as live.
+- For conformance work, read [docs/repo/compliance.md](docs/repo/compliance.md)
+  first. Done means no named-suite regression and a small upstreamable change.
+  Logs are commit-stamped. Check the revision before you use a log.
 - Before finalizing most code changes, run `just preflight` and then whatever
   build or spec commands it recommends, or explain why they were not run.
 
@@ -78,7 +77,7 @@ guidance.
 - Build, toolchain, or platform issue: [BUILDING.md](BUILDING.md)
 - Runtime or subsystem question: [ARCHITECTURE.md](ARCHITECTURE.md)
 - Test selection or validation scope: [docs/repo/testing.md](docs/repo/testing.md)
-- Test262 / WPT / Node compat conformance work: [docs/repo/compliance.md](docs/repo/compliance.md)
+- Test262 and regression conformance work: [docs/repo/compliance.md](docs/repo/compliance.md)
 - Pulling in upstream (`theMackabu/ant`): [docs/repo/upstream-sync.md](docs/repo/upstream-sync.md)
 - Long-running or multi-step task: [docs/exec-plans/index.md](docs/exec-plans/index.md)
 

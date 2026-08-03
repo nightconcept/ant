@@ -55,7 +55,7 @@ meant to answer "where should this change live?" before anyone starts editing.
 
 - `tests/` contains focused runtime tests.
 - `examples/spec/` is the main spec regression suite.
-- `test262/`, and `tools/wpt/` support broader conformance and standards work.
+- `.deps/compliance/test262` holds the pinned external Test262 corpus.
 - See [docs/repo/testing.md](docs/repo/testing.md) for the recommended command
   set by change type.
 

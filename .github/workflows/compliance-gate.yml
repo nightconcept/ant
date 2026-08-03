@@ -3,10 +3,10 @@ name: Compliance Gate
 on:
   workflow_call:
     inputs:
-      tier:
-        description: Compliance tier to run (2 or 3)
+      suite:
+        description: Named compliance suite to run
         required: true
-        type: number
+        type: string
       source_revision:
         description: Immutable candidate revision to build and test
         required: true
@@ -25,18 +25,18 @@ permissions:
 
 jobs:
   compliance:
-    name: Tier ${{ inputs.tier }} Exact Set
+    name: ${{ inputs.suite }} Exact Set
     runs-on: ubuntu-latest
     steps:
       - name: Validate inputs
         env:
-          COMPLIANCE_TIER: ${{ inputs.tier }}
+          COMPLIANCE_SUITE: ${{ inputs.suite }}
           SOURCE_REVISION: ${{ inputs.source_revision }}
           BASELINE_REVISION: ${{ inputs.baseline_revision }}
           LOGICAL_BRANCH: ${{ inputs.logical_branch }}
         run: |
           set -euo pipefail
-          case "$COMPLIANCE_TIER" in 2|3) ;; *) exit 2 ;; esac
+          case "$COMPLIANCE_SUITE" in regression|test262) ;; *) exit 2 ;; esac
           [[ "$SOURCE_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]
           [[ "$BASELINE_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]
           [[ "$LOGICAL_BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]]
@@ -58,6 +58,22 @@ jobs:
           git switch --force-create "$LOGICAL_BRANCH" "$SOURCE_REVISION"
           git show "$BASELINE_REVISION:docs/repo/compliance-baseline.json" \
             > "$RUNNER_TEMP/trusted-compliance-baseline.json"
+          schema_version=$(python3 -c \
+            'import json,sys; print(json.load(open(sys.argv[1]))["schema_version"])' \
+            "$RUNNER_TEMP/trusted-compliance-baseline.json")
+          if [[ "$schema_version" == 1 ]]; then
+            # Bootstrap schema 2 for the one migration PR. Remove this block
+            # after the named baseline lands on main. The content pin prevents
+            # an arbitrary candidate baseline from approving itself.
+            expected_blob=ffecbd42ea1a76957de35c18a280885b1b0333a8
+            actual_blob=$(git hash-object docs/repo/compliance-baseline.json)
+            if [[ "$actual_blob" != "$expected_blob" ]]; then
+              echo "schema-2 bootstrap baseline has unexpected content" >&2
+              exit 1
+            fi
+            cp docs/repo/compliance-baseline.json \
+              "$RUNNER_TEMP/trusted-compliance-baseline.json"
+          fi
 
       - name: Install build dependencies
         run: |
@@ -86,7 +102,7 @@ jobs:
       - name: Setup build caches
         uses: ./.github/actions/setup-build-caches
         with:
-          platform: pr-compliance-tier${{ inputs.tier }}-linux-x64
+          platform: pr-compliance-${{ inputs.suite }}-linux-x64
           compiler_version: llvm-${{ steps.config.outputs.llvm_version }}
           zig_version: ${{ steps.config.outputs.zig_version }}
 
@@ -104,15 +120,15 @@ jobs:
 
       - name: Run and verify compliance
         env:
-          COMPLIANCE_TIER: ${{ inputs.tier }}
+          COMPLIANCE_SUITE: ${{ inputs.suite }}
           SOURCE_REVISION: ${{ inputs.source_revision }}
           LOGICAL_BRANCH: ${{ inputs.logical_branch }}
         run: |
           set -euo pipefail
           python3 scripts/run_compliance.py \
-            --tier "$COMPLIANCE_TIER" --all --allow-failures --log
+            --suite "$COMPLIANCE_SUITE" --all --allow-failures --log
           python3 scripts/compliance_baseline.py diff \
-            ".deps/compliance/logs/tier${COMPLIANCE_TIER}-latest.json" \
+            ".deps/compliance/logs/${COMPLIANCE_SUITE}-latest.json" \
             --baseline "$RUNNER_TEMP/trusted-compliance-baseline.json" \
             --require-baseline \
             --require-full \
@@ -123,7 +139,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
-          name: pr-tier${{ inputs.tier }}-${{ inputs.source_revision }}
-          path: .deps/compliance/logs/tier${{ inputs.tier }}_*
+          name: pr-${{ inputs.suite }}-${{ inputs.source_revision }}
+          path: .deps/compliance/logs/${{ inputs.suite }}_*
           if-no-files-found: warn
-

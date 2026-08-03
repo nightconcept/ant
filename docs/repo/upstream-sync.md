@@ -8,7 +8,7 @@ How to pull `theMackabu/ant` (`upstream/master`) into this fork's protected
 `main` without losing our work or silently inheriting a regression we cannot
 explain.
 
-For the meaning of the compliance tiers and the bar each one has to clear, read
+For the named compliance suites and their bars, read
 [compliance.md](compliance.md) first. This guide only covers the sync.
 
 ## The Shape Of The Problem
@@ -103,7 +103,7 @@ just upstream-verify <sync-branch>
 ```
 
 builds `upstream/master` standalone and the sync branch in throwaway worktrees,
-both pinned to this checkout's corpus, and runs tier 3 on all three points.
+both pinned to this checkout's corpus, and runs Test262 on all three points.
 To do it by hand, `scripts/sync_upstream.py worktree` does the pinning (and
 seeds the vendor cache so nothing re-downloads).
 
@@ -121,7 +121,7 @@ only the failing-test *sets* can.
 
 ### 6. Land it through the protected route
 
-Tier 1 must be at 100%. Tier 2 and tier 3 must show no failure that
+Ant Regression must pass. Test262 must show no failure that
 `attribute` blames on us. Inherited upstream regressions are a judgement call —
 they are usually worth accepting to stay close to upstream, but list them
 explicitly in the merge commit or PR so they are not discovered later as ours.
@@ -141,7 +141,7 @@ per [compliance.md](compliance.md), in a shape small enough to send upstream.
 
 ## Related
 
-- Compliance tiers and the definition of done: [compliance.md](compliance.md)
+- Compliance suites and the definition of done: [compliance.md](compliance.md)
 - Validation scope: [testing.md](testing.md)
 - Branch layout (`main` / `upstream`): [../../AGENTS.md](../../AGENTS.md).
   Note that `upstream` is a record of `theMackabu/ant`'s work kept for history

@@ -131,24 +131,24 @@ jobs:
       build_timestamp: ${{ needs.classify.outputs.timestamp }}
       source_revision: ${{ github.sha }}
 
-  compliance-tier2:
-    name: PR Compliance Tier 2
+  compliance-regression:
+    name: PR Ant Regression
     needs: classify
     if: needs.classify.outputs.build_changed == 'true'
     uses: ./.github/workflows/compliance-gate.yml
     with:
-      tier: 2
+      suite: regression
       source_revision: ${{ github.sha }}
       logical_branch: main
       baseline_revision: ${{ needs.classify.outputs.baseline_revision }}
 
-  compliance-tier3:
-    name: PR Compliance Tier 3
+  compliance-test262:
+    name: PR Test262
     needs: classify
-    if: needs.classify.outputs.runtime_changed == 'true' || github.event_name == 'merge_group'
+    if: needs.classify.outputs.build_changed == 'true' || github.event_name == 'merge_group'
     uses: ./.github/workflows/compliance-gate.yml
     with:
-      tier: 3
+      suite: test262
       source_revision: ${{ github.sha }}
       logical_branch: main
       baseline_revision: ${{ needs.classify.outputs.baseline_revision }}
@@ -161,8 +161,8 @@ jobs:
       - repo-knowledge
       - workflow-lint
       - build-and-test
-      - compliance-tier2
-      - compliance-tier3
+      - compliance-regression
+      - compliance-test262
     runs-on: ubuntu-latest
     steps:
       - name: Checkout merge candidate
@@ -181,6 +181,6 @@ jobs:
           REPO_RESULT: ${{ needs.repo-knowledge.result }}
           WORKFLOW_RESULT: ${{ needs.workflow-lint.result }}
           BUILD_RESULT: ${{ needs.build-and-test.result }}
-          TIER2_RESULT: ${{ needs.compliance-tier2.result }}
-          TIER3_RESULT: ${{ needs.compliance-tier3.result }}
+          REGRESSION_RESULT: ${{ needs.compliance-regression.result }}
+          TEST262_RESULT: ${{ needs.compliance-test262.result }}
         run: node .github/agents/check_pr_gate.js

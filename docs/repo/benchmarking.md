@@ -9,7 +9,7 @@ answers "is it correct"; this answers "is it still fast", and it is tracked the
 same way — a checked-in baseline, a per-run manifest, and a diff that fails on
 regression.
 
-For correctness tiers read [compliance.md](compliance.md).
+For compliance suites, read [compliance.md](compliance.md).
 
 ## The Two Halves
 
@@ -239,6 +239,6 @@ make it checkable later.
 
 ## Related
 
-- Correctness tiers and their bars: [compliance.md](compliance.md)
+- Compliance suites and their bars: [compliance.md](compliance.md)
 - Validation scope: [testing.md](testing.md)
 - Architecture Decision Log: [../../adl/README.md](../../adl/README.md)

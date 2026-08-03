@@ -12,7 +12,7 @@ This guide keeps validation proportional to the change while still protecting ru
 - Fresh setup and build: `just setup && just build`
 - Run one runtime test: `./build/ant tests/test_<name>.cjs`
 - Run the spec suite: `./build/ant examples/spec/run.js --all`
-- Run compliance test suite: `just compliance --tier all --smoke`
+- Run all compliance suites: `just compliance -- --suite all`
 - Check performance while working: `just bench-fast-diff` (~75s)
 - Validate repo knowledge docs: `just knowledge`
 - Validate changed-file boundaries: `just structure`
@@ -51,25 +51,25 @@ Normal work starts from current `main` on a short-lived branch and enters
 pushes and deletion of `main`.
 
 - **`.github/workflows/pr-ci.yml`** (pull requests to `main`): always runs
-  classification and repository checks. It runs workflow lint for CI changes,
-  all six platform builds plus Tier 1 and Tier 2 for build/code changes, and a
-  full Tier 3 exact-set comparison for runtime changes and merge groups. The
+  classification and repository checks. It runs workflow lint for CI changes.
+  Build changes run all platform builds, Ant Regression, and Test262
+  non-regression checks. The
   final `PR Gate` fails unless every job required by the classification passes.
   Docs-only changes still produce the same required aggregate status.
 - **`.github/workflows/main-ci.yml`** (push to `main`): validates the exact
   landed SHA and produces post-merge evidence. It adapts by changed-file class:
   repository checks always run; workflow lint runs for automation changes;
-  code/build changes run all six platform builds, Tier 1, and Tier 2. This is a
+  code/build changes run all six platform builds, Ant Regression, and Test262
+  non-regression checks. This is a
   post-merge alarm, not a substitute for the pull-request gate.
-- **`.github/workflows/upstream-ci.yml`** (branch `upstream`): identical job
-  set and bar to `main-ci.yml`. `upstream` is a record of `theMackabu/ant`'s
-  work kept for history and inspection, so this workflow exists to tell us when
-  that record stops building — not to clear anything for submission.
-- **`.github/workflows/tier3-weekly.yml`** (schedule): tier 3 is ~50k
-  Test262/WPT tests, too slow to sit in front of a push, so it runs weekly
-  (Mondays 04:00 UTC) plus on demand. It checks out `main`, runs the full pinned
-  corpus, compares exact failing-test names with the trusted baseline, and
-  uploads `tier3-compliance-main`.
+- **`.github/workflows/upstream-ci.yml`** (branch `upstream`): builds the
+  upstream record and runs Ant Regression. `upstream` is kept for history and
+  inspection, so this workflow exists to tell us when that record stops
+  building — not to clear anything for submission.
+- **`.github/workflows/test262-weekly.yml`** (schedule): Test262 has approximately
+  50,000 tests, so it also runs weekly (Mondays 04:00 UTC) plus on demand. It
+  checks out `main`, runs the full pinned corpus, compares exact failing-test
+  names with the trusted baseline, and uploads `test262-compliance-main`.
 
 **No performance gate runs in CI.** The bench threshold assertion compared
 absolute milliseconds against a baseline recorded on a developer machine, which
@@ -78,7 +78,7 @@ reference runtime being noisier than Ant itself. Both the reasoning and the
 measurements are in [../exec-plans/tech-debt.md](../exec-plans/tech-debt.md);
 speed and memory are checked locally with `just bench-fast-diff`.
 
-Compare tiers as failing-test *sets*, not percentages: a net-positive rate can
+Compare suites as failing-test *sets*, not percentages. A net-positive rate can
 still hide a newly failing test, and only the sets separate the two. The
 trusted baseline belongs to `main`. Do not promote a filtered, dirty, or
 different-corpus manifest merely because its aggregate totals look better.
@@ -100,9 +100,8 @@ commit, enter its full 40-character SHA; the workflow rejects any SHA not
 reachable from `main`. Set **prerelease** only for an intentionally
 pre-release publication.
 
-The workflow runs Tier 1 through the Linux x64 platform build and a Tier 2
-exact-failing-set gate before it creates a Git tag or GitHub Release. Tier 3
-remains the scheduled/on-demand regression suite rather than a release gate.
+The workflow runs Ant Regression and Test262 non-regression gates before it
+creates a tag or release.
 It builds every asset from the resolved SHA, then attaches target archives,
 `SHA256SUMS`, and `provenance.json`. Normal pushes to `main` never publish a
 release.

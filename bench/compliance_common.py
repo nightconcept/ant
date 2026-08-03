@@ -6,7 +6,6 @@ import re
 import time
 import json
 import shutil
-import urllib.request
 import subprocess
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
@@ -110,94 +109,6 @@ DEFAULT_RUNTIMES = [
         "color": CYAN
     }
 ]
-
-# Official Upstream Online Smoke Test Manifests
-PULLED_SMOKE_TESTS = {
-    "tier1": [
-        {
-            "name": "Test262: Array.prototype.map (15.4.4.19-1-1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Array/prototype/map/15.4.4.19-1-1.js",
-            "filename": "t262_array_map_1.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Array.prototype.indexOf (15.4.4.14-1-1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Array/prototype/indexOf/15.4.4.14-1-1.js",
-            "filename": "t262_array_indexof.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Math.abs (S15.8.2.1_A1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Math/abs/S15.8.2.1_A1.js",
-            "filename": "t262_math_abs.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Object.create (15.2.3.5-1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Object/create/15.2.3.5-1.js",
-            "filename": "t262_object_create.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Reflect.has (return-boolean)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Reflect/has/return-boolean.js",
-            "filename": "t262_reflect_has.js",
-            "type": "test262"
-        }
-    ],
-    "tier2": [
-        {
-            "name": "Node.js: events.once (test-events-once.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-events-once.js",
-            "filename": "node_events_once.cjs",
-            "type": "node"
-        },
-        {
-            "name": "Node.js: buffer inheritance (test-buffer-inheritance.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-buffer-inheritance.js",
-            "filename": "node_buffer_inheritance.cjs",
-            "type": "node"
-        },
-        {
-            "name": "Node.js: buffer iterator (test-buffer-iterator.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-buffer-iterator.js",
-            "filename": "node_buffer_iterator.cjs",
-            "type": "node"
-        },
-        {
-            "name": "Node.js: stream readable event (test-stream-readable-event.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-stream-readable-event.js",
-            "filename": "node_stream_readable_event.cjs",
-            "type": "node"
-        },
-        {
-            "name": "Node.js: process.uptime (test-process-uptime.js)",
-            "url": "https://raw.githubusercontent.com/nodejs/node/main/test/parallel/test-process-uptime.js",
-            "filename": "node_process_uptime.cjs",
-            "type": "node"
-        }
-    ],
-    "tier3": [
-        {
-            "name": "Test262: Promise.resolve (S25.4.4.5_A1.1_T1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Promise/resolve/S25.4.4.5_A1.1_T1.js",
-            "filename": "t262_promise_resolve.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Promise.all (S25.4.4.1_A1.1_T1)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Promise/all/S25.4.4.1_A1.1_T1.js",
-            "filename": "t262_promise_all.js",
-            "type": "test262"
-        },
-        {
-            "name": "Test262: Array.prototype.map (15.4.4.19-1-10)",
-            "url": "https://raw.githubusercontent.com/tc39/test262/main/test/built-ins/Array/prototype/map/15.4.4.19-1-10.js",
-            "filename": "t262_array_map_10.js",
-            "type": "test262"
-        }
-    ]
-}
 
 def resolve_binary_path(path_str: str, r_id: str | None = None) -> Path | None:
     """Resolve binary path relative to REPO_ROOT, system PATH, or mise."""
@@ -313,127 +224,6 @@ def load_runtimes(filter_ids: list[str] | None = None, extra_runtimes: list[dict
 
     return resolved_runtimes
 
-def ensure_test262_harness() -> tuple[Path, Path]:
-    harness_dir = DEPS_DIR / "harness"
-    harness_dir.mkdir(parents=True, exist_ok=True)
-    
-    assert_js = harness_dir / "assert.js"
-    sta_js = harness_dir / "sta.js"
-    
-    headers = {"User-Agent": "ant-compliance-runner"}
-    
-    if not assert_js.exists():
-        url = "https://raw.githubusercontent.com/tc39/test262/main/harness/assert.js"
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req) as resp, open(assert_js, "wb") as f:
-            f.write(resp.read())
-
-    if not sta_js.exists():
-        url = "https://raw.githubusercontent.com/tc39/test262/main/harness/sta.js"
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req) as resp, open(sta_js, "wb") as f:
-            f.write(resp.read())
-            
-    return assert_js, sta_js
-
-def ensure_test262_repo() -> Path:
-    """Ensure Test262 suite repository is checked out locally."""
-    root_t262 = REPO_ROOT / "test262"
-    if (root_t262 / "test").exists():
-        return root_t262
-    
-    deps_t262 = DEPS_DIR / "test262"
-    if (deps_t262 / "test").exists():
-        return deps_t262
-
-    print(f"{CYAN}Cloning tc39/test262 repository into {deps_t262}...{RESET}")
-    deps_t262.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        ["git", "clone", "--depth", "1", "https://github.com/tc39/test262.git", str(deps_t262)],
-        check=True
-    )
-    return deps_t262
-
-def parse_test262_frontmatter(content: str) -> dict:
-    frontmatter = {"includes": [], "flags": [], "negative": None}
-    match = re.search(r"/\*---(.*?)---\*/", content, re.DOTALL)
-    if match:
-        block = match.group(1)
-        
-        inc_match = re.search(r"includes:\s*\[(.*?)\]", block)
-        if inc_match:
-            frontmatter["includes"] = [x.strip() for x in inc_match.group(1).split(",") if x.strip()]
-        else:
-            inc_list = re.findall(r"includes:.*?\n((?:\s*-\s*.*?\n)+)", block)
-            if inc_list:
-                frontmatter["includes"] = [x.strip().lstrip("- ").strip() for x in inc_list[0].splitlines()]
-
-        flags_match = re.search(r"flags:\s*\[(.*?)\]", block)
-        if flags_match:
-            frontmatter["flags"] = [x.strip() for x in flags_match.group(1).split(",") if x.strip()]
-
-        if "negative:" in block:
-            neg_type_match = re.search(r"type:\s*(\w+)", block)
-            neg_phase_match = re.search(r"phase:\s*(\w+)", block)
-            frontmatter["negative"] = {
-                "type": neg_type_match.group(1) if neg_type_match else None,
-                "phase": neg_phase_match.group(1) if neg_phase_match else None
-            }
-    return frontmatter
-
-def prepare_test262_code(test_file: Path, test262_dir: Path) -> tuple[str, dict]:
-    harness_dir = test262_dir / "harness"
-    content = test_file.read_text(encoding="utf-8", errors="replace")
-    fm = parse_test262_frontmatter(content)
-    
-    parts = []
-    assert_js = harness_dir / "assert.js"
-    sta_js = harness_dir / "sta.js"
-    if assert_js.exists():
-        parts.append(assert_js.read_text(encoding="utf-8", errors="replace"))
-    if sta_js.exists():
-        parts.append(sta_js.read_text(encoding="utf-8", errors="replace"))
-        
-    for inc in fm.get("includes", []):
-        inc_path = harness_dir / inc
-        if inc_path.exists():
-            parts.append(inc_path.read_text(encoding="utf-8", errors="replace"))
-            
-    parts.append("if (typeof $DONE === 'undefined') { globalThis.$DONE = function(err) { if (err) throw err; }; }")
-    
-    flags = fm.get("flags", [])
-    if "onlyStrict" in flags:
-        parts.append('"use strict";')
-        
-    parts.append(content)
-    return "\n".join(parts), fm
-
-def fetch_pulled_test(spec: dict) -> Path:
-    pulled_dir = DEPS_DIR / "pulled"
-    pulled_dir.mkdir(parents=True, exist_ok=True)
-    
-    target_path = pulled_dir / spec["filename"]
-    
-    if not target_path.exists():
-        headers = {"User-Agent": "ant-compliance-runner"}
-        req = urllib.request.Request(spec["url"], headers=headers)
-        with urllib.request.urlopen(req) as resp:
-            content = resp.read().decode("utf-8")
-            
-        if spec["type"] == "test262":
-            assert_js, sta_js = ensure_test262_harness()
-            harness_code = assert_js.read_text() + "\n" + sta_js.read_text() + "\n"
-            content = harness_code + content
-        elif spec["type"] == "node":
-            content = content.replace(
-                "require('../common')",
-                "(function(){ return { mustCall: (f) => f || (() => {}), mustNotCall: () => {} }; })()"
-            )
-            
-        target_path.write_text(content)
-        
-    return target_path
-
 def run_js_test(runtime: dict, test_path: Path, timeout_sec: float = 15.0) -> tuple[bool, float, str]:
     bin_path = runtime["resolved_path"]
     args = runtime.get("args", [])
@@ -467,8 +257,8 @@ def make_log_path(label: str) -> Path:
     return LOGS_DIR / f"{safe}_{ts}.log"
 
 class MultiRuntimeTracker:
-    def __init__(self, tier_name: str, runtimes: list[dict], log_path: Path | None = None, log_fail_only: bool = False):
-        self.tier_name = tier_name
+    def __init__(self, suite_name: str, runtimes: list[dict], log_path: Path | None = None, log_fail_only: bool = False):
+        self.suite_name = suite_name
         self.runtimes = runtimes
         self.log_path = log_path
         self.log_fail_only = log_fail_only
@@ -478,7 +268,7 @@ class MultiRuntimeTracker:
         if self.log_path:
             self.log_path.parent.mkdir(parents=True, exist_ok=True)
             self._log_file = open(self.log_path, "w", encoding="utf-8")
-            self._log_file.write(f"=== {tier_name} ===\n")
+            self._log_file.write(f"=== {suite_name} ===\n")
             self._log_file.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
     def _write_log(self, text: str):
@@ -530,9 +320,9 @@ class MultiRuntimeTracker:
                         self._write_log(details.rstrip())
                         self._write_log("-" * 14)
 
-    def print_tier_summary(self, width: int = 90) -> dict:
+    def print_suite_summary(self, width: int = 90) -> dict:
         """
-        Print tier summary box and return runtime stats dict:
+        Print the suite summary box and return runtime statistics:
         { r_id: { "total": int, "passed": int, "failed": int, "pass_pct": float } }
         """
         stats = {}
@@ -550,7 +340,7 @@ class MultiRuntimeTracker:
             }
 
         lines = [
-            f"{BOLD}{MAGENTA}Summary: {self.tier_name}{RESET}",
+            f"{BOLD}{MAGENTA}Summary: {self.suite_name}{RESET}",
             "─" * (width - 6),
             f"{BOLD}{pad_cell('Runtime', 16)} {pad_cell('Total', 10, 'right')} {pad_cell('Passed', 10, 'right')} {pad_cell('Failed', 10, 'right')} {pad_cell('Pass Rate', 14, 'right')}{RESET}",
             "─" * (width - 6),
@@ -575,7 +365,7 @@ class MultiRuntimeTracker:
         print("\n".join(box))
 
         if self._log_file:
-            self._write_log(f"Summary for {self.tier_name}:")
+            self._write_log(f"Summary for {self.suite_name}:")
             for r in self.runtimes:
                 st = stats[r["id"]]
                 self._write_log(f"  {r['name']}: {st['passed']}/{st['total']} ({st['pass_pct']:.1f}%)")

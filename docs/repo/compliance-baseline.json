@@ -1,2867 +1,42 @@
 {
-  "schema_version": 1,
-  "tiers": {
-    "1": {
+  "schema_version": 2,
+  "suites": {
+    "regression": {
       "categories": {
-        "examples/spec (full suite)": {
+        "Ant Regression: spec": {
           "failed": 0,
           "failing": [],
-          "passed": 1,
-          "total": 1
+          "passed": 98,
+          "total": 98
+        },
+        "Ant Regression: tests": {
+          "failed": 0,
+          "failing": [],
+          "passed": 471,
+          "total": 471
         }
       },
       "filter": null,
-      "finished": "2026-07-26T15:25:44",
+      "finished": "2026-08-02T04:53:27.846403+00:00",
       "revision": {
-        "branch": "dev",
-        "commit": "a1b4081baaa754164fa16cae5e6b0c57827c8788",
+        "branch": "compliance/named-suites",
+        "commit": "2916d9fc008ccdd5d5864a0795119d4fd8df998d",
         "dirty": false,
-        "short": "a1b4081b",
-        "subject": "gitignore: ignore .direnv directory"
+        "short": "2916d9fc",
+        "subject": "test: replace compliance tiers with named suites"
       },
-      "schema_version": 1,
-      "started": "2026-07-26T15:25:43",
-      "suite": "Tier 1 - WinterTC / Edge Baseline & Core JS",
-      "tier": 1,
+      "schema_version": 2,
+      "started": "2026-08-02T04:52:22.460774+00:00",
+      "suite": "Ant Regression",
+      "suite_id": "regression",
       "totals": {
         "failed": 0,
         "pass_rate": 100.0,
-        "passed": 1,
-        "total": 1
+        "passed": 569,
+        "total": 569
       }
     },
-    "2": {
-      "categories": {
-        "test_accessor_ic.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_all_modules.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_all_new.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_ant_serve.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_apply_argument_length_limit.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_arguments_async.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_arguments_escaped_coro.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_callback_thisarg.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_comprehensive.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_flat_prototype_indices.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_from.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_generic_this.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_includes_regression_big.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_is_template_object.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_join_number_stringification.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_numeric_fast_set_descriptors.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_proto_subclassing.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_sort_gc_roots.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_array_sparse_descending_length.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_arraybuffer_isview.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_arrow_closure.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_arrow_this.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_asi.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_asi_all.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_assert_bigint.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_assert_exceptions.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_await_integration.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_await_microtask.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_class_methods.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_coroutines.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_dead_await_fastpath.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_gc.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_gen_leak.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_generator_gc_liveness.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_iterable_stream_cleanup.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_loops.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_materialized_stack_slice.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_promise_job_resume.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_reentrant_resume.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_regular_function.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_this.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_this_binding.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_async_this_context.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_atomics.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_atomics_wait_async.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_atomics_with_literals.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_await.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_await_return.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_await_thenables.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_base64.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_bigint.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_binding_loop_closures.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_block_closure.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_block_function_hoisting.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_bracket_getter.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_bracket_setter.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_buffer.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_buffer_indexof.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_buffer_species_arraybuffer.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_builtin_function_name.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_builtin_missing_named_export.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_builtin_prop_attrs.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_captured.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_child_process_exec_promisify.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_child_process_execfile_git_options.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_child_process_execfile_promisify.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_child_process_exit_drain.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_child_process_spawn_options_overload.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_child_process_spawnsync_env.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_child_process_spawnsync_inherit.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_child_process_stream_setencoding.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_circular.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_cjs_accessor_exports.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_cjs_esbuild_named_exports.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_cjs_esm_circular.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_cjs_exports_prototype.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_class_closure.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_class_function_hoisting.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_cli_eval_type_module.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_cli_file_arg_precedes_package_script.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_closure.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_closure2.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_closure_forwarder_reentrant_callbacks.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_closure_spec.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_collection_foreach_thisarg.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_collection_method_lengths.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_collections_constructor_iterables.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_commonjs_circular_module_exports.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_commonjs_module_not_found.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_computed_assignment_order.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_concurrent_scope.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_concurrent_timing.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_console_inspect_string_internals.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_console_methods.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_contextual_keyword.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_coro_resume_safety.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_coro_this.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_cpu_usage.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_crypto_extended.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_crypto_get_ciphers.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_crypto_get_curves.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_crypto_get_hashes.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_crypto_subtle_digest.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_crypto_timing_safe_equal.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_ctor_prop_feedback.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_dataview_view_value.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_date.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_date_parse_string.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_debug_await.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_deep_this.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_default_params.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_define_property.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_define_property_descriptor_object.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_define_property_edge_cases.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_define_property_shape_slot.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_define_property_simple.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_define_property_strict.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_direct_eval_environment.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_direct_eval_jit.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_direct_eval_lexical.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_direct_eval_strict.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_disposable_stack.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_dot.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_dot_property_syntax.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_double_resolve.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_double_underscore_enumeration.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_dynamic_func.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_dynamic_import_tla_module_context.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_entry_tla_for_await_async_only.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_error_catch.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_error_diagnostics.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_es2016_includes_and_strict.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_esm_import_vs_create_require_conditions.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_esm_package_self_reference.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_eval.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_event_loop_timers.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_eventemitter_function_call.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_eventemitter_max_listeners.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_events.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_events_listeners_api.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_events_prototype_chain.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_exp_associativity.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_exponentiation.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_extensionless_hidden_entrypoint.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fetch_cookie_header.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fetch_redirect.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_ffi_wrappers.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_float16_rounding.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_for_in_closure.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_for_in_dense_array_fast.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_for_of_dense_array_fast.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_async.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_chmod_sync.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_cpsync_symlinks.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_error_messages.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_fsync.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_promises_filehandle.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_readfile_url.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_stats_node_fields.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_streams.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_symlink_sync.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_sync.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_truncate_sync.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_fs_writefile_buffer.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_function_call_apply_bind.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_function_constructor.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_function_constructor_strictness.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_function_constructor_tostring.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_function_scope.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_async.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_comprehensive.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_coro.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_cycles.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_debug.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_in_coro.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_large.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_minimal8.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_simple.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_stress10.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_stress7.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_tco.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_template_const_cache.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_gc_timer.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_generator_reentrant_next.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_getters_setters.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_global_accessor_read.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_global_write_fast_path.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_highlight.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_highlight_comments.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_highlight_keyword_using.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_http_request_host_port_fetch_shim.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_https_get_fetch_shim.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_if_else_var.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_immediate_concurrent.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_import_binding_length.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_import_meta.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_import_meta_full.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_in_operator.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_inherited_class_constructor.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_inline_await.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_inspect_custom.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_instanceof_ic_prototype_guard.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_intl.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_iterator_result_fast_path.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_add_local_numeric_feedback.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_arguments_object.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_bigint_ops.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_cfunc_call_fast.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_delete_numeric_key.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_derived_ctor.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_destructure_arg_resume.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_for_of.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_get_elem_opt.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_get_field_opt.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_global_read_ic.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_handlekey.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_inc_dec.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_inline_call_errors.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_inline_special_obj.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_inline_special_obj_dep.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_inline_special_obj_import.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_is_undef_or_null.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_jmp_not_nullish.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_map_string_concat.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_missing_arg_normalization.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_nip.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_num_add_ok.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_osr_existing_open_upvalue.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_osr_existing_param_upvalue.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_osr_param_write.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_post_inc_upval.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_private.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_put_elem_fast.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_put_field_ic.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_regexp_literal_intrinsics.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_sparse_captured_param_bailout.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_string_add_bailout.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_string_builder_snapshot.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_string_concat_gc_roots.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_typed_array_elem_fast.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_typeof_bailout_arg_resume.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_upvalue_self_reference.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_jit_void.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_js_entry_module_syntax_server.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_js_entry_tla_resume.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_json.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_json_stringify_global_this.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_json_stringify_spec.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_label_of.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_labeled_loops.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_legacy_accessors.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_literal_primordials.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_loops.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_map.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_map_gc.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_map_upsert.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_math.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_math_ops.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_microtask_order.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_mini_amp_tui_exit_restores_tty.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_minicoro_concurrent.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_minimal.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_missing_named_export.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_module_destructured_export_clause.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_module_eval_reentrancy.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_module_static_dependency_order.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_named_evaluation.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_nan_infinity.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_native_bind.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_native_bind_debug.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_native_cfunc_object_semantics_repro.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_native_method_descriptors.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_net_create_connection.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_new_arr.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_events_cjs_static_helpers.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_events_get_event_listeners.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_events_once_eventtarget_abort.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_events_once_prototype_spoof.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_http_host_header_ipv6.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_http_incoming_message_readable.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_http_max_header_size.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_http_upgrade_head.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_http_upgrade_max_header_size.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_http_upgrade_non101_body.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_url_parse_named_export.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_node_util_textcodec_exports.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_not_operator.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_number_literals.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_number_radix.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_number_simple_decimal_fast.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_numeric_separators.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_obj_closure.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_object_define_properties_enumerable.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_object_define_properties_symbols.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_object_define_property_generic_descriptor.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_object_fromentries_iterables.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_optional_chain.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_parser_unterminated_template.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_path.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_performance.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_pkg_exec_user_agent.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_pkg_lifecycle_install_postinstall_order.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_practical_async.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_primitive_wrappers.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_private_brands.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_binding_constants.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_emit_warning.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_env.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_env_double_underscore.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_event_api.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_nexttick_bound_receiver.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_nexttick_order.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_stdin_setencoding_tty.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_stdout_resize_signal.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_process_stdout_setencoding.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise_all_array_iterator.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise_chained_catch_unhandled.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise_combinator_resolve_then.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise_display.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise_inspect_long.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise_only.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise_resolve.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_promise_thenables.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_property_cache_deletion.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_property_error_messages.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_property_ic_proto_guard.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_property_lookup_cache.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_prototype_chain_class_mutation.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_prototype_chain_obj_mutation.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_prototypes.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_proxy_array_flat_urlsearchparams.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_proxy_get_topropertykey.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_proxy_object_entries.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_proxy_toprimitive_get_trap.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_proxy_typeof_callable.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_readable_stream_tee_object_chunk.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_readline_history_bounds.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_readline_keypress.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_readline_keypress_arrow.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_readline_keypress_sequential.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_readline_promises_piped.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_readline_question_prompt.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_readline_stdin_pause.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_reflect_construct_newtarget_wrappers.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_reflect_get_own_property_descriptor.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_reflect_proxy_get_toprimitive.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_regex_equals_literal.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_regexp_basic.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_regexp_edge_cases.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_regexp_exec_fast_paths.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_regexp_patterns.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_regexp_replace_large_template.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_registry_multipart_publish.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_repl_static_import.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_require_exports_conditions.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_response_constructor_fast_path.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_rest_params.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_return.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_rope_large_property_concat.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_rpc.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_sandbox_cpu_limits.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_sandbox_messages.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_server_invalid_request_target.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_set.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_setter_direct.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_shadowing.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_shell.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_silver_eval.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_spread.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_spread_accessor.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_spread_symbols.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stack_depth.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_static.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stream_is_disturbed_end.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stream_is_errored.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stream_read0_refills_below_hwm.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stream_readable_data_listener_order.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stream_readable_resume_end_async.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stream_readable_to_web.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stream_static_state_predicates.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_stream_transform_async_callback.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_strict_function.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_strict_mode.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_concat_perf.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_exports.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_fromcharcode_unicode.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_large_space_stats.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_length_accumulation.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_number_methods.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_pad_unicode.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_replace_regex.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_small_append_loop.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_string_template_modern.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_super_getter_receiver.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_suppressed_error_symbols.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_sv_async.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_switch.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tco.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tco_asi.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tco_curried.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tco_curried_debug.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tco_monad.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tco_zeroarg.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_template_regex_brace.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_template_self_append.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_ternary_and_operators.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_this.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_three_params.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_throw_expressions.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_throw_stack.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_timer_chain_iter.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_timer_fired_timeout_gc.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_timer_mutation.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_timer_refresh.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_timer_unref_exit.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_timers.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tla_dead_await_fastpath.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tls_secure_connect_event.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_toString.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_toprimitive_null.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_try_catch.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_ts_js_extension_resolution.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tty_readstream_da_timeout.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tty_readstream_dev_tty.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tty_readstream_dev_tty_on_data_flowing.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_tty_readstream_setencoding.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_two_awaits.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_typedarray_apply.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_typedarray_find_last.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_typedarray_index_access.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_typeof_closure_assignment.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_typescript_entry_tla.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_typescript_type_only_import_elision.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_ub_class.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_uint8array_base64_hex.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_upvalue_gc.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_uri.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_url_bracket_query.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_util_is_deep_strict_equal.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_util_parse_args.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_var.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_var_hoisting.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_void_operator.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_wasm_imported_global_mutability.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_wasm_imported_memory_shared.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_wasm_imported_table_funcref.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_wasm_memory_constructor.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_wasm_simd.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_wasm_table_constructor.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_wasm_webassembly_api.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_watch_supervisor.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_weakmap.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_weakset.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_websocket_client_buffered_frames.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_websocket_server_options.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_window_identifier_shadowing.mjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_windows_file_url_paths.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_windows_float64array_tco_gc.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_with_package_compat.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_with_proxy_write_delete.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_with_strict.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_without_strict.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_wrapped_this.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_ws_echo.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "test_yield_identifier_non_strict.cjs": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        }
-      },
-      "filter": null,
-      "finished": "2026-07-30T16:03:02.113335+00:00",
-      "revision": {
-        "branch": "dev",
-        "commit": "d75d49a4a987ed202619d306367cebcaf5613eec",
-        "dirty": false,
-        "short": "d75d49a4",
-        "subject": "fix(array): respect indexed descriptors in copy methods"
-      },
-      "schema_version": 1,
-      "started": "2026-07-30T16:02:08.956693+00:00",
-      "suite": "Tier 2 - Node.js Compatibility Suite",
-      "tier": 2,
-      "totals": {
-        "failed": 0,
-        "pass_rate": 100.0,
-        "passed": 468,
-        "total": 468
-      }
-    },
-    "3": {
+    "test262": {
       "categories": {
         "Test262: annexB/built-ins": {
           "failed": 130,
@@ -3433,11 +608,8 @@
           "total": 25
         },
         "Test262: built-ins/Array": {
-          "failed": 895,
+          "failed": 701,
           "failing": [
-            "Test262: built-ins/Array/15.4.5.1-5-1.js",
-            "Test262: built-ins/Array/S15.4.5.1_A1.2_T2.js",
-            "Test262: built-ins/Array/S15.4.5.1_A2.1_T1.js",
             "Test262: built-ins/Array/S15.4.5.2_A3_T2.js",
             "Test262: built-ins/Array/S15.4_A1.1_T10.js",
             "Test262: built-ins/Array/Symbol.species/symbol-species-name.js",
@@ -3513,7 +685,6 @@
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-function.js",
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-number-wrapper.js",
             "Test262: built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-reg-exp.js",
-            "Test262: built-ins/Array/prototype/concat/S15.4.4.4_A3_T1.js",
             "Test262: built-ins/Array/prototype/concat/S15.4.4.4_A3_T2.js",
             "Test262: built-ins/Array/prototype/concat/S15.4.4.4_A3_T3.js",
             "Test262: built-ins/Array/prototype/concat/arg-length-exceeding-integer-limit.js",
@@ -3531,28 +702,16 @@
             "Test262: built-ins/Array/prototype/concat/is-concat-spreadable-proxy.js",
             "Test262: built-ins/Array/prototype/concat/length.js",
             "Test262: built-ins/Array/prototype/concat/not-a-constructor.js",
-            "Test262: built-ins/Array/prototype/copyWithin/coerced-values-end.js",
             "Test262: built-ins/Array/prototype/copyWithin/coerced-values-start-change-start.js",
             "Test262: built-ins/Array/prototype/copyWithin/coerced-values-start-change-target.js",
-            "Test262: built-ins/Array/prototype/copyWithin/coerced-values-start.js",
-            "Test262: built-ins/Array/prototype/copyWithin/coerced-values-target.js",
             "Test262: built-ins/Array/prototype/copyWithin/fill-holes.js",
             "Test262: built-ins/Array/prototype/copyWithin/length-near-integer-limit.js",
             "Test262: built-ins/Array/prototype/copyWithin/length.js",
-            "Test262: built-ins/Array/prototype/copyWithin/non-negative-out-of-bounds-end.js",
-            "Test262: built-ins/Array/prototype/copyWithin/non-negative-out-of-bounds-target-and-start.js",
             "Test262: built-ins/Array/prototype/copyWithin/not-a-constructor.js",
             "Test262: built-ins/Array/prototype/copyWithin/resizable-buffer.js",
             "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-delete-target.js",
-            "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-end-as-symbol.js",
-            "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-end.js",
             "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-get-start-value.js",
             "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-has-start.js",
-            "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-start-as-symbol.js",
-            "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-start.js",
-            "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-target-as-symbol.js",
-            "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-target.js",
-            "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-this-length-as-symbol.js",
             "Test262: built-ins/Array/prototype/copyWithin/return-abrupt-from-this-length.js",
             "Test262: built-ins/Array/prototype/entries/iteration-mutable.js",
             "Test262: built-ins/Array/prototype/entries/not-a-constructor.js",
@@ -3567,30 +726,13 @@
             "Test262: built-ins/Array/prototype/every/15.4.4.16-2-7.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-2-8.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-2-9.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-10.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-11.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-13.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-14.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-15.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-16.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-17.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-19.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-2.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-20.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-21.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-3-22.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-23.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-25.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-7.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-3-9.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-4-10.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-4-11.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-4-15.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-4-8.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-4-9.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-5-1.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-15.js",
-            "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-16.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-2.js",
             "Test262: built-ins/Array/prototype/every/15.4.4.16-7-b-3.js",
             "Test262: built-ins/Array/prototype/every/callbackfn-resize-arraybuffer.js",
@@ -3599,17 +741,11 @@
             "Test262: built-ins/Array/prototype/every/resizable-buffer-grow-mid-iteration.js",
             "Test262: built-ins/Array/prototype/every/resizable-buffer-shrink-mid-iteration.js",
             "Test262: built-ins/Array/prototype/every/resizable-buffer.js",
-            "Test262: built-ins/Array/prototype/fill/coerced-indexes.js",
             "Test262: built-ins/Array/prototype/fill/length-near-integer-limit.js",
             "Test262: built-ins/Array/prototype/fill/length.js",
             "Test262: built-ins/Array/prototype/fill/not-a-constructor.js",
             "Test262: built-ins/Array/prototype/fill/resizable-buffer.js",
-            "Test262: built-ins/Array/prototype/fill/return-abrupt-from-end-as-symbol.js",
-            "Test262: built-ins/Array/prototype/fill/return-abrupt-from-end.js",
             "Test262: built-ins/Array/prototype/fill/return-abrupt-from-setting-property-value.js",
-            "Test262: built-ins/Array/prototype/fill/return-abrupt-from-start-as-symbol.js",
-            "Test262: built-ins/Array/prototype/fill/return-abrupt-from-start.js",
-            "Test262: built-ins/Array/prototype/fill/return-abrupt-from-this-length-as-symbol.js",
             "Test262: built-ins/Array/prototype/fill/return-abrupt-from-this-length.js",
             "Test262: built-ins/Array/prototype/fill/typed-array-resize.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-1-3.js",
@@ -3619,28 +755,12 @@
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-2-7.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-2-8.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-2-9.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-10.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-11.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-13.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-15.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-16.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-17.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-19.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-2.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-20.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-21.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-22.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-23.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-25.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-7.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-3-9.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-4-10.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-4-11.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-4-15.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-4-8.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-4-9.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-15.js",
-            "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-16.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-2.js",
             "Test262: built-ins/Array/prototype/filter/15.4.4.20-9-b-3.js",
             "Test262: built-ins/Array/prototype/filter/callbackfn-resize-arraybuffer.js",
@@ -3665,7 +785,6 @@
             "Test262: built-ins/Array/prototype/find/resizable-buffer-grow-mid-iteration.js",
             "Test262: built-ins/Array/prototype/find/resizable-buffer-shrink-mid-iteration.js",
             "Test262: built-ins/Array/prototype/find/resizable-buffer.js",
-            "Test262: built-ins/Array/prototype/find/return-abrupt-from-this-length-as-symbol.js",
             "Test262: built-ins/Array/prototype/find/return-abrupt-from-this-length.js",
             "Test262: built-ins/Array/prototype/findIndex/callbackfn-resize-arraybuffer.js",
             "Test262: built-ins/Array/prototype/findIndex/length.js",
@@ -3675,7 +794,6 @@
             "Test262: built-ins/Array/prototype/findIndex/resizable-buffer-grow-mid-iteration.js",
             "Test262: built-ins/Array/prototype/findIndex/resizable-buffer-shrink-mid-iteration.js",
             "Test262: built-ins/Array/prototype/findIndex/resizable-buffer.js",
-            "Test262: built-ins/Array/prototype/findIndex/return-abrupt-from-this-length-as-symbol.js",
             "Test262: built-ins/Array/prototype/findIndex/return-abrupt-from-this-length.js",
             "Test262: built-ins/Array/prototype/findLast/callbackfn-resize-arraybuffer.js",
             "Test262: built-ins/Array/prototype/findLast/length.js",
@@ -3686,7 +804,6 @@
             "Test262: built-ins/Array/prototype/findLast/resizable-buffer-grow-mid-iteration.js",
             "Test262: built-ins/Array/prototype/findLast/resizable-buffer-shrink-mid-iteration.js",
             "Test262: built-ins/Array/prototype/findLast/resizable-buffer.js",
-            "Test262: built-ins/Array/prototype/findLast/return-abrupt-from-this-length-as-symbol.js",
             "Test262: built-ins/Array/prototype/findLast/return-abrupt-from-this-length.js",
             "Test262: built-ins/Array/prototype/findLastIndex/callbackfn-resize-arraybuffer.js",
             "Test262: built-ins/Array/prototype/findLastIndex/length.js",
@@ -3697,7 +814,6 @@
             "Test262: built-ins/Array/prototype/findLastIndex/resizable-buffer-grow-mid-iteration.js",
             "Test262: built-ins/Array/prototype/findLastIndex/resizable-buffer-shrink-mid-iteration.js",
             "Test262: built-ins/Array/prototype/findLastIndex/resizable-buffer.js",
-            "Test262: built-ins/Array/prototype/findLastIndex/return-abrupt-from-this-length-as-symbol.js",
             "Test262: built-ins/Array/prototype/findLastIndex/return-abrupt-from-this-length.js",
             "Test262: built-ins/Array/prototype/flat/non-numeric-depth-should-not-throw.js",
             "Test262: built-ins/Array/prototype/flat/non-object-ctor-throws.js",
@@ -3729,28 +845,12 @@
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-2-7.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-2-8.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-2-9.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-10.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-11.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-13.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-15.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-16.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-17.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-19.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-2.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-20.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-21.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-22.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-23.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-25.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-7.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-3-9.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-4-10.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-4-11.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-4-15.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-4-8.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-4-9.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-15.js",
-            "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-16.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-2.js",
             "Test262: built-ins/Array/prototype/forEach/15.4.4.18-7-b-3.js",
             "Test262: built-ins/Array/prototype/forEach/callbackfn-resize-arraybuffer.js",
@@ -3778,22 +878,7 @@
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-2-7.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-2-8.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-2-9.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-10.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-11.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-13.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-14.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-15.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-16.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-17.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-19.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-2.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-20.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-21.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-22.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-23.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-25.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-7.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-3-9.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-5-1.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-5-12.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-5-15.js",
@@ -3811,8 +896,6 @@
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-5-30.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-9.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-1.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-18.js",
-            "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-19.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-2.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-3.js",
             "Test262: built-ins/Array/prototype/indexOf/15.4.4.14-9-a-5.js",
@@ -3823,12 +906,9 @@
             "Test262: built-ins/Array/prototype/indexOf/length.js",
             "Test262: built-ins/Array/prototype/indexOf/not-a-constructor.js",
             "Test262: built-ins/Array/prototype/indexOf/resizable-buffer.js",
-            "Test262: built-ins/Array/prototype/join/S15.4.4.5_A2_T2.js",
-            "Test262: built-ins/Array/prototype/join/S15.4.4.5_A2_T3.js",
             "Test262: built-ins/Array/prototype/join/S15.4.4.5_A2_T4.js",
             "Test262: built-ins/Array/prototype/join/S15.4.4.5_A3.1_T2.js",
             "Test262: built-ins/Array/prototype/join/S15.4.4.5_A3.2_T2.js",
-            "Test262: built-ins/Array/prototype/join/S15.4.4.5_A4_T3.js",
             "Test262: built-ins/Array/prototype/join/S15.4.4.5_A5_T1.js",
             "Test262: built-ins/Array/prototype/join/coerced-separator-grow.js",
             "Test262: built-ins/Array/prototype/join/coerced-separator-shrink.js",
@@ -3848,20 +928,8 @@
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-2-7.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-2-8.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-2-9.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-11.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-13.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-15.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-16.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-17.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-19.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-2.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-20.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-21.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-22.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-23.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-25.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-28.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-3-7.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-5-1.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-5-12.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-5-14.js",
@@ -3885,8 +953,6 @@
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-5-5.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-9.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-1.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-18.js",
-            "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-19.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-2.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-3.js",
             "Test262: built-ins/Array/prototype/lastIndexOf/15.4.4.15-8-a-5.js",
@@ -3905,25 +971,11 @@
             "Test262: built-ins/Array/prototype/map/15.4.4.19-2-7.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-2-8.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-2-9.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-10.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-11.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-13.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-3-14.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-15.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-16.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-17.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-19.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-2.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-20.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-21.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-3-22.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-23.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-25.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-3-28.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-3-29.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-7.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-3-8.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-3-9.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-4-10.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-4-11.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-4-15.js",
@@ -3936,8 +988,6 @@
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-9.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-1.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-10.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-15.js",
-            "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-16.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-b-2.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-c-i-11.js",
             "Test262: built-ins/Array/prototype/map/15.4.4.19-8-c-i-13.js",
@@ -3965,7 +1015,6 @@
             "Test262: built-ins/Array/prototype/methods-called-as-functions.js",
             "Test262: built-ins/Array/prototype/pop/S15.4.4.6_A2_T1.js",
             "Test262: built-ins/Array/prototype/pop/S15.4.4.6_A2_T2.js",
-            "Test262: built-ins/Array/prototype/pop/S15.4.4.6_A2_T3.js",
             "Test262: built-ins/Array/prototype/pop/S15.4.4.6_A2_T4.js",
             "Test262: built-ins/Array/prototype/pop/S15.4.4.6_A3_T1.js",
             "Test262: built-ins/Array/prototype/pop/S15.4.4.6_A3_T2.js",
@@ -3984,7 +1033,6 @@
             "Test262: built-ins/Array/prototype/push/S15.4.4.7_A3.js",
             "Test262: built-ins/Array/prototype/push/S15.4.4.7_A4_T1.js",
             "Test262: built-ins/Array/prototype/push/S15.4.4.7_A4_T2.js",
-            "Test262: built-ins/Array/prototype/push/S15.4.4.7_A4_T3.js",
             "Test262: built-ins/Array/prototype/push/S15.4.4.7_A5_T1.js",
             "Test262: built-ins/Array/prototype/push/clamps-to-integer-limit.js",
             "Test262: built-ins/Array/prototype/push/length-near-integer-limit-set-failure.js",
@@ -4008,21 +1056,7 @@
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-2-7.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-2-8.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-2-9.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-10.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-11.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-13.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-15.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-16.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-17.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-19.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-2.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-20.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-21.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-22.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-23.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-25.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-7.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-3-9.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-4-10.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-4-11.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-4-15.js",
@@ -4038,11 +1072,7 @@
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-8-c-6.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-8-c-7.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-8-c-8.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-15.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-16.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-2.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-28.js",
-            "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-29.js",
             "Test262: built-ins/Array/prototype/reduce/15.4.4.21-9-b-3.js",
             "Test262: built-ins/Array/prototype/reduce/length.js",
             "Test262: built-ins/Array/prototype/reduce/not-a-constructor.js",
@@ -4060,18 +1090,7 @@
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-2-7.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-2-8.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-2-9.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-11.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-13.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-15.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-16.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-17.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-19.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-20.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-21.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-22.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-23.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-25.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-3-7.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-4-10.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-4-11.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-4-15.js",
@@ -4091,11 +1110,7 @@
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-8-c-6.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-8-c-7.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-8-c-8.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-15.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-16.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-2.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-28.js",
-            "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-29.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-b-3.js",
             "Test262: built-ins/Array/prototype/reduceRight/15.4.4.22-9-c-1.js",
             "Test262: built-ins/Array/prototype/reduceRight/length-near-integer-limit.js",
@@ -4106,7 +1121,6 @@
             "Test262: built-ins/Array/prototype/reduceRight/resizable-buffer.js",
             "Test262: built-ins/Array/prototype/reverse/S15.4.4.8_A2_T2.js",
             "Test262: built-ins/Array/prototype/reverse/S15.4.4.8_A2_T3.js",
-            "Test262: built-ins/Array/prototype/reverse/S15.4.4.8_A3_T3.js",
             "Test262: built-ins/Array/prototype/reverse/S15.4.4.8_A4_T1.js",
             "Test262: built-ins/Array/prototype/reverse/S15.4.4.8_A4_T2.js",
             "Test262: built-ins/Array/prototype/reverse/get_if_present_with_delete.js",
@@ -4116,7 +1130,6 @@
             "Test262: built-ins/Array/prototype/reverse/resizable-buffer.js",
             "Test262: built-ins/Array/prototype/shift/S15.4.4.9_A2_T1.js",
             "Test262: built-ins/Array/prototype/shift/S15.4.4.9_A2_T2.js",
-            "Test262: built-ins/Array/prototype/shift/S15.4.4.9_A2_T3.js",
             "Test262: built-ins/Array/prototype/shift/S15.4.4.9_A2_T4.js",
             "Test262: built-ins/Array/prototype/shift/S15.4.4.9_A2_T5.js",
             "Test262: built-ins/Array/prototype/shift/S15.4.4.9_A3_T3.js",
@@ -4161,30 +1174,12 @@
             "Test262: built-ins/Array/prototype/some/15.4.4.17-2-7.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-2-8.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-2-9.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-10.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-11.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-13.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-14.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-15.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-16.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-17.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-19.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-2.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-20.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-21.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-3-22.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-23.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-25.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-7.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-3-9.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-4-10.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-4-11.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-4-15.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-4-8.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-4-9.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-9.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-15.js",
-            "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-16.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-2.js",
             "Test262: built-ins/Array/prototype/some/15.4.4.17-7-b-3.js",
             "Test262: built-ins/Array/prototype/some/callbackfn-resize-arraybuffer.js",
@@ -4195,7 +1190,6 @@
             "Test262: built-ins/Array/prototype/some/resizable-buffer.js",
             "Test262: built-ins/Array/prototype/sort/S15.4.4.11_A2.1_T3.js",
             "Test262: built-ins/Array/prototype/sort/S15.4.4.11_A3_T1.js",
-            "Test262: built-ins/Array/prototype/sort/S15.4.4.11_A4_T3.js",
             "Test262: built-ins/Array/prototype/sort/S15.4.4.11_A5_T1.js",
             "Test262: built-ins/Array/prototype/sort/S15.4.4.11_A6_T2.js",
             "Test262: built-ins/Array/prototype/sort/bug_596_1.js",
@@ -4235,7 +1229,6 @@
             "Test262: built-ins/Array/prototype/splice/S15.4.4.12_A2_T1.js",
             "Test262: built-ins/Array/prototype/splice/S15.4.4.12_A2_T4.js",
             "Test262: built-ins/Array/prototype/splice/S15.4.4.12_A3_T1.js",
-            "Test262: built-ins/Array/prototype/splice/S15.4.4.12_A3_T3.js",
             "Test262: built-ins/Array/prototype/splice/S15.4.4.12_A4_T1.js",
             "Test262: built-ins/Array/prototype/splice/S15.4.4.12_A4_T2.js",
             "Test262: built-ins/Array/prototype/splice/S15.4.4.12_A4_T3.js",
@@ -4271,28 +1264,20 @@
             "Test262: built-ins/Array/prototype/toLocaleString/user-provided-tolocalestring-grow.js",
             "Test262: built-ins/Array/prototype/toLocaleString/user-provided-tolocalestring-shrink.js",
             "Test262: built-ins/Array/prototype/toReversed/get-descending-order.js",
-            "Test262: built-ins/Array/prototype/toReversed/length-casted-to-zero.js",
             "Test262: built-ins/Array/prototype/toReversed/length-decreased-while-iterating.js",
             "Test262: built-ins/Array/prototype/toReversed/length-exceeding-array-length-limit.js",
-            "Test262: built-ins/Array/prototype/toReversed/length-tolength.js",
             "Test262: built-ins/Array/prototype/toReversed/not-a-constructor.js",
             "Test262: built-ins/Array/prototype/toReversed/this-value-boolean.js",
             "Test262: built-ins/Array/prototype/toSorted/comparefn-called-after-get-elements.js",
             "Test262: built-ins/Array/prototype/toSorted/comparefn-stop-after-error.js",
-            "Test262: built-ins/Array/prototype/toSorted/length-casted-to-zero.js",
-            "Test262: built-ins/Array/prototype/toSorted/length-decreased-while-iterating.js",
             "Test262: built-ins/Array/prototype/toSorted/length-exceeding-array-length-limit.js",
-            "Test262: built-ins/Array/prototype/toSorted/length-tolength.js",
             "Test262: built-ins/Array/prototype/toSorted/length.js",
             "Test262: built-ins/Array/prototype/toSorted/not-a-constructor.js",
             "Test262: built-ins/Array/prototype/toSorted/this-value-boolean.js",
             "Test262: built-ins/Array/prototype/toSpliced/deleteCount-undefined.js",
             "Test262: built-ins/Array/prototype/toSpliced/discarded-element-not-read.js",
-            "Test262: built-ins/Array/prototype/toSpliced/length-casted-to-zero.js",
             "Test262: built-ins/Array/prototype/toSpliced/length-clamped-to-2pow53minus1.js",
-            "Test262: built-ins/Array/prototype/toSpliced/length-decreased-while-iterating.js",
             "Test262: built-ins/Array/prototype/toSpliced/length-exceeding-array-length-limit.js",
-            "Test262: built-ins/Array/prototype/toSpliced/length-tolength.js",
             "Test262: built-ins/Array/prototype/toSpliced/length.js",
             "Test262: built-ins/Array/prototype/toSpliced/not-a-constructor.js",
             "Test262: built-ins/Array/prototype/toSpliced/start-and-deleteCount-undefineds.js",
@@ -4300,9 +1285,7 @@
             "Test262: built-ins/Array/prototype/toString/S15.4.4.2_A1_T4.js",
             "Test262: built-ins/Array/prototype/toString/non-callable-join-string-tag.js",
             "Test262: built-ins/Array/prototype/toString/not-a-constructor.js",
-            "Test262: built-ins/Array/prototype/unshift/S15.4.4.13_A2_T2.js",
             "Test262: built-ins/Array/prototype/unshift/S15.4.4.13_A2_T3.js",
-            "Test262: built-ins/Array/prototype/unshift/S15.4.4.13_A3_T2.js",
             "Test262: built-ins/Array/prototype/unshift/S15.4.4.13_A4_T1.js",
             "Test262: built-ins/Array/prototype/unshift/S15.4.4.13_A4_T2.js",
             "Test262: built-ins/Array/prototype/unshift/clamps-to-integer-limit.js",
@@ -4324,14 +1307,12 @@
             "Test262: built-ins/Array/prototype/with/index-casted-to-number.js",
             "Test262: built-ins/Array/prototype/with/index-smaller-than-minus-length.js",
             "Test262: built-ins/Array/prototype/with/index-throw-completion.js",
-            "Test262: built-ins/Array/prototype/with/length-decreased-while-iterating.js",
             "Test262: built-ins/Array/prototype/with/length-exceeding-array-length-limit.js",
-            "Test262: built-ins/Array/prototype/with/length-tolength.js",
             "Test262: built-ins/Array/prototype/with/length.js",
             "Test262: built-ins/Array/prototype/with/not-a-constructor.js",
             "Test262: built-ins/Array/prototype/with/this-value-boolean.js"
           ],
-          "passed": 2186,
+          "passed": 2380,
           "total": 3081
         },
         "Test262: built-ins/ArrayBuffer": {
@@ -5634,7 +2615,7 @@
           "total": 6
         },
         "Test262: built-ins/Iterator": {
-          "failed": 273,
+          "failed": 140,
           "failing": [
             "Test262: built-ins/Iterator/concat/arguments-checked-in-order.js",
             "Test262: built-ins/Iterator/concat/fresh-iterator-result.js",
@@ -5665,15 +2646,10 @@
             "Test262: built-ins/Iterator/concat/throws-typeerror-when-generator-is-running-return.js",
             "Test262: built-ins/Iterator/concat/throws-typeerror-when-iterator-not-an-object.js",
             "Test262: built-ins/Iterator/concat/zero-arguments.js",
-            "Test262: built-ins/Iterator/from/get-next-method-only-once.js",
-            "Test262: built-ins/Iterator/from/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/from/get-return-method-when-call-return.js",
             "Test262: built-ins/Iterator/from/iterable-primitives.js",
-            "Test262: built-ins/Iterator/from/iterable-to-iterator-fallback.js",
             "Test262: built-ins/Iterator/from/result-proto.js",
             "Test262: built-ins/Iterator/from/return-method-calls-base-return-method.js",
             "Test262: built-ins/Iterator/from/return-method-returns-iterator-result.js",
-            "Test262: built-ins/Iterator/from/return-method-throws-for-invalid-this.js",
             "Test262: built-ins/Iterator/from/supports-iterable.js",
             "Test262: built-ins/Iterator/length.js",
             "Test262: built-ins/Iterator/name.js",
@@ -5692,146 +2668,18 @@
             "Test262: built-ins/Iterator/prototype/Symbol.toStringTag/weird-setter.js",
             "Test262: built-ins/Iterator/prototype/constructor/prop-desc.js",
             "Test262: built-ins/Iterator/prototype/constructor/weird-setter.js",
-            "Test262: built-ins/Iterator/prototype/drop/argument-effect-order.js",
-            "Test262: built-ins/Iterator/prototype/drop/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/drop/get-next-method-only-once.js",
-            "Test262: built-ins/Iterator/prototype/drop/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/drop/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/drop/limit-greater-than-total.js",
-            "Test262: built-ins/Iterator/prototype/drop/limit-rangeerror.js",
-            "Test262: built-ins/Iterator/prototype/drop/limit-tonumber-throws.js",
-            "Test262: built-ins/Iterator/prototype/drop/limit-tonumber.js",
-            "Test262: built-ins/Iterator/prototype/drop/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/drop/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/drop/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/drop/return-is-forwarded.js",
-            "Test262: built-ins/Iterator/prototype/drop/return-is-not-forwarded-after-exhaustion.js",
-            "Test262: built-ins/Iterator/prototype/drop/this-non-callable-next.js",
             "Test262: built-ins/Iterator/prototype/drop/throws-typeerror-when-generator-is-running.js",
-            "Test262: built-ins/Iterator/prototype/every/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/every/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/every/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/every/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/every/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/every/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/every/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/every/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/every/predicate-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/every/this-plain-iterator.js",
-            "Test262: built-ins/Iterator/prototype/filter/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/filter/get-next-method-only-once.js",
-            "Test262: built-ins/Iterator/prototype/filter/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/filter/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/filter/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/filter/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/filter/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/filter/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/filter/predicate-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/filter/predicate-throws.js",
-            "Test262: built-ins/Iterator/prototype/filter/return-is-forwarded.js",
-            "Test262: built-ins/Iterator/prototype/filter/return-is-not-forwarded-after-exhaustion.js",
-            "Test262: built-ins/Iterator/prototype/filter/this-non-callable-next.js",
-            "Test262: built-ins/Iterator/prototype/filter/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/filter/throws-typeerror-when-generator-is-running.js",
-            "Test262: built-ins/Iterator/prototype/find/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/find/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/find/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/find/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/find/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/find/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/find/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/find/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/find/predicate-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/find/this-plain-iterator.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/argument-validation-failure-closes-underlying.js",
             "Test262: built-ins/Iterator/prototype/flatMap/flattens-iterator.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/get-next-method-only-once.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/get-return-method-throws.js",
             "Test262: built-ins/Iterator/prototype/flatMap/iterable-primitives-are-not-flattened.js",
             "Test262: built-ins/Iterator/prototype/flatMap/iterable-to-iterator-fallback.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/iterator-return-method-throws.js",
             "Test262: built-ins/Iterator/prototype/flatMap/mapper-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/mapper-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/mapper-throws.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/next-method-returns-throwing-value.js",
             "Test262: built-ins/Iterator/prototype/flatMap/return-is-forwarded-to-mapper-result.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/return-is-forwarded-to-underlying-iterator.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/return-is-not-forwarded-after-exhaustion.js",
             "Test262: built-ins/Iterator/prototype/flatMap/strings-are-not-flattened.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/this-non-callable-next.js",
-            "Test262: built-ins/Iterator/prototype/flatMap/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/flatMap/throws-typeerror-when-generator-is-running.js",
-            "Test262: built-ins/Iterator/prototype/forEach/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/forEach/fn-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/forEach/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/forEach/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/forEach/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/forEach/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/forEach/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/forEach/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/initial-value.js",
-            "Test262: built-ins/Iterator/prototype/map/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/map/get-next-method-only-once.js",
-            "Test262: built-ins/Iterator/prototype/map/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/map/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/map/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/map/mapper-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/map/mapper-throws.js",
-            "Test262: built-ins/Iterator/prototype/map/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/map/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/map/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/map/return-is-forwarded-to-underlying-iterator.js",
-            "Test262: built-ins/Iterator/prototype/map/return-is-not-forwarded-after-exhaustion.js",
-            "Test262: built-ins/Iterator/prototype/map/this-non-callable-next.js",
-            "Test262: built-ins/Iterator/prototype/map/this-plain-iterator.js",
             "Test262: built-ins/Iterator/prototype/map/throws-typeerror-when-generator-is-running.js",
-            "Test262: built-ins/Iterator/prototype/reduce/argument-effect-order.js",
-            "Test262: built-ins/Iterator/prototype/reduce/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/reduce/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/reduce/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/reduce/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/reduce/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/reduce/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/reduce/reducer-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/reduce/this-plain-iterator.js",
-            "Test262: built-ins/Iterator/prototype/some/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/some/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/some/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/some/iterator-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/some/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/some/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/some/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/some/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/some/predicate-throws-then-closing-iterator-also-throws.js",
-            "Test262: built-ins/Iterator/prototype/some/this-plain-iterator.js",
-            "Test262: built-ins/Iterator/prototype/take/argument-effect-order.js",
-            "Test262: built-ins/Iterator/prototype/take/argument-validation-failure-closes-underlying.js",
-            "Test262: built-ins/Iterator/prototype/take/exhaustion-calls-return.js",
-            "Test262: built-ins/Iterator/prototype/take/get-next-method-only-once.js",
-            "Test262: built-ins/Iterator/prototype/take/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/take/get-return-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/take/limit-greater-than-or-equal-to-total.js",
-            "Test262: built-ins/Iterator/prototype/take/limit-rangeerror.js",
-            "Test262: built-ins/Iterator/prototype/take/limit-tonumber-throws.js",
-            "Test262: built-ins/Iterator/prototype/take/limit-tonumber.js",
-            "Test262: built-ins/Iterator/prototype/take/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/take/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/take/next-method-returns-throwing-value-done.js",
-            "Test262: built-ins/Iterator/prototype/take/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/take/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/take/return-is-forwarded.js",
-            "Test262: built-ins/Iterator/prototype/take/return-is-not-forwarded-after-exhaustion.js",
-            "Test262: built-ins/Iterator/prototype/take/this-non-callable-next.js",
             "Test262: built-ins/Iterator/prototype/take/throws-typeerror-when-generator-is-running.js",
-            "Test262: built-ins/Iterator/prototype/toArray/get-next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/toArray/next-method-returns-non-object.js",
-            "Test262: built-ins/Iterator/prototype/toArray/next-method-returns-throwing-done.js",
-            "Test262: built-ins/Iterator/prototype/toArray/next-method-returns-throwing-value.js",
-            "Test262: built-ins/Iterator/prototype/toArray/next-method-throws.js",
-            "Test262: built-ins/Iterator/prototype/toArray/this-plain-iterator.js",
             "Test262: built-ins/Iterator/zip/basic-longest.js",
             "Test262: built-ins/Iterator/zip/basic-shortest.js",
             "Test262: built-ins/Iterator/zip/basic-strict.js",
@@ -5910,7 +2758,7 @@
             "Test262: built-ins/Iterator/zipKeyed/suspended-yield-iterator-close-calls-next.js",
             "Test262: built-ins/Iterator/zipKeyed/suspended-yield-iterator-close-calls-return.js"
           ],
-          "passed": 241,
+          "passed": 374,
           "total": 514
         },
         "Test262: built-ins/JSON": {
@@ -6389,7 +3237,7 @@
           "total": 340
         },
         "Test262: built-ins/Object": {
-          "failed": 501,
+          "failed": 478,
           "failing": [
             "Test262: built-ins/Object/S15.2.1.1_A1_T1.js",
             "Test262: built-ins/Object/S15.2.1.1_A1_T2.js",
@@ -6421,8 +3269,6 @@
             "Test262: built-ins/Object/create/15.2.3.5-4-311.js",
             "Test262: built-ins/Object/create/not-a-constructor.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-0-2.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-112.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-113.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-119.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-120.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-122.js",
@@ -6442,17 +3288,8 @@
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-160.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-163.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-164.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-165.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-166.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-168.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-169.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-170.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-172.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-173.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-175.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-176.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-177.js",
-            "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-180.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-184.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-185.js",
             "Test262: built-ins/Object/defineProperties/15.2.3.7-6-a-20.js",
@@ -6474,8 +3311,6 @@
             "Test262: built-ins/Object/defineProperty/15.2.3.6-3-256-1.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-3-41-1.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-3-94-1.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-116.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-117.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-123.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-124.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-126.js",
@@ -6494,16 +3329,7 @@
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-162.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-164.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-167.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-168.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-169.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-170.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-172.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-173.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-174.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-176.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-177.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-181.js",
-            "Test262: built-ins/Object/defineProperty/15.2.3.6-4-184.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-188.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-189.js",
             "Test262: built-ins/Object/defineProperty/15.2.3.6-4-206.js",
@@ -6596,7 +3422,6 @@
             "Test262: built-ins/Object/fromEntries/string-entry-object-succeeds.js",
             "Test262: built-ins/Object/fromEntries/string-entry-string-object-succeeds.js",
             "Test262: built-ins/Object/fromEntries/to-property-key.js",
-            "Test262: built-ins/Object/fromEntries/uses-keys-not-iterator.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-1-1.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-1-2.js",
             "Test262: built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-38.js",
@@ -6893,7 +3718,7 @@
             "Test262: built-ins/Object/values/primitive-strings.js",
             "Test262: built-ins/Object/values/return-order.js"
           ],
-          "passed": 2910,
+          "passed": 2933,
           "total": 3411
         },
         "Test262: built-ins/Promise": {
@@ -23060,7 +19885,7 @@
           "total": 3
         },
         "Test262: staging/sm": {
-          "failed": 794,
+          "failed": 753,
           "failing": [
             "Test262: staging/sm/Array/array-length-set-during-for-in.js",
             "Test262: staging/sm/Array/array-length-set-on-nonarray.js",
@@ -23071,7 +19896,6 @@
             "Test262: staging/sm/Array/concat-spreadable-primitive.js",
             "Test262: staging/sm/Array/fill.js",
             "Test262: staging/sm/Array/from-iterator-close.js",
-            "Test262: staging/sm/Array/from_basics.js",
             "Test262: staging/sm/Array/from_constructor.js",
             "Test262: staging/sm/Array/from_errors.js",
             "Test262: staging/sm/Array/from_iterable.js",
@@ -23089,9 +19913,7 @@
             "Test262: staging/sm/Array/isArray.js",
             "Test262: staging/sm/Array/join-01.js",
             "Test262: staging/sm/Array/length-set-object.js",
-            "Test262: staging/sm/Array/length-truncate-nonconfigurable-sparse.js",
             "Test262: staging/sm/Array/length-truncate-nonconfigurable.js",
-            "Test262: staging/sm/Array/length-truncate-with-indexed.js",
             "Test262: staging/sm/Array/pop-empty-nonwritable.js",
             "Test262: staging/sm/Array/pop-no-has-trap.js",
             "Test262: staging/sm/Array/redefine-nonwritable-length-custom-conversion-call-counts.js",
@@ -23183,14 +20005,11 @@
             "Test262: staging/sm/Iterator/from/Iterator.from-length.js",
             "Test262: staging/sm/Iterator/from/Iterator.from-name.js",
             "Test262: staging/sm/Iterator/from/call-from-with-different-this.js",
-            "Test262: staging/sm/Iterator/from/modify-next.js",
             "Test262: staging/sm/Iterator/from/modify-return.js",
             "Test262: staging/sm/Iterator/from/proxy-not-wrapped.js",
             "Test262: staging/sm/Iterator/from/proxy-wrap-next.js",
             "Test262: staging/sm/Iterator/from/proxy-wrap-return.js",
-            "Test262: staging/sm/Iterator/from/return-iterator-if-iterable.js",
             "Test262: staging/sm/Iterator/from/wrap-functions-on-other-global.js",
-            "Test262: staging/sm/Iterator/from/wrap-method-with-non-wrap-this-throws.js",
             "Test262: staging/sm/Iterator/from/wrap-new-global.js",
             "Test262: staging/sm/Iterator/from/wrap-next-not-object-throws.js",
             "Test262: staging/sm/Iterator/from/wrap-return-closes-iterator.js",
@@ -23200,83 +20019,50 @@
             "Test262: staging/sm/Iterator/proto.js",
             "Test262: staging/sm/Iterator/prototype/drop/length.js",
             "Test262: staging/sm/Iterator/prototype/drop/name.js",
-            "Test262: staging/sm/Iterator/prototype/every/check-fn-after-getting-iterator.js",
             "Test262: staging/sm/Iterator/prototype/every/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/every/length.js",
             "Test262: staging/sm/Iterator/prototype/every/name.js",
-            "Test262: staging/sm/Iterator/prototype/every/next-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/every/proxy.js",
-            "Test262: staging/sm/Iterator/prototype/every/value-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/filter/length.js",
             "Test262: staging/sm/Iterator/prototype/filter/name.js",
-            "Test262: staging/sm/Iterator/prototype/find/check-fn-after-getting-iterator.js",
             "Test262: staging/sm/Iterator/prototype/find/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/find/length.js",
             "Test262: staging/sm/Iterator/prototype/find/name.js",
-            "Test262: staging/sm/Iterator/prototype/find/next-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/find/proxy.js",
-            "Test262: staging/sm/Iterator/prototype/find/value-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/flatMap/close-iterator-when-inner-complete-throws.js",
             "Test262: staging/sm/Iterator/prototype/flatMap/close-iterator-when-inner-next-throws.js",
             "Test262: staging/sm/Iterator/prototype/flatMap/close-iterator-when-inner-value-throws.js",
             "Test262: staging/sm/Iterator/prototype/flatMap/length.js",
             "Test262: staging/sm/Iterator/prototype/flatMap/name.js",
             "Test262: staging/sm/Iterator/prototype/flatMap/throw-when-inner-not-iterable.js",
-            "Test262: staging/sm/Iterator/prototype/forEach/check-fn-after-getting-iterator.js",
             "Test262: staging/sm/Iterator/prototype/forEach/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/forEach/length.js",
             "Test262: staging/sm/Iterator/prototype/forEach/name.js",
-            "Test262: staging/sm/Iterator/prototype/forEach/next-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/forEach/proxy.js",
-            "Test262: staging/sm/Iterator/prototype/forEach/value-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/iterator-helpers-from-other-global.js",
             "Test262: staging/sm/Iterator/prototype/lazy-methods-from-other-global.js",
-            "Test262: staging/sm/Iterator/prototype/lazy-methods-iterator-closed-on-call-throws.js",
-            "Test262: staging/sm/Iterator/prototype/lazy-methods-iterator-closed-on-yield-throws.js",
-            "Test262: staging/sm/Iterator/prototype/lazy-methods-iterator-not-closed-on-value-throws.js",
-            "Test262: staging/sm/Iterator/prototype/lazy-methods-multiple-return-close-iterator-once.js",
             "Test262: staging/sm/Iterator/prototype/lazy-methods-proxy-accesses.js",
             "Test262: staging/sm/Iterator/prototype/lazy-methods-reentry-not-close-iterator.js",
             "Test262: staging/sm/Iterator/prototype/lazy-methods-return-closes-iterator.js",
-            "Test262: staging/sm/Iterator/prototype/lazy-methods-throw-eagerly-on-non-iterator.js",
-            "Test262: staging/sm/Iterator/prototype/lazy-methods-throw-next-done-throws.js",
-            "Test262: staging/sm/Iterator/prototype/lazy-methods-throw-next-not-object.js",
             "Test262: staging/sm/Iterator/prototype/lazy-methods-throw-on-reentry.js",
             "Test262: staging/sm/Iterator/prototype/map/length.js",
             "Test262: staging/sm/Iterator/prototype/map/name.js",
-            "Test262: staging/sm/Iterator/prototype/map/proxy-abrupt-completion-in-iteratorValue.js",
-            "Test262: staging/sm/Iterator/prototype/map/proxy-abrupt-completion-in-yield.js",
-            "Test262: staging/sm/Iterator/prototype/map/proxy-abrupt-completion.js",
             "Test262: staging/sm/Iterator/prototype/map/proxy-accesses.js",
-            "Test262: staging/sm/Iterator/prototype/map/this-not-iterator-throw.js",
-            "Test262: staging/sm/Iterator/prototype/map/throw-when-iterator-returns-non-object.js",
-            "Test262: staging/sm/Iterator/prototype/reduce/check-fn-after-getting-iterator.js",
             "Test262: staging/sm/Iterator/prototype/reduce/error-from-correct-realm.js",
-            "Test262: staging/sm/Iterator/prototype/reduce/iterator-next-return-non-object-throws.js",
             "Test262: staging/sm/Iterator/prototype/reduce/length.js",
             "Test262: staging/sm/Iterator/prototype/reduce/name.js",
-            "Test262: staging/sm/Iterator/prototype/reduce/next-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/reduce/proxy.js",
-            "Test262: staging/sm/Iterator/prototype/reduce/value-throws-iterator-not-closed.js",
-            "Test262: staging/sm/Iterator/prototype/some/check-fn-after-getting-iterator.js",
             "Test262: staging/sm/Iterator/prototype/some/error-from-correct-realm.js",
             "Test262: staging/sm/Iterator/prototype/some/length.js",
             "Test262: staging/sm/Iterator/prototype/some/name.js",
-            "Test262: staging/sm/Iterator/prototype/some/next-throws-iterator-not-closed.js",
             "Test262: staging/sm/Iterator/prototype/some/proxy.js",
-            "Test262: staging/sm/Iterator/prototype/some/value-throws-iterator-not-closed.js",
-            "Test262: staging/sm/Iterator/prototype/take-drop-throw-eagerly-on-negative.js",
             "Test262: staging/sm/Iterator/prototype/take-drop-throw-eagerly-on-non-integer.js",
-            "Test262: staging/sm/Iterator/prototype/take/close-iterator-when-none-remaining.js",
             "Test262: staging/sm/Iterator/prototype/take/length.js",
             "Test262: staging/sm/Iterator/prototype/take/name.js",
-            "Test262: staging/sm/Iterator/prototype/take/take-more-than-available.js",
             "Test262: staging/sm/Iterator/prototype/toArray/create-in-current-realm.js",
             "Test262: staging/sm/Iterator/prototype/toArray/length.js",
             "Test262: staging/sm/Iterator/prototype/toArray/name.js",
-            "Test262: staging/sm/Iterator/prototype/toArray/next-throws.js",
             "Test262: staging/sm/Iterator/prototype/toArray/proxy.js",
-            "Test262: staging/sm/Iterator/prototype/toArray/value-throws-iterator-not-closed.js",
             "Test262: staging/sm/JSON/parse-arguments.js",
             "Test262: staging/sm/JSON/parse-with-source.js",
             "Test262: staging/sm/JSON/stringify-boxed-primitives.js",
@@ -23428,7 +20214,6 @@
             "Test262: staging/sm/String/codePointAt.js",
             "Test262: staging/sm/String/fromCodePoint.js",
             "Test262: staging/sm/String/iterator_edge_cases.js",
-            "Test262: staging/sm/String/match-defines-match-elements.js",
             "Test262: staging/sm/String/match-throws-nonwritable-lastIndex-global.js",
             "Test262: staging/sm/String/match.js",
             "Test262: staging/sm/String/matchAll.js",
@@ -23830,7 +20615,6 @@
             "Test262: staging/sm/strict/15.4.4.6.js",
             "Test262: staging/sm/strict/15.4.4.8.js",
             "Test262: staging/sm/strict/15.4.4.9.js",
-            "Test262: staging/sm/strict/15.4.5.1.js",
             "Test262: staging/sm/strict/15.5.5.1.js",
             "Test262: staging/sm/strict/15.5.5.2.js",
             "Test262: staging/sm/strict/8.12.5.js",
@@ -23857,7 +20641,7 @@
             "Test262: staging/sm/syntax/syntax-parsed-arrow-then-directive.js",
             "Test262: staging/sm/syntax/yield-as-identifier.js"
           ],
-          "passed": 612,
+          "passed": 653,
           "total": 1406
         },
         "Test262: staging/source-phase-imports": {
@@ -23871,44 +20655,26 @@
           "failing": [],
           "passed": 1,
           "total": 1
-        },
-        "atomics.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "explicit_resource_management.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
-        },
-        "observable.js": {
-          "failed": 0,
-          "failing": [],
-          "passed": 1,
-          "total": 1
         }
       },
       "filter": null,
-      "finished": "2026-07-30T16:01:44.942641+00:00",
+      "finished": "2026-08-02T04:53:40.397425+00:00",
       "revision": {
-        "branch": "dev",
-        "commit": "d75d49a4a987ed202619d306367cebcaf5613eec",
+        "branch": "compliance/named-suites",
+        "commit": "2916d9fc008ccdd5d5864a0795119d4fd8df998d",
         "dirty": false,
-        "short": "d75d49a4",
-        "subject": "fix(array): respect indexed descriptors in copy methods"
+        "short": "2916d9fc",
+        "subject": "test: replace compliance tiers with named suites"
       },
-      "schema_version": 1,
-      "started": "2026-07-30T16:00:13.330571+00:00",
-      "suite": "Tier 3 - Full Conformance (Test262 / WPT / Frameworks)",
-      "tier": 3,
+      "schema_version": 2,
+      "started": "2026-08-02T04:52:23.235071+00:00",
+      "suite": "Test262",
+      "suite_id": "test262",
       "totals": {
-        "failed": 19292,
-        "pass_rate": 63.9,
-        "passed": 34139,
-        "total": 53431
+        "failed": 18901,
+        "pass_rate": 64.6,
+        "passed": 34527,
+        "total": 53428
       }
     }
   }
