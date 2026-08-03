@@ -9,10 +9,8 @@
 #include "loader_cache.h"
 #include "loader_internal.h"
 
-#include "modules/buffer.h"
 #include "modules/json.h"
 #include "modules/napi.h"
-#include "modules/symbol.h"
 #include "modules/uri.h"
 
 #include "silver/ast.h"
@@ -23,7 +21,6 @@
 #include "internal.h"
 #include "reactor.h"
 #include "runtime.h"
-#include "silver/engine.h"
 #include "gc/roots.h"
 #include "utils.h"
 
@@ -446,7 +443,6 @@ static ant_value_t esm_make_namespace_object(ant_t *js) {
   ant_value_t ns = js_mkobj(js);
   js_set_slot(ns, SLOT_BRAND, js_mknum(BRAND_MODULE_NAMESPACE));
   js_set_slot(ns, SLOT_MODULE_LOADING, js_true);
-  js_set_sym_desc(js, ns, get_toStringTag_sym(), ANT_STRING("Module"), 0);
   return ns;
 }
 
@@ -462,7 +458,6 @@ static ant_value_t esm_complete_value_module(ant_t *js, esm_module_t *mod, ant_v
   ant_value_t ns = js_mkobj(js);
   GC_ROOT_PIN(js, ns);
   js_set_slot(ns, SLOT_BRAND, js_mknum(BRAND_MODULE_NAMESPACE));
-  js_set_sym_desc(js, ns, get_toStringTag_sym(), ANT_STRING("Module"), 0);
 
   if (is_object_type(value)) {
     ant_value_t keys = js_own_property_keys(js, value, false, true);
@@ -1146,12 +1141,6 @@ static inline bool esm_is_esm_extension(const char *path) {
   return
     esm_has_suffix(path, ".mjs") ||
     esm_has_suffix(path, ".mts");
-}
-
-static bool esm_path_contains_node_modules(const char *path) {
-  if (!path) return false;
-  if (strstr(path, "/node_modules/")) return true;
-  return strstr(path, "\\node_modules\\") != NULL;
 }
 
 static bool esm_lookup_package_type(ant_t *js, const char *resolved_path, esm_package_type_t *out_type) {

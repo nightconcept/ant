@@ -4,16 +4,17 @@ import { ChildProcess as NodeChildProcess } from 'node:child_process';
 
 console.log('Child Process Tests\n');
 
-test('execSync returns stdout', execSync('echo hello').trim(), 'hello');
-test('execSync with spaces', execSync('echo "hello world"').trim(), 'hello world');
-test('execSync exit code 0', typeof execSync('true'), 'string');
+test('execSync returns stdout', execSync('echo hello').toString().trim(), 'hello');
+test('execSync with spaces', execSync('echo "hello world"').toString().trim(), 'hello world');
+test('execSync returns a Buffer by default', Buffer.isBuffer(execSync('true')), true);
+test('execSync honours encoding', typeof execSync('true', { encoding: 'utf8' }), 'string');
 
 testThrows('execSync throws on non-zero exit', () => {
   execSync('exit 1');
 });
 
 const syncResult = spawnSync('echo', ['hello', 'world']);
-test('spawnSync stdout', syncResult.stdout.trim(), 'hello world');
+test('spawnSync stdout', syncResult.stdout.toString().trim(), 'hello world');
 test('spawnSync status 0', syncResult.status, 0);
 test('spawnSync signal null', syncResult.signal, null);
 test('spawnSync has pid', syncResult.pid > 0, true);
@@ -22,10 +23,10 @@ const failSync = spawnSync('sh', ['-c', 'exit 42']);
 test('spawnSync non-zero status', failSync.status, 42);
 
 const stderrSync = spawnSync('sh', ['-c', 'echo error >&2']);
-test('spawnSync captures stderr', stderrSync.stderr.trim(), 'error');
+test('spawnSync captures stderr', stderrSync.stderr.toString().trim(), 'error');
 
 const inputSync = spawnSync('cat', [], { input: 'test input' });
-test('spawnSync with input', inputSync.stdout, 'test input');
+test('spawnSync with input', inputSync.stdout.toString(), 'test input');
 
 let execDone = false;
 const execDoneP = exec('echo async').then(result => {
@@ -62,7 +63,7 @@ constructedChild.on('ping', () => {
 constructedChild.emit('ping');
 test('new ChildProcess has EventEmitter behavior', constructedChildEvent, true);
 
-child.on('stdout', data => {
+child.stdout.on('data', data => {
   spawnStdout += data;
 });
 
@@ -82,7 +83,7 @@ const childClosedP = new Promise(resolve =>
 
 let stdinRoundTrip = '';
 const stdinChild = spawn('cat');
-stdinChild.on('stdout', data => {
+stdinChild.stdout.on('data', data => {
   stdinRoundTrip += data;
 });
 stdinChild.stdin.write('ping');
@@ -106,26 +107,38 @@ const shellChildDoneP = childClosedP.then(
     })
 );
 
-// Awaited below: without it summary() can run before 'close' fires, and the
-// stderr assertion is silently never counted.
-const stderrChildDoneP = new Promise(resolve => {
-  const stderrChild = spawn('sh', ['-c', 'echo err >&2']);
-  let stderrData = '';
-  stderrChild.on('stderr', data => {
-    stderrData += data;
-  });
-  stderrChild.on('close', () => {
-    test('spawn captures stderr', stderrData.trim(), 'err');
-    resolve();
-  });
+const stderrChild = spawn('sh', ['-c', 'echo err >&2']);
+let stderrData = '';
+stderrChild.stderr.on('data', data => {
+  stderrData += data;
+});
+stderrChild.on('close', () => {
+  test('spawn captures stderr', stderrData.trim(), 'err');
 });
 
 const longChild = spawn('sleep', ['10']);
-longChild.on('close', () => {});
+let killedExitCode;
+let killedSignal;
+longChild.on('exit', (code, signal) => {
+  killedExitCode = code;
+  killedSignal = signal;
+});
+const longChildDoneP = new Promise(resolve => {
+  longChild.on('close', (code, signal) => {
+    test('signal exit event code is null', killedExitCode, null);
+    test('signal exit event names signal', killedSignal, 'SIGTERM');
+    test('signal close event code is null', code, null);
+    test('signal close event names signal', signal, 'SIGTERM');
+    test('signal leaves exitCode null', longChild.exitCode, null);
+    test('signal sets symbolic signalCode', longChild.signalCode, 'SIGTERM');
+    test('successful kill marks child killed', longChild.killed, true);
+    resolve();
+  });
+});
 const killResult = longChild.kill('SIGTERM');
 test('spawn kill returns true', killResult, true);
 
-Promise.all([execDoneP, execFailDoneP, shellChildDoneP, stdinChildDoneP, stderrChildDoneP]).then(() => {
+Promise.all([execDoneP, execFailDoneP, shellChildDoneP, stdinChildDoneP, longChildDoneP]).then(() => {
   test('exec async completed', execDone, true);
   test('exec fail async completed', execFailDone, true);
   summary();
