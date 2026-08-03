@@ -8372,24 +8372,64 @@ static void array_materialize_dense_for_define(ant_t *js, ant_value_t obj, const
   array_mark_may_have_holes(obj);
 }
 
-// TODO: decompose this huge function into small pieces
-static ant_value_t object_define_property(ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor) {
+/*
+ * ValidateAndApplyPropertyDescriptor's prologue allocates: callable-only
+ * forms are promoted and ToPropertyKey can execute user code. Keep its
+ * inputs rooted while the upstream descriptor implementation runs.
+ */
+static ant_value_t object_define_property_coerced(
+  ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor
+);
+
+static ant_value_t object_define_property(
+  ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor
+) {
+  GC_ROOT_SAVE(root_mark, js);
+  GC_ROOT_PIN(js, obj);
+  GC_ROOT_PIN(js, prop);
+  GC_ROOT_PIN(js, descriptor);
+
+  ant_value_t result;
   if (vtype(obj) == T_CFUNC) obj = js_cfunc_promote(js, obj);
 
   if (!is_object_type(obj)) {
-    return js_mkerr(js, "Object.defineProperty called on non-object");
+    result = js_mkerr(js, "Object.defineProperty called on non-object");
+    goto done;
   }
-  
+
+  if (vtype(prop) != T_STR && vtype(prop) != T_SYMBOL) {
+    prop = js_to_primitive(js, prop, 1);
+    if (is_err(prop)) {
+      result = prop;
+      goto done;
+    }
+    if (vtype(prop) != T_SYMBOL) {
+      prop = js_tostring_val(js, prop);
+      if (is_err(prop)) {
+        result = prop;
+        goto done;
+      }
+    }
+  }
+
+  if (vtype(descriptor) == T_CFUNC) descriptor = js_cfunc_promote(js, descriptor);
+  if (!is_object_type(descriptor)) {
+    result = js_mkerr(js, "Property descriptor must be an object");
+    goto done;
+  }
+
+  result = object_define_property_coerced(js, obj, prop, descriptor);
+
+done:
+  GC_ROOT_RESTORE(js, root_mark);
+  return result;
+}
+
+// TODO: decompose this huge function into small pieces
+static ant_value_t object_define_property_coerced(
+  ant_t *js, ant_value_t obj, ant_value_t prop, ant_value_t descriptor
+) {
   bool sym_key = (vtype(prop) == T_SYMBOL);
-  if (!sym_key && vtype(prop) != T_STR) {
-    char buf[64];
-    size_t len = tostr(js, prop, buf, sizeof(buf));
-    prop = js_mkstr(js, buf, len);
-  }
-  
-  if (vtype(descriptor) != T_OBJ) {
-    return js_mkerr(js, "Property descriptor must be an object");
-  }
   
   ant_value_t as_obj = js_as_obj(obj);
   if (is_proxy(as_obj)) {
@@ -8873,29 +8913,50 @@ static ant_value_t object_define_properties(ant_t *js, ant_value_t obj, ant_valu
     return obj;
   }
 
-  if (pt == T_ARR) {
-    ant_offset_t arr_len = js_arr_len(js, props);
-    for (ant_offset_t i = 0; i < arr_len; i++) {
-      if (!arr_has(js, props, i)) continue;
-      ant_value_t result = object_define_property(js, obj, js_mknum((double)i), js_arr_get(js, props, i));
-      if (is_err(result)) return result;
-    }
+  // ObjectDefineProperties uses own enumerable keys, then reads each
+  // descriptor with [[Get]].  Iterating the raw property table loses both
+  // attributes and accessor behavior after the event-internals rewrite.
+  GC_ROOT_SAVE(root_mark, js);
+  GC_ROOT_PIN(js, obj);
+  GC_ROOT_PIN(js, props);
+
+  ant_value_t keys = js_own_property_keys(js, props, true, true);
+  GC_ROOT_PIN(js, keys);
+  if (is_err(keys)) {
+    GC_ROOT_RESTORE(js, root_mark);
+    return keys;
   }
 
-  ant_iter_t iter = js_prop_iter_begin(js, props);
-  const char *key = NULL;
-  size_t key_len = 0;
-  ant_value_t descriptor = js_mkundef();
+  ant_offset_t key_count = js_arr_len(js, keys);
+  for (ant_offset_t i = 0; i < key_count; i++) {
+    GC_ROOT_SAVE(key_mark, js);
+    ant_value_t prop_key = js_arr_get(js, keys, i);
+    GC_ROOT_PIN(js, prop_key);
 
-  while (js_prop_iter_next(&iter, &key, &key_len, &descriptor)) {
-    ant_value_t result = object_define_property(js, obj, js_mkstr(js, key, key_len), descriptor);
+    ant_value_t descriptor;
+    if (vtype(prop_key) == T_SYMBOL) descriptor = js_get_sym(js, props, prop_key);
+    else {
+      ant_offset_t key_len = 0;
+      ant_offset_t key_off = vstr(js, prop_key, &key_len);
+      descriptor = js_get(js, props, (const char *)(uintptr_t)key_off);
+    }
+    if (is_err(descriptor)) {
+      GC_ROOT_RESTORE(js, key_mark);
+      GC_ROOT_RESTORE(js, root_mark);
+      return descriptor;
+    }
+    GC_ROOT_PIN(js, descriptor);
+
+    ant_value_t result = object_define_property(js, obj, prop_key, descriptor);
     if (is_err(result)) {
-      js_prop_iter_end(&iter);
+      GC_ROOT_RESTORE(js, key_mark);
+      GC_ROOT_RESTORE(js, root_mark);
       return result;
     }
+    GC_ROOT_RESTORE(js, key_mark);
   }
-  
-  js_prop_iter_end(&iter);
+
+  GC_ROOT_RESTORE(js, root_mark);
   return obj;
 }
 
