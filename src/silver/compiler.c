@@ -515,6 +515,21 @@ static void compile_expr_with_inferred_name(
   c->inferred_name_len = saved_len;
 }
 
+/* IsIdentifierRef: a parenthesized identifier is not one, so `(x) = function(){}`
+ * leaves the function anonymous. */
+static inline bool is_identifier_ref(const sv_ast_t *node) {
+  return node && node->type == N_IDENT && !(node->flags & FN_PAREN);
+}
+
+/* NamedEvaluation for a default initializer: only a plain identifier target
+ * names the anonymous function or class it defaults to. */
+static void compile_default_init(sv_compiler_t *c, sv_ast_t *value, sv_ast_t *target) {
+  if (is_identifier_ref(target))
+    compile_expr_with_inferred_name(c, value, target->str, target->len);
+  else
+    compile_expr(c, value);
+}
+
 static void emit_const_assign_error(sv_compiler_t *c, const char *name, uint32_t len) {
   static const char prefix[] = "Assignment to constant variable '";
   static const char suffix[] = "'";
@@ -550,6 +565,10 @@ static inline bool is_repl_top_level(const sv_compiler_t *c) {
     c->mode == SV_COMPILE_REPL && c->scope_depth == 0 &&
     c->enclosing && !c->enclosing->enclosing &&
     !c->is_strict;
+}
+
+static inline bool is_sloppy_eval_top_level(const sv_compiler_t *c) {
+  return c && c->mode == SV_COMPILE_EVAL && c->scope_depth == 0 && !c->is_strict;
 }
 
 static inline bool has_completion_value(const sv_compiler_t *c) {
@@ -2106,6 +2125,11 @@ static void hoist_one_func(sv_compiler_t *c, sv_ast_t *node, bool annex_b_update
   if (annex_var >= 0) emit_op(c, OP_DUP);
   if (is_repl_top_level(c)) {
     emit_atom_op(c, OP_PUT_GLOBAL, node->str, node->len);
+  } else if (is_sloppy_eval_top_level(c)) {
+    emit_op(c, OP_DUP);
+    emit_atom_op(c, OP_DEFINE_EVAL_VAR, node->str, node->len);
+    int local = resolve_local(c, node->str, node->len);
+    emit_put_local(c, local);
   } else {
     int local = resolve_local(c, node->str, node->len);
     emit_put_local(c, local);
@@ -2701,7 +2725,9 @@ void compile_assign(sv_compiler_t *c, sv_ast_t *node) {
       return;
     }
 
-    compile_expr(c, node->right);
+    if (is_identifier_ref(target))
+      compile_expr_with_inferred_name(c, node->right, target->str, target->len);
+    else compile_expr(c, node->right);
     compile_lhs_set(c, target, true);
     return;
   }
@@ -3744,6 +3770,10 @@ static bool compile_direct_eval_call(
     return true;
   }
 
+  // Later unresolved identifiers may refer to var-scoped bindings created by
+  // this direct eval.
+  c->inherits_eval_env = true;
+
   uint32_t eval_scope;
   if (!capture_dynamic_eval_scope(c, &eval_scope)) return true;
 
@@ -3754,6 +3784,8 @@ static bool compile_direct_eval_call(
   }
 
   emit_op(c, OP_EVAL);
+  if (c->enclosing && !c->enclosing->enclosing)
+    eval_scope |= UINT32_C(0x80000000);
   emit_u32(c, eval_scope);
   return true;
 }
@@ -3841,6 +3873,14 @@ static int resolve_raw_length_local(sv_compiler_t *c, sv_ast_t *base) {
 
   int local = resolve_local(c, base->str, base->len);
   if (local < 0 || c->locals[local].is_tdz) return -1;
+
+  // An imported binding is indirect - the frame slot holds the link to the
+  // exporting module, not the value - so OP_GET_SLOT_RAW would read straight
+  // past the indirection and `imported.length` would come back undefined.
+  // Every other property goes through OP_GET_FIELD and resolves correctly,
+  // which is why only `.length` was affected.
+  if (c->locals[local].binding.import_kind != SV_IMPORT_BIND_NONE) return -1;
+
   return local_to_frame_slot(c, local);
 }
 
@@ -4153,10 +4193,10 @@ static void compile_destructure_pattern(
         emit_op(c, OP_IS_UNDEF);
         int skip = emit_jump(c, OP_JMP_FALSE);
         emit_op(c, OP_POP);
-        compile_expr(c, default_val);
+        compile_default_init(c, default_val, target);
         patch_jump(c, skip);
       }
-      
+
       compile_destructure_store(c, target, mode, kind);
     }
 
@@ -4218,7 +4258,7 @@ static void compile_destructure_pattern(
         emit_op(c, OP_IS_UNDEF);
         int skip = emit_jump(c, OP_JMP_FALSE);
         emit_op(c, OP_POP);
-        compile_expr(c, default_val);
+        compile_default_init(c, default_val, value);
         patch_jump(c, skip);
       }
 
@@ -6291,7 +6331,7 @@ sv_func_t *compile_function_body(
         emit_op(&comp, OP_IS_UNDEF);
         int skip = emit_jump(&comp, OP_JMP_FALSE);
         emit_op(&comp, OP_POP);
-        compile_expr(&comp, p->right);
+        compile_default_init(&comp, p->right, p->left);
         patch_jump(&comp, skip);
         if (p->left && p->left->type == N_IDENT) {
           emit_op(&comp, OP_PUT_ARG);
@@ -6383,7 +6423,7 @@ sv_func_t *compile_function_body(
         emit_op(&comp, OP_IS_UNDEF);
         int skip = emit_jump(&comp, OP_JMP_FALSE);
         emit_op(&comp, OP_POP);
-        compile_expr(&comp, p->right);
+        compile_default_init(&comp, p->right, p->left);
         patch_jump(&comp, skip);
         if (p->left && p->left->type == N_IDENT && bind_lb < comp.local_count) {
           int slot = bind_lb - comp.param_locals;

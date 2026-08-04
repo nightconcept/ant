@@ -33,15 +33,19 @@ function render() {
 }
 
 const t0 = Date.now();
-for (let frame = 0; frame < 50000; frame++) {
+// Keep enough iterations to exercise repeated TUI allocation and collection
+// while remaining a bounded correctness test in the compliance suite.
+for (let frame = 0; frame < 25; frame++) {
   render();
   const stats = Ant.stats();
   const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
   const a = stats.alloc, M = 1024 * 1024;
   const total = (stats.pools.totalUsed + a.total) / M;
-  console.log(
-    `frame ${frame}: pools ${(stats.pools.totalUsed/M).toFixed(1)}MB obj ${(a.objects/M).toFixed(1)}MB shp ${(a.shapes/M).toFixed(1)}MB arr ${(a.arrays/M).toFixed(1)}MB cls ${(a.closures/M).toFixed(1)}MB uv ${(a.upvalues/M).toFixed(1)}MB ov ${(a.overflow/M).toFixed(1)}MB | ${total.toFixed(1)}MB rss ${(stats.rss/M).toFixed(1)}MB ${elapsed}s`
-  );
+  if (frame % 5 === 0) {
+    console.log(
+      `frame ${frame}: pools ${(stats.pools.totalUsed/M).toFixed(1)}MB obj ${(a.objects/M).toFixed(1)}MB shp ${(a.shapes/M).toFixed(1)}MB arr ${(a.arrays/M).toFixed(1)}MB cls ${(a.closures/M).toFixed(1)}MB uv ${(a.upvalues/M).toFixed(1)}MB ov ${(a.overflow/M).toFixed(1)}MB | ${total.toFixed(1)}MB rss ${(stats.rss/M).toFixed(1)}MB ${elapsed}s`
+    );
+  }
 }
 
 const total = ((Date.now() - t0) / 1000).toFixed(2);

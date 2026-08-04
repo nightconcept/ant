@@ -551,11 +551,24 @@ size_t js_to_pcre2_pattern(const char *src, size_t src_len, char *dst, size_t ds
   return di;
 }
 
-#define REGEXP_SET_PROP(js, obj, key, klen, val, is_new) \
-  ((is_new) ? js_mkprop_fast(js, obj, key, klen, val) \
-            : js_setprop(js, obj, js_mkstr(js, key, klen), val))
+// Nothing a RegExp instance carries is enumerable. In the spec the flag
+// accessors live on RegExp.prototype (non-enumerable, configurable) and
+// `lastIndex` is an own { writable, !enumerable, !configurable } data
+// property. We keep the flags as own data properties — the engine reads them
+// by name on hot paths — but they must still not show up in Object.keys,
+// spread, JSON.stringify, or Object.create's Properties argument.
+static ant_value_t regexp_def_prop(
+  ant_t *js, ant_value_t obj, const char *key, size_t klen, ant_value_t val, uint8_t attrs
+) {
+  const char *interned = intern_string(key, klen);
+  if (!interned) return js_mkerr(js, "oom");
+  return mkprop_interned(js, obj, interned, val, attrs);
+}
 
-static void regexp_init_flags(ant_t *js, ant_value_t obj, const char *fstr, ant_offset_t flen, bool is_new) {
+#define REGEXP_SET_FLAG(js, obj, key, klen, val) \
+  regexp_def_prop(js, obj, key, klen, val, ANT_PROP_ATTR_WRITABLE | ANT_PROP_ATTR_CONFIGURABLE)
+
+static void regexp_init_flags(ant_t *js, ant_value_t obj, const char *fstr, ant_offset_t flen) {
   uint8_t mask = regexp_parse_flags_mask(fstr, flen);
   bool d = (mask & REGEXP_FLAG_HAS_INDICES) != 0;
   bool g = (mask & REGEXP_FLAG_GLOBAL) != 0;
@@ -577,16 +590,16 @@ static void regexp_init_flags(ant_t *js, ant_value_t obj, const char *fstr, ant_
   if (y) sorted[si++] = 'y';
 
   ant_value_t flags_value = js_mkstr(js, sorted, si);
-  REGEXP_SET_PROP(js, obj, "flags", 5, flags_value, is_new);
-  REGEXP_SET_PROP(js, obj, "hasIndices", 10, mkval(T_BOOL, d ? 1 : 0), is_new);
-  REGEXP_SET_PROP(js, obj, "global", 6, mkval(T_BOOL, g ? 1 : 0), is_new);
-  REGEXP_SET_PROP(js, obj, "ignoreCase", 10, mkval(T_BOOL, i ? 1 : 0), is_new);
-  REGEXP_SET_PROP(js, obj, "multiline", 9, mkval(T_BOOL, m ? 1 : 0), is_new);
-  REGEXP_SET_PROP(js, obj, "dotAll", 6, mkval(T_BOOL, s ? 1 : 0), is_new);
-  REGEXP_SET_PROP(js, obj, "unicode", 7, mkval(T_BOOL, u ? 1 : 0), is_new);
-  REGEXP_SET_PROP(js, obj, "unicodeSets", 11, mkval(T_BOOL, v ? 1 : 0), is_new);
-  REGEXP_SET_PROP(js, obj, "sticky", 6, mkval(T_BOOL, y ? 1 : 0), is_new);
-  REGEXP_SET_PROP(js, obj, "lastIndex", 9, tov(0), is_new);
+  REGEXP_SET_FLAG(js, obj, "flags", 5, flags_value);
+  REGEXP_SET_FLAG(js, obj, "hasIndices", 10, mkval(T_BOOL, d ? 1 : 0));
+  REGEXP_SET_FLAG(js, obj, "global", 6, mkval(T_BOOL, g ? 1 : 0));
+  REGEXP_SET_FLAG(js, obj, "ignoreCase", 10, mkval(T_BOOL, i ? 1 : 0));
+  REGEXP_SET_FLAG(js, obj, "multiline", 9, mkval(T_BOOL, m ? 1 : 0));
+  REGEXP_SET_FLAG(js, obj, "dotAll", 6, mkval(T_BOOL, s ? 1 : 0));
+  REGEXP_SET_FLAG(js, obj, "unicode", 7, mkval(T_BOOL, u ? 1 : 0));
+  REGEXP_SET_FLAG(js, obj, "unicodeSets", 11, mkval(T_BOOL, v ? 1 : 0));
+  REGEXP_SET_FLAG(js, obj, "sticky", 6, mkval(T_BOOL, y ? 1 : 0));
+  regexp_def_prop(js, obj, "lastIndex", 9, tov(0), ANT_PROP_ATTR_WRITABLE);
   js_set_slot(obj, SLOT_REGEXP_FLAGS_MASK, tov((double)mask));
   js_set_slot(obj, SLOT_REGEXP_FLAGS_STRING, flags_value);
   js_set_slot(obj, SLOT_REGEXP_NAMED_GROUPS, js_mkundef());
@@ -956,10 +969,10 @@ static ant_value_t builtin_RegExp(ant_t *js, ant_value_t *args, int nargs) {
     }
   }
 
-  js_mkprop_fast(js, regexp_obj, "source", 6, pattern);
+  REGEXP_SET_FLAG(js, regexp_obj, "source", 6, pattern);
   js_set_slot(regexp_obj, SLOT_DATA, pattern);
   ant_offset_t flags_len, flags_off = vstr(js, flags, &flags_len);
-  regexp_init_flags(js, regexp_obj, (const char *)(uintptr_t)(flags_off), flags_len, true);
+  regexp_init_flags(js, regexp_obj, (const char *)(uintptr_t)(flags_off), flags_len);
 
   return regexp_obj;
 }
@@ -1353,10 +1366,10 @@ static ant_value_t builtin_regexp_compile(ant_t *js, ant_value_t *args, int narg
     if (is_err(flags)) return flags;
   }
 
-  js_setprop(js, rx, js_mkstr(js, "source", 6), pattern);
+  REGEXP_SET_FLAG(js, rx, "source", 6, pattern);
   js_set_slot(rx, SLOT_DATA, pattern);
   ant_offset_t flen, foff = vstr(js, flags, &flen);
-  regexp_init_flags(js, rx, (const char *)(uintptr_t)(foff), flen, false);
+  regexp_init_flags(js, rx, (const char *)(uintptr_t)(foff), flen);
 
   ant_object_t *rx_ptr = js_obj_ptr(rx);
   for (size_t i = 0; i < regex_cache_count; i++) {
@@ -1908,11 +1921,11 @@ static ant_value_t regexp_literal_object(ant_t *js, ant_value_t pattern, ant_val
   if (is_object_type(regexp_proto)) js_set_proto_init(regexp_obj, regexp_proto);
 
   ant_offset_t pattern_len; vstr(js, pattern, &pattern_len);
-  if (is_err(js_mkprop_fast(js, regexp_obj, "source", 6, pattern))) return js_mkerr(js, "oom");
+  if (is_err(REGEXP_SET_FLAG(js, regexp_obj, "source", 6, pattern))) return js_mkerr(js, "oom");
   js_set_slot(regexp_obj, SLOT_DATA, pattern);
 
   ant_offset_t flags_len, flags_off = vstr(js, flags, &flags_len);
-  regexp_init_flags(js, regexp_obj, (const char *)(uintptr_t)flags_off, flags_len, true);
+  regexp_init_flags(js, regexp_obj, (const char *)(uintptr_t)flags_off, flags_len);
   
   return regexp_obj;
 }
@@ -2780,7 +2793,13 @@ void init_regex_module(ant_t *js) {
   js_set_sym(js, js->builtins.regexp_matchall_iter_proto_val, get_iterator_sym(), js_mkfun(sym_this_cb));
   js_set_sym(js, regexp_proto, get_replace_sym(), js_mkfun(builtin_regexp_symbol_replace));
   js_set_sym(js, regexp_proto, get_search_sym(), js_mkfun(builtin_regexp_symbol_search));
-  js_set_sym(js, regexp_proto, get_toStringTag_sym(), js_mkstr(js, "RegExp", 6));
+  // This is an implementation compatibility tag (the spec's built-in tag
+  // algorithm already classifies RegExp instances), so it must remain
+  // overrideable by an ordinary instance @@toStringTag assignment.
+  js_set_sym_desc(
+    js, regexp_proto, get_toStringTag_sym(), js_mkstr(js, "RegExp", 6),
+    JS_DESC_W | JS_DESC_C
+  );
   js_set_getter_desc(js, regexp_proto, "flags", 5, js_mkfun(builtin_regexp_flags_getter), JS_DESC_C);
   defmethod(js, regexp_proto, "compile", 7, js_mkfun(builtin_regexp_compile));
 

@@ -20,6 +20,9 @@ eq(JSON.stringify(new String('boxed')), '"boxed"', 'String wrapper');
 eq(JSON.stringify(new Number(7)), '7', 'Number wrapper');
 eq(JSON.stringify(new Boolean(true)), 'true', 'Boolean wrapper');
 eq(JSON.stringify({ n: new Number(1.5) }), '{"n":1.5}', 'nested Number wrapper');
+const customString = new String('ignored');
+customString.toString = () => 'custom';
+eq(JSON.stringify(customString), '"custom"', 'String wrapper observes custom toString');
 
 // BigInt is not serializable.
 let threw = null;
@@ -82,6 +85,19 @@ const proxy = new Proxy({ a: 1, b: 2 }, {
 });
 eq(JSON.stringify(proxy), '{"a":1,"b":2}', 'proxy stringify');
 assert(trapped.length > 0, 'proxy ownKeys trap should have run');
+
+// Object keys are captured before values are read. A replacer still observes
+// a snapshotted key if an earlier replacement deletes it.
+const deletedDuringReplacement = { a: 1, b: 2 };
+eq(
+  JSON.stringify(deletedDuringReplacement, (key, value) => {
+    if (key === 'a') delete deletedDuringReplacement.b;
+    if (key === 'b' && value === undefined) return 'replaced';
+    return value;
+  }),
+  '{"a":1,"b":"replaced"}',
+  'replacer observes a deleted snapshotted key'
+);
 
 // Duplicate keys in parsed input keep the last value.
 eq(JSON.parse('{"a":1,"a":2}').a, 2, 'duplicate key wins');

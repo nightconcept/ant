@@ -509,6 +509,7 @@ ant_value_t mkprop_interned_exact(ant_t *js, ant_value_t obj, const char *intern
 
 ant_value_t setprop_cstr(ant_t *js, ant_value_t obj, const char *key, size_t len, ant_value_t v);
 ant_value_t setprop_interned(ant_t *js, ant_value_t obj, const char *key, size_t len, ant_value_t v);
+void js_set_sym_desc(ant_t *js, ant_value_t obj, ant_value_t sym, ant_value_t val, int flags);
 
 // TODO: move into builder.c
 typedef struct {
@@ -593,6 +594,7 @@ ant_value_t js_delete_sym_prop(ant_t *js, ant_value_t obj, ant_value_t sym);
 
 ant_value_t js_cfunc_promote(ant_t *js, ant_value_t cfunc);
 ant_value_t js_cfunc_expose_named(ant_t *js, ant_value_t cfunc, const char *name, size_t name_len);
+ant_value_t js_cfunc_expose_anonymous_for_key(ant_t *js, ant_value_t value, const char *key, size_t key_len);
 ant_value_t js_set_function_name(ant_t *js, ant_value_t fn, const char *name, size_t name_len);
 
 ant_value_t js_set_function_name_prefixed(

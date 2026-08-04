@@ -174,6 +174,16 @@ if (originalFetchProto !== Function.prototype) {
   pass = false;
 }
 
+for (const [name, fn] of [
+  ['Math.abs', Math.abs],
+  ['Iterator.from', Iterator.from],
+]) {
+  if (Object.getPrototypeOf(fn) !== Function.prototype) {
+    console.log(`FAIL: ${name} should inherit from Function.prototype`);
+    pass = false;
+  }
+}
+
 for (const [name, length] of [
   ['map', 1],
   ['filter', 1],

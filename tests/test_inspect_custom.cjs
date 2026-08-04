@@ -77,12 +77,12 @@ assert(
   `expected Response Symbol.inspect output, got: ${Response.prototype[Symbol.inspect].call(response)}`
 );
 assert(
-  timeoutInspect === 'Timeout (1) {\n  delay: 1,\n  repeat: null,\n  [Symbol(Symbol.toPrimitive)]: [native code]\n}',
-  `expected legacy Timeout inspect output, got: ${timeoutInspect}`
+  timeoutInspect === 'Timeout (1) {\n  delay: 1,\n  repeat: null,\n  [Symbol(Symbol.toPrimitive)]: [Function (anonymous)]\n}',
+  `expected Timeout inspect output, got: ${timeoutInspect}`
 );
 assert(
-  intervalInspect === 'Interval (2) {\n  delay: 5,\n  repeat: 5,\n  [Symbol(Symbol.toPrimitive)]: [native code]\n}',
-  `expected legacy Interval inspect output, got: ${intervalInspect}`
+  intervalInspect === 'Interval (2) {\n  delay: 5,\n  repeat: 5,\n  [Symbol(Symbol.toPrimitive)]: [Function (anonymous)]\n}',
+  `expected Interval inspect output, got: ${intervalInspect}`
 );
 
 const fallback = inspect(new FallbackConnection('db.internal'));

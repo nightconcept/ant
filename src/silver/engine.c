@@ -1865,6 +1865,7 @@ ant_value_t sv_execute_frame(sv_vm_t *vm, sv_func_t *func, ant_value_t this, ant
   L_GET_EVAL_GLOBAL:       { VM_CHECK(sv_op_get_eval_global(vm, js, frame, func, ip));        NEXT(7); }
   L_GET_EVAL_GLOBAL_UNDEF: { VM_CHECK(sv_op_get_eval_global_undef(vm, js, frame, func, ip));  NEXT(7); }
   L_PUT_EVAL_GLOBAL:       { VM_CHECK(sv_op_put_eval_global(vm, js, frame, func, ip)); NEXT(5); }
+  L_DEFINE_EVAL_VAR:       { VM_CHECK(sv_op_define_eval_var(vm, js, frame, func, ip)); NEXT(5); }
   L_DELETE_EVAL_VAR:       { sv_op_delete_eval_var(vm, js, frame, func, ip);           NEXT(5); }
 
   // TODO: make the methods below DRY
